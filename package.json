@@ -1,0 +1,32 @@
+{
+  "name": "@rxdi/graphqj",
+  "main": "./lib/main.js",
+  "version": "0.7.9",
+  "scripts": {
+    "start": "gapi start --local --minify=false",
+    "build": "gapi build",
+    "patch": "npm version patch && npm publish --update-readme --access public"
+  },
+  "dependencies": {
+    "@gapi/core": "^1.8.5",
+    "@gapi/voyager": "^1.8.5",
+    "esm": "^3.2.25"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rxdi/graphqj"
+  },
+  "bin": {
+    "gj": "./dist/main.js",
+    "gg": "./dist/main.js",
+    "graphqj": "./dist/main.js"
+  },
+  "devDependencies": {
+    "@types/graphql": "^14.2.3",
+    "typescript": "^3.5.3",
+    "@rxdi/parcel-plugin-shebang": "0.7.5"
+  },
+  "types": "./lib/index.d.ts",
+  "module": "./lib/index.js",
+  "typings": "./lib/index.d.ts"
+}
