@@ -3,7 +3,8 @@ import {
   GraphQLList,
   GraphQLInt,
   GraphQLObjectType,
-  GraphQLNonNull
+  GraphQLNonNull,
+  GraphQLBoolean
 } from 'graphql';
 import { BootstrapService } from '@gapi/core';
 
@@ -20,12 +21,22 @@ export function MakeAdvancedSchema(config, bootstrap: BootstrapService) {
       if (currentKey === 'string' || currentKey === 'String') {
         types[type][key] = { type: GraphQLString };
       }
-      if (currentKey === 'string[]' || currentKey === 'String[]') {
-        types[type][key] = { type: new GraphQLList(GraphQLString) };
+
+      if (currentKey === 'boolean' || currentKey === 'Boolean') {
+        types[type][key] = { type: GraphQLString };
       }
+
       if (currentKey === 'number' || currentKey === 'Number') {
         types[type][key] = { type: GraphQLInt };
       }
+
+      if (currentKey === 'string[]' || currentKey === 'String[]') {
+        types[type][key] = { type: new GraphQLList(GraphQLString) };
+      }
+      if (currentKey === 'boolean[]' || currentKey === 'Boolean[]') {
+        types[type][key] = { type: new GraphQLList(GraphQLString) };
+      }
+
       if (currentKey === 'number[]' || currentKey === 'Number[]') {
         types[type][key] = { type: new GraphQLList(GraphQLInt) };
       }
@@ -44,11 +55,23 @@ export function MakeAdvancedSchema(config, bootstrap: BootstrapService) {
         fields[a] = { type: GraphQLString };
       }
 
+      if (currentArg === 'boolean' || currentArg === 'Boolean') {
+        fields[a] = { type: GraphQLBoolean };
+      }
+
       if (currentArg === 'string[]' || currentArg === 'String[]') {
         fields[a] = { type: new GraphQLList(GraphQLString) };
       }
 
+      if (currentArg === 'boolean[]' || currentArg === 'Boolean[]') {
+        fields[a] = { type: new GraphQLList(GraphQLBoolean) };
+      }
+
       if (currentArg === 'string!' || currentArg === 'String!') {
+        fields[a] = { type: new GraphQLNonNull(GraphQLString) };
+      }
+
+      if (currentArg === 'boolean!' || currentArg === 'Boolean!') {
         fields[a] = { type: new GraphQLNonNull(GraphQLString) };
       }
 

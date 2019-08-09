@@ -2,7 +2,8 @@ import {
   GraphQLString,
   GraphQLInt,
   GraphQLList,
-  GraphQLObjectType
+  GraphQLObjectType,
+  GraphQLBoolean
 } from 'graphql';
 import { BootstrapService } from '@gapi/core';
 
@@ -21,6 +22,9 @@ export function MakeBasicSchema(config, bootstrap: BootstrapService) {
       if (typeof resolver === 'number') {
         fields[key] = { type: GraphQLInt };
       }
+      if (typeof resolver === 'boolean') {
+        fields[key] = { type: GraphQLBoolean };
+      }
       if (typeof resolver !== 'string' && resolver.length) {
         if (typeof resolver[0] === 'string') {
           fields[key] = { type: new GraphQLList(GraphQLString) };
@@ -28,6 +32,9 @@ export function MakeBasicSchema(config, bootstrap: BootstrapService) {
 
         if (typeof resolver[0] === 'number') {
           fields[key] = { type: new GraphQLList(GraphQLInt) };
+        }
+        if (typeof resolver[0] === 'boolean') {
+          fields[key] = { type: new GraphQLList(GraphQLBoolean) };
         }
       }
     });
