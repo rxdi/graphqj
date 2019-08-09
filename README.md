@@ -103,6 +103,19 @@ gj --port 5000
 gj --generate
 ```
 
+
+## Spawn random PORT on every start
+
+```
+gj --random
+```
+
+
+## Listen for changes
+```
+gj --listen ./gj.js
+```
+
 Schema:
 
 ```graphql
@@ -157,11 +170,6 @@ Result:
 }
 ```
 
-## Spawn random PORT on every start
-
-```
-gj --random
-```
 
 
 

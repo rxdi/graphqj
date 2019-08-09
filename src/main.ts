@@ -4,9 +4,33 @@ import { CoreModule } from '@gapi/core';
 import { nextOrDefault, includes } from './helpers/args-extractors';
 import { writeFile } from 'fs';
 import { promisify } from 'util';
+import { watch } from 'chokidar';
+import { SelfChild } from './helpers/self-child';
+import { Subscription } from 'rxjs';
 
+if (includes('--listen')) {
+  let subscription: Subscription;
+  const path = nextOrDefault('--listen', './gj.ts');
+  const ignored = path => path.includes('node_modules');
 
-if (includes('init')) {
+  watch(path, { ignored }).on('change', async (event, path) => {
+    if (subscription) {
+      subscription.unsubscribe();
+    }
+    subscription = SelfChild().subscribe(process => {
+      console.log('Child process started: ', process.pid);
+    });
+  });
+
+  watch(path, { ignored }).on('ready', async (event, path) => {
+    if (subscription) {
+      subscription.unsubscribe();
+    }
+    subscription = SelfChild().subscribe(process => {
+      console.log('Child process started: ', process.pid);
+    });
+  });
+} else if (includes('init')) {
   if (includes('advanced')) {
     promisify(writeFile)(
       './gj.json',
@@ -61,7 +85,9 @@ if (includes('init')) {
   BootstrapFramework(AppModule, [
     CoreModule.forRoot({
       graphql: {
-        openBrowser: nextOrDefault('--random', true, (v) => v === 'true' ? false : true)
+        openBrowser: nextOrDefault('--random', true, v =>
+          v === 'true' ? false : true
+        )
       },
       server: {
         randomPort: nextOrDefault('--random', false),

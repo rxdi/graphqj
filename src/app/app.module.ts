@@ -57,7 +57,7 @@ ${printSchema(mergedSchemas)}
           });
         } else {
           console.log(
-            'You can extract this schema by running --extract command'
+            'You can extract this schema by running --generate command'
           );
         }
         return mergedSchemas;
