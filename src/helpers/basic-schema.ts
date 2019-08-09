@@ -13,19 +13,20 @@ export function MakeBasicSchema(config, bootstrap: BootstrapService) {
     const args = {};
 
     Object.keys(resolve).forEach(key => {
-      if (typeof resolve[key] === 'string') {
+      const resolver = resolve[key];
+      if (typeof resolver === 'string') {
         fields[key] = { type: GraphQLString };
       }
 
-      if (typeof resolve[key] === 'number') {
+      if (typeof resolver === 'number') {
         fields[key] = { type: GraphQLInt };
       }
-      if (typeof resolve[key] !== 'string' && resolve[key].length) {
-        if (typeof resolve[key][0] === 'string') {
+      if (typeof resolver !== 'string' && resolver.length) {
+        if (typeof resolver[0] === 'string') {
           fields[key] = { type: new GraphQLList(GraphQLString) };
         }
 
-        if (typeof resolve[key][0] === 'number') {
+        if (typeof resolver[0] === 'number') {
           fields[key] = { type: new GraphQLList(GraphQLInt) };
         }
       }

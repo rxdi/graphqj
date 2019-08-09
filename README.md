@@ -252,17 +252,17 @@ Filename: `gj.yml`
 $mode: advanced
 $types:
   user:
-    name: string
-    email: string
-    phone: number
-    arrayOfNumbers: number[]
-    arrayOfStrings: string[]
+    name: String
+    email: String
+    phone: Number
+    arrayOfNumbers: Number[]
+    arrayOfStrings: String[]
 
 $resolvers:
   findUser:
     type: user
     args:
-      userId: string
+      userId: String
     resolve:
       name: Kristiyan Tachev
       email: test@gmail.com
@@ -277,7 +277,7 @@ $resolvers:
   findUser2:
     type: user
     args:
-      userId: string
+      userId: String!
     resolve:
       name: Kristiyan Tachev
       email: test@gmail.com
