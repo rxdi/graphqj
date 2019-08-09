@@ -10,13 +10,15 @@ export async function getConfig(configFilename: string) {
     config = require('esm')(module)(
       join(process.cwd(), `${configFilename}.js`)
     );
+    console.log('JS Config', config)
   } catch (e) {}
   if (await promisify(exists)(`./${configFilename}.yml`)) {
     const file = readFileSync(`./${configFilename}.yml`, {encoding: 'utf-8'})
     config = load(file);
-    console.log(config)
+    console.log('YML Config', config)
   }
   if (await promisify(exists)(`./${configFilename}.ts`)) {
+    console.log('Typescript Config', config)
     const isMigrateTempConfigExists = await promisify(exists)(
       './.gj/config.temp'
     );
@@ -54,6 +56,7 @@ export async function getConfig(configFilename: string) {
         encoding: 'utf-8'
       })
     );
+    console.log('Json Config', config)
   } catch (e) {}
 
   return config;

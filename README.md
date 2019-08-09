@@ -1,6 +1,6 @@
 # @rxdi/graphqj
 
-Create easy Graphql server from `json`
+Create easy Graphql server from `json`, `yml`, `graphql`, `js` or `ts` files
 
 ## Features
 
