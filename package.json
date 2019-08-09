@@ -10,7 +10,8 @@
   "dependencies": {
     "@gapi/core": "^1.8.5",
     "@gapi/voyager": "^1.8.5",
-    "esm": "^3.2.25"
+    "esm": "^3.2.25",
+    "js-yaml": "^3.13.1"
   },
   "repository": {
     "type": "git",
@@ -22,9 +23,10 @@
     "graphqj": "./dist/main.js"
   },
   "devDependencies": {
+    "@rxdi/parcel-plugin-shebang": "0.7.5",
     "@types/graphql": "^14.2.3",
-    "typescript": "^3.5.3",
-    "@rxdi/parcel-plugin-shebang": "0.7.5"
+    "@types/js-yaml": "^3.12.1",
+    "typescript": "^3.5.3"
   },
   "types": "./lib/index.d.ts",
   "module": "./lib/index.js",

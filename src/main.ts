@@ -5,6 +5,7 @@ import { nextOrDefault, includes } from './helpers/args-extractors';
 import { writeFile } from 'fs';
 import { promisify } from 'util';
 
+
 if (includes('init')) {
   if (includes('advanced')) {
     promisify(writeFile)(

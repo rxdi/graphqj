@@ -1,7 +1,8 @@
 import { promisify } from 'util';
-import { exists, Stats, writeFile, stat, readFile, unlink } from 'fs';
+import { exists, Stats, writeFile, stat, readFile, unlink, readFileSync } from 'fs';
 import { TranspileTypescript } from './typescript.builder';
 import { join } from 'path';
+import { load } from 'js-yaml';
 
 export async function getConfig(configFilename: string) {
   let config;
@@ -10,6 +11,11 @@ export async function getConfig(configFilename: string) {
       join(process.cwd(), `${configFilename}.js`)
     );
   } catch (e) {}
+  if (await promisify(exists)(`./${configFilename}.yml`)) {
+    const file = readFileSync(`./${configFilename}.yml`, {encoding: 'utf-8'})
+    config = load(file);
+    console.log(config)
+  }
   if (await promisify(exists)(`./${configFilename}.ts`)) {
     const isMigrateTempConfigExists = await promisify(exists)(
       './.gj/config.temp'

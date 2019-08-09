@@ -245,6 +245,51 @@ export default {
 
 ```
 
+## YML Compatability
+
+Filename: `gj.yml`
+```yml
+$mode: advanced
+$types:
+  user:
+    name: string
+    email: string
+    phone: number
+    arrayOfNumbers: number[]
+    arrayOfStrings: string[]
+
+$resolvers:
+  findUser:
+    type: user
+    args:
+      userId: string
+    resolve:
+      name: Kristiyan Tachev
+      email: test@gmail.com
+      phone: 414141
+      arrayOfNumbers: 
+        - 515151
+        - 412414
+      arrayOfStrings:
+        - '515151'
+        - '412414'
+
+  findUser2:
+    type: user
+    args:
+      userId: string
+    resolve:
+      name: Kristiyan Tachev
+      email: test@gmail.com
+      phone: 414141
+      arrayOfNumbers: 
+        - 515151
+        - 412414
+      arrayOfStrings:
+        - '515151'
+        - '412414'
+```
+
 ## Loading existing generated schema
 
 Filename: `gj.json`
