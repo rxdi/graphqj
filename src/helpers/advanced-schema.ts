@@ -6,46 +6,17 @@ import {
   GraphQLNonNull,
   GraphQLBoolean
 } from 'graphql';
-import { BootstrapService } from '@gapi/core';
+import { BootstrapService, Container } from '@gapi/core';
+import { TypesToken, Config, Args } from '../app/app.tokens';
 
-function strEnum<T extends string>(o: Array<T>): {[K in T]: K} {
-  return o.reduce((res, key) => {
-      res[key] = key;
-      return res;
-  }, Object.create(null));
-}
-
-const BooleanUnion = strEnum([
-  'Boolean',
-  'Bool',
-  'boolean'
-])
-
-const StringUnion = strEnum([
-  'String',
-  'string'
-])
-
-const IntegerUnion = strEnum([
-  'Int',
-  'integer',
-  'number',
-  'Num',
-  'int'
-])
-
-type BooleanUnion = keyof typeof BooleanUnion;
-type StringUnion = keyof typeof StringUnion;
-type IntegerUnion = keyof typeof IntegerUnion;
-
-const Roots = {
-  booleanNode: BooleanUnion,
-  stringNode: StringUnion,
-  numberNode: IntegerUnion
-}
-
-export function MakeAdvancedSchema(config, bootstrap: BootstrapService) {
+export function MakeAdvancedSchema(
+  config: Config,
+  bootstrap: BootstrapService
+) {
   const types = {};
+  const Types = Container.get(TypesToken);
+  const Arguments = Container.get(TypesToken);
+  const Resolvers = Container.get(TypesToken);
 
   Object.keys(config.$types).forEach(type => {
     if (types[type]) {
@@ -84,10 +55,11 @@ export function MakeAdvancedSchema(config, bootstrap: BootstrapService) {
       fields: types[type]
     });
   });
-  const buildArgumentsSchema = (args: { [key: string]: string }) => {
+  const buildArgumentsSchema = (args: Args) => {
     const fields = {};
     args = args || fields;
     Object.keys(args).forEach(a => {
+      console.log(a, args[a]);
       const ck = args[a];
 
       /* Basic */
@@ -121,11 +93,21 @@ export function MakeAdvancedSchema(config, bootstrap: BootstrapService) {
         fields[a] = { type: new GraphQLList(GraphQLString) };
       }
 
-      if (ck === 'boolean[]' || ck === 'Boolean[]' || ck === '[Boolean]' || ck === '[Bool]') {
+      if (
+        ck === 'boolean[]' ||
+        ck === 'Boolean[]' ||
+        ck === '[Boolean]' ||
+        ck === '[Bool]'
+      ) {
         fields[a] = { type: new GraphQLList(GraphQLBoolean) };
       }
 
-      if (ck === 'number[]' || ck === 'Number[]' || ck === '[Number]' || ck === '[Int]') {
+      if (
+        ck === 'number[]' ||
+        ck === 'Number[]' ||
+        ck === '[Number]' ||
+        ck === '[Int]'
+      ) {
         fields[a] = { type: new GraphQLList(GraphQLInt) };
       }
 
@@ -136,24 +118,35 @@ export function MakeAdvancedSchema(config, bootstrap: BootstrapService) {
         };
       }
 
-      if (ck === 'boolean[]!' || ck === 'Boolean[]!' || ck === '[Boolean]!' || ck === '[Bool]') {
+      if (
+        ck === 'boolean[]!' ||
+        ck === 'Boolean[]!' ||
+        ck === '[Boolean]!' ||
+        ck === '[Bool]'
+      ) {
         fields[a] = {
           type: new GraphQLNonNull(new GraphQLList(GraphQLBoolean))
         };
       }
 
-      if (ck === 'number[]!' || ck === 'Number[]!' || ck === '[Number]!' || ck === '[Int]!') {
+      if (
+        ck === 'number[]!' ||
+        ck === 'Number[]!' ||
+        ck === '[Number]!' ||
+        ck === '[Int]!'
+      ) {
         fields[a] = {
           type: new GraphQLNonNull(new GraphQLList(GraphQLInt))
         };
       }
-    
     });
     return fields;
   };
-  Object.keys(config.$resolvers).forEach(method_name => {
-    const resolve = config.$resolvers[method_name].resolve;
-    const type = config.$resolvers[method_name].type;
+
+  Object.keys(config.$resolvers).forEach(resolver => {
+    console.log(resolver);
+    const resolve = config.$resolvers[resolver].resolve;
+    const type = config.$resolvers[resolver].type;
     if (!types[type]) {
       throw new Error(
         `Missing type '${type}', Available types: '${Object.keys(
@@ -161,10 +154,10 @@ export function MakeAdvancedSchema(config, bootstrap: BootstrapService) {
         ).toString()}'`
       );
     }
-    bootstrap.Fields.query[method_name] = {
+    bootstrap.Fields.query[resolver] = {
       type: types[type],
-      method_name,
-      args: buildArgumentsSchema(config.$resolvers[method_name].args),
+      method_name: resolver,
+      args: buildArgumentsSchema(config.$resolvers[resolver].args),
       public: true,
       method_type: 'query',
       target: () => {},

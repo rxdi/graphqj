@@ -1,2 +1,3 @@
 import { BootstrapService } from '@gapi/core';
-export declare function MakeAdvancedSchema(config: any, bootstrap: BootstrapService): void;
+import { Config } from '../app/app.tokens';
+export declare function MakeAdvancedSchema(config: Config, bootstrap: BootstrapService): void;

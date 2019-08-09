@@ -1,0 +1,44 @@
+
+$mode: advanced
+$types:
+  user:
+    name: String
+    email: String
+    phone: Number
+    arrayOfNumbers: Number[]
+    arrayOfStrings: String[]
+
+$args:
+  UserPayload:
+    userId: String
+
+$resolvers:
+  findUser:
+    type: user
+    args:
+      payload: UserPayload
+    resolve:
+      name: Kristiyan Tachev
+      email: test@gmail.com
+      phone: 414141
+      arrayOfNumbers: 
+        - 515151
+        - 412414
+      arrayOfStrings:
+        - '515151'
+        - '412414'
+
+  findUser2:
+    type: user
+    args:
+      userId: String!
+    resolve:
+      name: Kristiyan Tachev
+      email: test@gmail.com
+      phone: 414141
+      arrayOfNumbers: 
+        - 515151
+        - 412414
+      arrayOfStrings:
+        - '515151'
+        - '412414'

@@ -16,10 +16,23 @@ import { basicTemplate } from '../helpers/basic.template';
 import { MakeAdvancedSchema } from '../helpers/advanced-schema';
 import { MakeBasicSchema } from '../helpers/basic-schema';
 import { join } from 'path';
+import { TypesToken, ResolversToken, ArgumentsToken, Config } from './app.tokens';
 
 @Module({
   imports: [VoyagerModule.forRoot()],
   providers: [
+    {
+      provide: TypesToken,
+      useValue: new Map()
+    },
+    {
+      provide: ResolversToken,
+      useValue: new Map()
+    },
+    {
+      provide: ArgumentsToken,
+      useValue: new Map()
+    },
     {
       provide: SCHEMA_OVERRIDE,
       useFactory: () => (schema: GraphQLSchema) => {
@@ -35,7 +48,7 @@ import { join } from 'path';
             externalSchema = readFileSync(config.$schema, {
               encoding: 'utf-8'
             });
-            externalSchema = buildSchema(externalSchema)
+            externalSchema = buildSchema(externalSchema);
           }
         } catch (e) {}
         const mergedSchemas = mergeSchemas({
@@ -64,10 +77,8 @@ ${printSchema(mergedSchemas)}
       }
     },
     {
-      provide: 'createFields',
-      deps: [BootstrapService],
-      lazy: true,
-      useFactory: async (bootstrap: BootstrapService) => {
+      provide: Config,
+      useFactory: async () => {
         let config = await getConfig(
           nextOrDefault('--config', 'graphqj-config')
         );
@@ -77,8 +88,25 @@ ${printSchema(mergedSchemas)}
         if (!config) {
           config = basicTemplate;
         }
-        config = config['default'] || config;
-
+        return config['default'] || config;
+      }
+    },
+    {
+      provide: 'Run',
+      deps: [Config, BootstrapService, TypesToken, ResolversToken, ArgumentsToken],
+      lazy: true,
+      useFactory: async (
+        config: Config,
+        bootstrap: BootstrapService,
+        types: TypesToken,
+        resolvers: ResolversToken,
+        args: ArgumentsToken
+      ) => {
+        config = await config
+        config.$mode;
+        config.$types;
+        config.$resolvers;
+        config.$args
         if (config.$mode === 'basic') {
           MakeBasicSchema(config, bootstrap);
         }
