@@ -5,7 +5,8 @@ import {
   GraphQLSchema,
   printSchema,
   buildSchema,
-  mergeSchemas
+  mergeSchemas,
+  Container
 } from '@gapi/core';
 import { writeFile, readFileSync } from 'fs';
 import { promisify } from 'util';
@@ -16,7 +17,7 @@ import { basicTemplate } from '../helpers/basic.template';
 import { MakeAdvancedSchema } from '../helpers/advanced-schema';
 import { MakeBasicSchema } from '../helpers/basic-schema';
 import { join } from 'path';
-import { TypesToken, ResolversToken, ArgumentsToken, Config } from './app.tokens';
+import { TypesToken, ResolversToken, ArgumentsToken, Config, GuardsToken } from './app.tokens';
 
 @Module({
   imports: [VoyagerModule.forRoot()],
@@ -31,6 +32,10 @@ import { TypesToken, ResolversToken, ArgumentsToken, Config } from './app.tokens
     },
     {
       provide: ArgumentsToken,
+      useValue: new Map()
+    },
+    {
+      provide: GuardsToken,
       useValue: new Map()
     },
     {
@@ -93,20 +98,22 @@ ${printSchema(mergedSchemas)}
     },
     {
       provide: 'Run',
-      deps: [Config, BootstrapService, TypesToken, ResolversToken, ArgumentsToken],
+      deps: [Config, BootstrapService, TypesToken, ResolversToken, ArgumentsToken, GuardsToken],
       lazy: true,
       useFactory: async (
         config: Config,
         bootstrap: BootstrapService,
         types: TypesToken,
         resolvers: ResolversToken,
-        args: ArgumentsToken
+        args: ArgumentsToken,
+        guards: GuardsToken
       ) => {
         config = await config
-        config.$mode;
-        config.$types;
-        config.$resolvers;
-        config.$args
+        config.$externals.map(external => {
+          const m = require('esm')(module)(join(process.cwd(), external.file));
+          external.module = m['default'] || m
+          Container.set(external.map, external.module);
+        })
         if (config.$mode === 'basic') {
           MakeBasicSchema(config, bootstrap);
         }

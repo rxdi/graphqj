@@ -35,7 +35,7 @@ export const buildArgumentsSchema = (config: Config, resolver: string) => {
       }
       return;
     }
-    fields[a] = ParseArgs(args[a], fields[a]);
+    fields[a] = ParseArgs(args[a]);
   });
   return fields;
 };

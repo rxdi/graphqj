@@ -366,3 +366,20 @@ Open http://localhost:9000/voyager
 Exclude `.gj` folder inside your `.gitignore` or `.dockerignore` files
 
 Folder `.gj` is working directory when we store transpiled `typescript` configuration file
+
+
+## Experimental
+
+```yml
+$mode: advanced
+$externals:
+  - map: 🗡️
+    file: ./directives.js
+  - map: 🛡️
+    file: ./guards.js
+
+$types:
+  User:
+    phone: Number {🛡️@isAuthorized}
+    phone2: Number (🛡️@isAuthorized)
+```

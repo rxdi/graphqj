@@ -6,31 +6,47 @@ import {
   GraphQLType
 } from 'graphql';
 import { GlobalUnion } from '../app/app.tokens';
+import { Container, InjectionToken } from '@rxdi/core';
 
-export function ParseTypesSchema(ck: GlobalUnion) {
-  let key: { type: GraphQLScalarType | GraphQLList<GraphQLType> };
+export function ParseTypesSchema(
+  ck: GlobalUnion,
+  key: string,
+  validators: InjectionToken<((value: any) => any)>[],
+  interceptor?: (value: any) => any
+) {
+  let type: { type: GraphQLScalarType | GraphQLList<GraphQLType> };
   if (ck === 'string' || ck === 'String') {
-    key = { type: GraphQLString };
+    type = { type: GraphQLString };
   }
 
   if (ck === 'boolean' || ck === 'Boolean') {
-    key = { type: GraphQLString };
+    type = { type: GraphQLString };
   }
 
   if (ck === 'number' || ck === 'Number') {
-    key = { type: GraphQLInt };
+    type = { type: GraphQLInt };
   }
 
   if (ck === 'string[]' || ck === 'String[]' || ck === '[String]') {
-    key = { type: new GraphQLList(GraphQLString) };
+    type = { type: new GraphQLList(GraphQLString) };
   }
 
   if (ck === 'boolean[]' || ck === 'Boolean[]' || ck === '[Boolean]') {
-    key = { type: new GraphQLList(GraphQLString) };
+    type = { type: new GraphQLList(GraphQLString) };
   }
 
   if (ck === 'number[]' || ck === 'Number[]' || ck === '[Number]') {
-    key = { type: new GraphQLList(GraphQLInt) };
+    type = { type: new GraphQLList(GraphQLInt) };
   }
-  return key;
+  type['resolve'] = async function(...args) {
+    let defaultValue = args[0][key];
+    for (const validator of validators) {
+      await Container.get(validator)(defaultValue);
+    }
+    if (interceptor) {
+      defaultValue = await interceptor(defaultValue)
+    }
+    return defaultValue;
+  };
+  return type;
 }

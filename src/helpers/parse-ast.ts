@@ -3,10 +3,14 @@ import {
   GraphQLBoolean,
   GraphQLInt,
   GraphQLNonNull,
-  GraphQLList
+  GraphQLList,
+  GraphQLScalarType,
+  GraphQLType
 } from 'graphql';
+import { GlobalUnion } from '../app/app.tokens';
 
-export function ParseArgs(ck, type) {
+export function ParseArgs(ck: GlobalUnion) {
+  let type: { type: GraphQLScalarType | GraphQLList<GraphQLType> };
   /* Basic */
   if (ck === 'string' || ck === 'String') {
     type = { type: GraphQLString };

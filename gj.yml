@@ -1,10 +1,16 @@
 
 $mode: advanced
+$externals:
+  - map: 🗡️
+    file: ./directives.js
+  - map: 🛡️
+    file: ./guards.js
+
 $types:
   User:
     name: String
     email: String
-    phone: Number
+    phone: Number (🛡️@isAuthorized)
     arrayOfNumbers: Number[]
     arrayOfStrings: String[]
 

@@ -1,1 +1,5 @@
-export declare function ParseArgs(ck: any, type: any): any;
+import { GraphQLList, GraphQLScalarType, GraphQLType } from 'graphql';
+import { GlobalUnion } from '../app/app.tokens';
+export declare function ParseArgs(ck: GlobalUnion): {
+    type: GraphQLScalarType | GraphQLList<GraphQLType>;
+};

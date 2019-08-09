@@ -108,12 +108,19 @@ export interface Config {
             resolve: any;
         };
     };
+    $externals: {
+        map: string;
+        file: string;
+        module?: any;
+    }[];
     $args: any;
 }
 export declare const TypesToken: InjectionToken<Map<string, Args>>;
 export declare const ArgumentsToken: InjectionToken<Map<string, Args>>;
 export declare const ResolversToken: InjectionToken<Map<string, Args>>;
+export declare const GuardsToken: InjectionToken<Map<string, Args>>;
 export declare const Config: InjectionToken<Map<string, Args>>;
 export declare type TypesToken = Map<string, Args>;
 export declare type ArgumentsToken = Map<string, Args>;
 export declare type ResolversToken = Map<string, Args>;
+export declare type GuardsToken = Map<string, Args>;
