@@ -1,13 +1,9 @@
-import {
-  GraphQLString,
-  GraphQLList,
-  GraphQLInt,
-  GraphQLObjectType,
-  GraphQLNonNull,
-  GraphQLBoolean
-} from 'graphql';
+import { GraphQLObjectType } from 'graphql';
 import { BootstrapService, Container } from '@gapi/core';
-import { TypesToken, Config, Args } from '../app/app.tokens';
+import { TypesToken, Config } from '../app/app.tokens';
+import { ParseArgs } from './parse-ast';
+import { buildArgumentsSchema } from './parse-args-schema';
+import { ParseTypesSchema } from './parse-types.schema';
 
 export function MakeAdvancedSchema(
   config: Config,
@@ -17,135 +13,29 @@ export function MakeAdvancedSchema(
   const Types = Container.get(TypesToken);
   const Arguments = Container.get(TypesToken);
   const Resolvers = Container.get(TypesToken);
-
+  Object.keys(config.$args).forEach(reusableArgumentKey => {
+    const args = {};
+    Object.keys(config.$args[reusableArgumentKey]).forEach(o => {
+      const ck = config.$args[reusableArgumentKey][o];
+      args[o] = ParseArgs(ck, args[o]);
+      Arguments.set(reusableArgumentKey, args);
+    });
+  });
   Object.keys(config.$types).forEach(type => {
     if (types[type]) {
       return;
     }
     Object.keys(config.$types[type]).forEach(key => {
       types[type] = types[type] || {};
-      const ck = config.$types[type][key];
-
-      if (ck === 'string' || ck === 'String') {
-        types[type][key] = { type: GraphQLString };
-      }
-
-      if (ck === 'boolean' || ck === 'Boolean') {
-        types[type][key] = { type: GraphQLString };
-      }
-
-      if (ck === 'number' || ck === 'Number') {
-        types[type][key] = { type: GraphQLInt };
-      }
-
-      if (ck === 'string[]' || ck === 'String[]' || ck === '[String]') {
-        types[type][key] = { type: new GraphQLList(GraphQLString) };
-      }
-
-      if (ck === 'boolean[]' || ck === 'Boolean[]' || ck === '[Boolean]') {
-        types[type][key] = { type: new GraphQLList(GraphQLString) };
-      }
-
-      if (ck === 'number[]' || ck === 'Number[]' || ck === '[Number]') {
-        types[type][key] = { type: new GraphQLList(GraphQLInt) };
-      }
+      types[type][key] = ParseTypesSchema(config.$types[type][key]);
     });
     types[type] = new GraphQLObjectType({
       name: type,
       fields: types[type]
     });
   });
-  const buildArgumentsSchema = (args: Args) => {
-    const fields = {};
-    args = args || fields;
-    Object.keys(args).forEach(a => {
-      console.log(a, args[a]);
-      const ck = args[a];
-
-      /* Basic */
-      if (ck === 'string' || ck === 'String') {
-        fields[a] = { type: GraphQLString };
-      }
-
-      if (ck === 'boolean' || ck === 'Boolean' || ck === 'Bool') {
-        fields[a] = { type: GraphQLBoolean };
-      }
-
-      if (ck === 'number' || ck === 'Number' || ck === 'Int') {
-        fields[a] = { type: GraphQLInt };
-      }
-
-      /* False negative */
-      if (ck === 'string!' || ck === 'String!') {
-        fields[a] = { type: new GraphQLNonNull(GraphQLString) };
-      }
-
-      if (ck === 'boolean!' || ck === 'Boolean!') {
-        fields[a] = { type: new GraphQLNonNull(GraphQLString) };
-      }
-
-      if (ck === 'number!' || ck === 'Number!' || ck === 'Int') {
-        fields[a] = { type: new GraphQLNonNull(GraphQLInt) };
-      }
-
-      /* Array */
-      if (ck === 'string[]' || ck === 'String[]' || ck === '[String]') {
-        fields[a] = { type: new GraphQLList(GraphQLString) };
-      }
-
-      if (
-        ck === 'boolean[]' ||
-        ck === 'Boolean[]' ||
-        ck === '[Boolean]' ||
-        ck === '[Bool]'
-      ) {
-        fields[a] = { type: new GraphQLList(GraphQLBoolean) };
-      }
-
-      if (
-        ck === 'number[]' ||
-        ck === 'Number[]' ||
-        ck === '[Number]' ||
-        ck === '[Int]'
-      ) {
-        fields[a] = { type: new GraphQLList(GraphQLInt) };
-      }
-
-      /* False negative Array */
-      if (ck === 'string[]!' || ck === 'String[]!' || ck === '[String]!') {
-        fields[a] = {
-          type: new GraphQLNonNull(new GraphQLList(GraphQLString))
-        };
-      }
-
-      if (
-        ck === 'boolean[]!' ||
-        ck === 'Boolean[]!' ||
-        ck === '[Boolean]!' ||
-        ck === '[Bool]'
-      ) {
-        fields[a] = {
-          type: new GraphQLNonNull(new GraphQLList(GraphQLBoolean))
-        };
-      }
-
-      if (
-        ck === 'number[]!' ||
-        ck === 'Number[]!' ||
-        ck === '[Number]!' ||
-        ck === '[Int]!'
-      ) {
-        fields[a] = {
-          type: new GraphQLNonNull(new GraphQLList(GraphQLInt))
-        };
-      }
-    });
-    return fields;
-  };
 
   Object.keys(config.$resolvers).forEach(resolver => {
-    console.log(resolver);
-    const resolve = config.$resolvers[resolver].resolve;
     const type = config.$resolvers[resolver].type;
     if (!types[type]) {
       throw new Error(
@@ -154,10 +44,11 @@ export function MakeAdvancedSchema(
         ).toString()}'`
       );
     }
+    const resolve = config.$resolvers[resolver].resolve;
     bootstrap.Fields.query[resolver] = {
       type: types[type],
       method_name: resolver,
-      args: buildArgumentsSchema(config.$resolvers[resolver].args),
+      args: buildArgumentsSchema(config, resolver),
       public: true,
       method_type: 'query',
       target: () => {},

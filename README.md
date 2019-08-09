@@ -59,7 +59,7 @@ Advanced configuration
 {
   "$mode": "advanced",
   "$types": {
-    "user": {
+    "User": {
       "name": "String",
       "email": "String",
       "phone": "number",
@@ -67,9 +67,17 @@ Advanced configuration
       "arrayOfStrings": "string[]"
     }
   },
+  "$args": {
+    "UserPayload": {
+      "userId":"String!",
+      "userId2":"String",
+      "userId3":"String!",
+      "userId4":"String",
+    }
+  },
   "$resolvers": {
     "findUser": {
-      "type": "user",
+      "type": "User",
       "args": {
         "userId":"String!",
         "userId":"String",
@@ -81,7 +89,20 @@ Advanced configuration
         "arrayOfNumbers": [515151, 412414],
         "arrayOfStrings": ["515151", "412414"]
       }
-    }
+    },
+    "findUserWithPayloadRequired": {
+      "type": "User",
+      "args": {
+        "payload":"UserPayload!",
+      },
+      "resolve": {
+        "name": "Kristiyan Tachev",
+        "email": "test@gmail.com",
+        "phone": 414141,
+        "arrayOfNumbers": [515151, 412414],
+        "arrayOfStrings": ["515151", "412414"]
+      }
+    },
   }
 }
 ```
@@ -264,20 +285,28 @@ export default {
 
 Filename: `gj.yml`
 ```yml
+
 $mode: advanced
 $types:
-  user:
+  User:
     name: String
     email: String
     phone: Number
     arrayOfNumbers: Number[]
     arrayOfStrings: String[]
 
+$args:
+  UserPayload:
+    userId: String!
+    userId2: String
+    userId3: String
+    userId4: String
+
 $resolvers:
   findUser:
-    type: user
+    type: User
     args:
-      userId: String
+      payload: UserPayload
     resolve:
       name: Kristiyan Tachev
       email: test@gmail.com
@@ -290,15 +319,15 @@ $resolvers:
         - '412414'
 
   findUser2:
-    type: user
+    type: User
     args:
-      userId: String!
+      payload: UserPayload
     resolve:
       name: Kristiyan Tachev
       email: test@gmail.com
       phone: 414141
       arrayOfNumbers: 
-        - 515151
+        - 515152
         - 412414
       arrayOfStrings:
         - '515151'

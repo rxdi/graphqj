@@ -1,6 +1,5 @@
 import { InjectionToken } from '@rxdi/core';
 
-
 function strEnum<T extends string>(o: Array<T>): {[K in T]: K} {
     return o.reduce((res, key) => {
         res[key] = key;
@@ -59,6 +58,7 @@ function strEnum<T extends string>(o: Array<T>): {[K in T]: K} {
   export type StringUnion = keyof typeof StringUnion;
   export type IntegerUnion = keyof typeof IntegerUnion;
   export type GlobalUnion = BooleanUnion | StringUnion | IntegerUnion;
+
   export const Roots = {
     booleanNode: BooleanUnion,
     stringNode: StringUnion,
