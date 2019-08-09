@@ -8,6 +8,42 @@ import {
 } from 'graphql';
 import { BootstrapService } from '@gapi/core';
 
+function strEnum<T extends string>(o: Array<T>): {[K in T]: K} {
+  return o.reduce((res, key) => {
+      res[key] = key;
+      return res;
+  }, Object.create(null));
+}
+
+const BooleanUnion = strEnum([
+  'Boolean',
+  'Bool',
+  'boolean'
+])
+
+const StringUnion = strEnum([
+  'String',
+  'string'
+])
+
+const IntegerUnion = strEnum([
+  'Int',
+  'integer',
+  'number',
+  'Num',
+  'int'
+])
+
+type BooleanUnion = keyof typeof BooleanUnion;
+type StringUnion = keyof typeof StringUnion;
+type IntegerUnion = keyof typeof IntegerUnion;
+
+const Roots = {
+  booleanNode: BooleanUnion,
+  stringNode: StringUnion,
+  numberNode: IntegerUnion
+}
+
 export function MakeAdvancedSchema(config, bootstrap: BootstrapService) {
   const types = {};
 
@@ -17,27 +53,29 @@ export function MakeAdvancedSchema(config, bootstrap: BootstrapService) {
     }
     Object.keys(config.$types[type]).forEach(key => {
       types[type] = types[type] || {};
-      const currentKey = config.$types[type][key];
-      if (currentKey === 'string' || currentKey === 'String') {
+      const ck = config.$types[type][key];
+
+      if (ck === 'string' || ck === 'String') {
         types[type][key] = { type: GraphQLString };
       }
 
-      if (currentKey === 'boolean' || currentKey === 'Boolean') {
+      if (ck === 'boolean' || ck === 'Boolean') {
         types[type][key] = { type: GraphQLString };
       }
 
-      if (currentKey === 'number' || currentKey === 'Number') {
+      if (ck === 'number' || ck === 'Number') {
         types[type][key] = { type: GraphQLInt };
       }
 
-      if (currentKey === 'string[]' || currentKey === 'String[]') {
-        types[type][key] = { type: new GraphQLList(GraphQLString) };
-      }
-      if (currentKey === 'boolean[]' || currentKey === 'Boolean[]') {
+      if (ck === 'string[]' || ck === 'String[]') {
         types[type][key] = { type: new GraphQLList(GraphQLString) };
       }
 
-      if (currentKey === 'number[]' || currentKey === 'Number[]') {
+      if (ck === 'boolean[]' || ck === 'Boolean[]') {
+        types[type][key] = { type: new GraphQLList(GraphQLString) };
+      }
+
+      if (ck === 'number[]' || ck === 'Number[]') {
         types[type][key] = { type: new GraphQLList(GraphQLInt) };
       }
     });
@@ -51,22 +89,21 @@ export function MakeAdvancedSchema(config, bootstrap: BootstrapService) {
     args = args || fields;
     Object.keys(args).forEach(a => {
       const currentArg = args[a];
+
+      /* Basic */
       if (currentArg === 'string' || currentArg === 'String') {
         fields[a] = { type: GraphQLString };
       }
 
-      if (currentArg === 'boolean' || currentArg === 'Boolean') {
+      if (currentArg === 'boolean' || currentArg === 'Boolean' || currentArg === 'Bool') {
         fields[a] = { type: GraphQLBoolean };
       }
 
-      if (currentArg === 'string[]' || currentArg === 'String[]') {
-        fields[a] = { type: new GraphQLList(GraphQLString) };
+      if (currentArg === 'number' || currentArg === 'Number' || currentArg === 'Int') {
+        fields[a] = { type: GraphQLInt };
       }
 
-      if (currentArg === 'boolean[]' || currentArg === 'Boolean[]') {
-        fields[a] = { type: new GraphQLList(GraphQLBoolean) };
-      }
-
+      /* False negative */
       if (currentArg === 'string!' || currentArg === 'String!') {
         fields[a] = { type: new GraphQLNonNull(GraphQLString) };
       }
@@ -75,11 +112,42 @@ export function MakeAdvancedSchema(config, bootstrap: BootstrapService) {
         fields[a] = { type: new GraphQLNonNull(GraphQLString) };
       }
 
+      if (currentArg === 'number!' || currentArg === 'Number!') {
+        fields[a] = { type: new GraphQLNonNull(GraphQLInt) };
+      }
+
+      /* Array */
+      if (currentArg === 'string[]' || currentArg === 'String[]') {
+        fields[a] = { type: new GraphQLList(GraphQLString) };
+      }
+
+      if (currentArg === 'boolean[]' || currentArg === 'Boolean[]') {
+        fields[a] = { type: new GraphQLList(GraphQLBoolean) };
+      }
+
+      if (currentArg === 'number[]' || currentArg === 'Number[]') {
+        fields[a] = { type: new GraphQLList(GraphQLInt) };
+      }
+
+      /* False negative Array */
       if (currentArg === 'string[]!' || currentArg === 'String[]!') {
         fields[a] = {
           type: new GraphQLNonNull(new GraphQLList(GraphQLString))
         };
       }
+
+      if (currentArg === 'boolean[]!' || currentArg === 'Boolean[]!') {
+        fields[a] = {
+          type: new GraphQLNonNull(new GraphQLList(GraphQLBoolean))
+        };
+      }
+
+      if (currentArg === 'number[]!' || currentArg === 'Number[]!') {
+        fields[a] = {
+          type: new GraphQLNonNull(new GraphQLList(GraphQLInt))
+        };
+      }
+    
     });
     return fields;
   };

@@ -1,9 +1,12 @@
 import { spawn, ChildProcessWithoutNullStreams } from 'child_process';
 import { Observable } from 'rxjs';
 
-export const SelfChild = () => {
+export const SelfChild = (configFile: string) => {
   return new Observable<ChildProcessWithoutNullStreams>(observer => {
-    const child = spawn('gj');
+    const args = []
+    args.push('--config')
+    args.push(configFile)
+    const child = spawn('gj', args);
     child.stdout.pipe(process.stdout);
     child.stderr.pipe(process.stderr);
     process.on('exit', () => child.kill());

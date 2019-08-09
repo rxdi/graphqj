@@ -28,7 +28,13 @@ npm i -g @rxdi/graphqj
 
 ## Configuration
 
-Define `gj.json` or execute `gj init`, `gj init advanced`
+Define `gj.json` or execute `gj init`, 
+
+`gj init` by default creates `basic` configuration with `json`
+
+Available config templates:
+
+`gj init {advanced | es6 | typescript | jml}`
 
 Basic configuration
 
@@ -80,41 +86,6 @@ Advanced configuration
 }
 ```
 
-## Starting server
-
-Default port is `9000`
-
-This command will look for `gj.json` inside working directory
-
-Starting server
-```
-gj
-```
-
-## Changing port
-
-```
-gj --port 5000
-```
-
-## Generating `schema.graphql` from JSON
-
-```
-gj --generate
-```
-
-
-## Spawn random PORT on every start
-
-```
-gj --random
-```
-
-
-## Watch for changes with specific config
-```
-gj ./gj.json --watch
-```
 
 Schema:
 
@@ -170,7 +141,43 @@ Result:
 }
 ```
 
+## Starting server
 
+This command will look for `gj.{json | js | ts | yml}` configuration inside working directory
+
+```
+gj
+```
+
+#### Changing port
+Default port is `9000`
+```
+gj --port 5000
+```
+
+#### Generating `schema.graphql` from JSON
+
+```
+gj --generate
+```
+
+
+#### Spawn random PORT on every start
+
+```
+gj --random
+```
+
+
+#### Watch for changes with specific config
+
+```
+gj --config ./gj.{json|js|ts|yml} --watch
+```
+
+```
+gj --config ./gj.yml --watch
+```
 
 
 
@@ -253,7 +260,7 @@ export default {
 
 ```
 
-## YML Compatability
+### YML
 
 Filename: `gj.yml`
 ```yml
@@ -298,7 +305,7 @@ $resolvers:
         - '412414'
 ```
 
-## Loading existing generated schema
+### Loading existing generated schema
 
 Filename: `gj.json`
 ```json
@@ -314,7 +321,7 @@ gj --schema ./schema.graphql
 ```
 
 
-## [Graphql Voyager](https://github.com/Stradivario/gapi-voyager) 
+### [Graphql Voyager](https://github.com/Stradivario/gapi-voyager) 
 
 Open http://localhost:9000/voyager
 
@@ -328,4 +335,5 @@ Open http://localhost:9000/voyager
 ## Exclude
 
 Exclude `.gj` folder inside your `.gitignore` or `.dockerignore` files
-This is working directory when we store transpiled `typescript` configuration file
+
+Folder `.gj` is working directory when we store transpiled `typescript` configuration file

@@ -10,9 +10,9 @@ import { Subscription } from 'rxjs';
 
 if (includes('--watch')) {
   let subscription: Subscription;
-  const configPath = process.argv.slice(2)[0];
-  if (!existsSync(configPath) && !configPath.includes('--')) {
-    throw new Error(`File missing ${configPath}`)
+  const configPath = nextOrDefault('--config');
+  if (!existsSync(configPath)) {
+    throw new Error(`File missing ${configPath}`);
   }
   const ignored = (p: string) => p.includes('node_modules');
 
@@ -20,7 +20,7 @@ if (includes('--watch')) {
     if (subscription) {
       subscription.unsubscribe();
     }
-    subscription = SelfChild().subscribe(process => {
+    subscription = SelfChild(configPath).subscribe(process => {
       console.log('Child process started: ', process.pid);
     });
   });
@@ -29,7 +29,7 @@ if (includes('--watch')) {
     if (subscription) {
       subscription.unsubscribe();
     }
-    subscription = SelfChild().subscribe(process => {
+    subscription = SelfChild(configPath).subscribe(process => {
       console.log('Child process started: ', process.pid);
     });
   });
@@ -62,6 +62,122 @@ if (includes('--watch')) {
     }
   }
 }`,
+      { encoding: 'utf-8' }
+    );
+  } else if (includes('es6')) {
+    promisify(writeFile)(
+      './gj.js',
+      `
+export default {
+  $mode: 'advanced',
+  $types: {
+    user: {
+      name: 'String',
+      email: 'String',
+      phone: 'Number',
+      arrayOfNumbers: 'Number[]',
+      arrayOfStrings: 'String[]'
+    }
+  },
+  $resolvers: {
+    findUser: {
+      type: 'user',
+      args: {
+        userId: "String!",
+        userId2: "String",
+      },
+      resolve: async (root, payload, context) => ({
+        name: 'Kristiyan Tachev',
+        email: 'test@gmail.com',
+        phone: 4141423,
+        arrayOfNumbers: [515151, 412414],
+        arrayOfStrings: ['515151', '412414']
+      })
+    }
+  }
+};
+`,
+      { encoding: 'utf-8' }
+    );
+  } else if (includes('typescript')) {
+    promisify(writeFile)(
+      './gj.ts',
+      `
+export default {
+  $mode: 'advanced',
+  $types: {
+    user: {
+      name: 'String',
+      email: 'String',
+      phone: 'Number',
+      arrayOfNumbers: 'Number[]',
+      arrayOfStrings: 'String[]'
+    }
+  },
+  $resolvers: {
+    findUser: {
+      type: 'user',
+      args: {
+        userId: "String!",
+        userId2: "String",
+      },
+      resolve: async (root, payload: { userId: string; userId2?: string }) => ({
+        name: 'Kristiyan Tachev',
+        email: 'test@gmail.com',
+        phone: 4141423,
+        arrayOfNumbers: [515151, 412414],
+        arrayOfStrings: ['515151', '412414']
+      })
+    }
+  }
+};
+`,
+      { encoding: 'utf-8' }
+    );
+  }else if (includes('yml')) {
+    promisify(writeFile)(
+      './gj.yml',
+      `
+$mode: advanced
+$types:
+  user:
+    name: String
+    email: String
+    phone: Number
+    arrayOfNumbers: Number[]
+    arrayOfStrings: String[]
+
+$resolvers:
+  findUser:
+    type: user
+    args:
+      userId: String
+    resolve:
+      name: Kristiyan Tachev
+      email: test@gmail.com
+      phone: 414141
+      arrayOfNumbers: 
+        - 515151
+        - 412414
+      arrayOfStrings:
+        - '515151'
+        - '412414'
+
+  findUser2:
+    type: user
+    args:
+      userId: String!
+    resolve:
+      name: Kristiyan Tachev
+      email: test@gmail.com
+      phone: 414141
+      arrayOfNumbers: 
+        - 515151
+        - 412414
+      arrayOfStrings:
+        - '515151'
+        - '412414'
+`,
       { encoding: 'utf-8' }
     );
   } else {
