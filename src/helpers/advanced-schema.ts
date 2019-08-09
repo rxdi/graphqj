@@ -2,10 +2,13 @@ import {
   GraphQLString,
   GraphQLList,
   GraphQLInt,
-  GraphQLObjectType
+  GraphQLObjectType,
+  GraphQLInputObjectType,
+  GraphQLNonNull
 } from 'graphql';
+import { BootstrapService } from '@gapi/core';
 
-export function MakeAdvancedSchema(config, bootstrap) {
+export function MakeAdvancedSchema(config, bootstrap: BootstrapService) {
   const types = {};
 
   Object.keys(config.$types).forEach(type => {
@@ -32,7 +35,30 @@ export function MakeAdvancedSchema(config, bootstrap) {
       fields: types[type]
     });
   });
+  const buildArgumentsSchema = (args: { [key: string]: string }) => {
+    const fields = {};
+    args = args || fields;
+    Object.keys(args).forEach(a => {
+      if (args[a] === 'string') {
+        fields[a] = { type: GraphQLString };
+      }
 
+      if (args[a] === 'string[]') {
+        fields[a] = { type: new GraphQLList(GraphQLString) };
+      }
+
+      if (args[a] === 'string!') {
+        fields[a] = { type: new GraphQLNonNull(GraphQLString) };
+      }
+
+      if (args[a] === 'string[]!') {
+        fields[a] = {
+          type: new GraphQLNonNull(new GraphQLList(GraphQLString))
+        };
+      }
+    });
+    return fields;
+  };
   Object.keys(config.$resolvers).forEach(method_name => {
     const resolve = config.$resolvers[method_name].resolve;
     const type = config.$resolvers[method_name].type;
@@ -46,6 +72,7 @@ export function MakeAdvancedSchema(config, bootstrap) {
     bootstrap.Fields.query[method_name] = {
       type: types[type],
       method_name,
+      args: buildArgumentsSchema(config.$resolvers[method_name].args),
       public: true,
       method_type: 'query',
       target: () => {},

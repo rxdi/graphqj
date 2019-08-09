@@ -4,8 +4,9 @@ import {
   GraphQLList,
   GraphQLObjectType
 } from 'graphql';
+import { BootstrapService } from '@gapi/core';
 
-export function MakeBasicSchema(config, bootstrap) {
+export function MakeBasicSchema(config, bootstrap: BootstrapService) {
   Object.keys(config.$resolvers).forEach(method_name => {
     const resolve = config.$resolvers[method_name];
     const fields = {};

@@ -64,6 +64,10 @@ Advanced configuration
   "$resolvers": {
     "findUser": {
       "type": "user",
+      "args": {
+        "userId":"string!",
+        "userId":"string",
+      },
       "resolve": {
         "name": "Kristiyan Tachev",
         "email": "test@gmail.com",
@@ -189,7 +193,11 @@ export default {
   $resolvers: {
     findUser: {
       type: 'user',
-      resolve: async () => ({
+      args: {
+        userId: "string!",
+        userId2: "string",
+      },
+      resolve: async (root, payload: { userId: string; userId2: string }) => ({
         name: 'Kristiyan Tachev',
         email: 'test@gmail.com',
         phone: 4141423,
@@ -220,6 +228,10 @@ export default {
   $resolvers: {
     findUser: {
       type: 'user',
+      args: {
+        userId: "string!",
+        userId2: "string",
+      },
       resolve: async () => ({
         name: 'Kristiyan Tachev',
         email: 'test@gmail.com',
