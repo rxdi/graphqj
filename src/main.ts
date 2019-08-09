@@ -2,18 +2,21 @@ import { BootstrapFramework } from '@rxdi/core';
 import { AppModule } from './app/app.module';
 import { CoreModule } from '@gapi/core';
 import { nextOrDefault, includes } from './helpers/args-extractors';
-import { writeFile } from 'fs';
+import { writeFile, existsSync } from 'fs';
 import { promisify } from 'util';
 import { watch } from 'chokidar';
 import { SelfChild } from './helpers/self-child';
 import { Subscription } from 'rxjs';
 
-if (includes('--listen')) {
+if (includes('--watch')) {
   let subscription: Subscription;
-  const path = nextOrDefault('--listen', './gj.ts');
-  const ignored = path => path.includes('node_modules');
+  const configPath = process.argv.slice(2)[0];
+  if (!existsSync(configPath) && !configPath.includes('--')) {
+    throw new Error(`File missing ${configPath}`)
+  }
+  const ignored = (p: string) => p.includes('node_modules');
 
-  watch(path, { ignored }).on('change', async (event, path) => {
+  watch(configPath, { ignored }).on('change', async (event, path) => {
     if (subscription) {
       subscription.unsubscribe();
     }
@@ -22,7 +25,7 @@ if (includes('--listen')) {
     });
   });
 
-  watch(path, { ignored }).on('ready', async (event, path) => {
+  watch(configPath, { ignored }).on('ready', async (event, path) => {
     if (subscription) {
       subscription.unsubscribe();
     }
@@ -39,11 +42,11 @@ if (includes('--listen')) {
   "$mode": "advanced",
   "$types": {
     "user": {
-      "name": "string",
-      "email": "string",
-      "phone": "number",
-      "arrayOfNumbers": "number[]",
-      "arrayOfStrings": "string[]"
+      "name": "String",
+      "email": "String",
+      "phone": "Number",
+      "arrayOfNumbers": "Number[]",
+      "arrayOfStrings": "String[]"
     }
   },
   "$resolvers": {

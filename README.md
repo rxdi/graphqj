@@ -54,8 +54,8 @@ Advanced configuration
   "$mode": "advanced",
   "$types": {
     "user": {
-      "name": "string",
-      "email": "string",
+      "name": "String",
+      "email": "String",
       "phone": "number",
       "arrayOfNumbers": "number[]",
       "arrayOfStrings": "string[]"
@@ -65,8 +65,8 @@ Advanced configuration
     "findUser": {
       "type": "user",
       "args": {
-        "userId":"string!",
-        "userId":"string",
+        "userId":"String!",
+        "userId":"String",
       },
       "resolve": {
         "name": "Kristiyan Tachev",
@@ -111,9 +111,9 @@ gj --random
 ```
 
 
-## Listen for changes
+## Watch for changes with specific config
 ```
-gj --listen ./gj.js
+gj ./gj.json --watch
 ```
 
 Schema:
@@ -191,21 +191,21 @@ export default {
   $mode: 'advanced',
   $types: {
     user: {
-      name: 'string',
-      email: 'string',
-      phone: 'number',
-      arrayOfNumbers: 'number[]',
-      arrayOfStrings: 'string[]'
+      name: 'String',
+      email: 'String',
+      phone: 'Number',
+      arrayOfNumbers: 'Number[]',
+      arrayOfStrings: 'String[]'
     }
   },
   $resolvers: {
     findUser: {
       type: 'user',
       args: {
-        userId: "string!",
-        userId2: "string",
+        userId: "String!",
+        userId2: "String",
       },
-      resolve: async (root, payload: { userId: string; userId2: string }) => ({
+      resolve: async (root, payload: { userId: string; userId2?: string }) => ({
         name: 'Kristiyan Tachev',
         email: 'test@gmail.com',
         phone: 4141423,
@@ -226,21 +226,21 @@ export default {
   $mode: 'advanced',
   $types: {
     user: {
-      name: 'string',
-      email: 'string',
-      phone: 'number',
-      arrayOfNumbers: 'number[]',
-      arrayOfStrings: 'string[]'
+      name: 'String',
+      email: 'String',
+      phone: 'Number',
+      arrayOfNumbers: 'Number[]',
+      arrayOfStrings: 'String[]'
     }
   },
   $resolvers: {
     findUser: {
       type: 'user',
       args: {
-        userId: "string!",
-        userId2: "string",
+        userId: "String!",
+        userId2: "String",
       },
-      resolve: async () => ({
+      resolve: async (root, payload: { userId: string; userId2?: string }) => ({
         name: 'Kristiyan Tachev',
         email: 'test@gmail.com',
         phone: 4141423,
@@ -323,3 +323,9 @@ Open http://localhost:9000/voyager
 ## Aliases
 
 `graphqj`, `gg`, `gj`
+
+
+## Exclude
+
+Exclude `.gj` folder inside your `.gitignore` or `.dockerignore` files
+This is working directory when we store transpiled `typescript` configuration file
