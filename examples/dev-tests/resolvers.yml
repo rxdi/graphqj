@@ -1,0 +1,5 @@
+findUser:
+  type: User
+  args:
+    payload: UserPayload
+  resolve: 💉./api/methods/findUser.js

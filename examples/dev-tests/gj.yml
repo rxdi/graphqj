@@ -1,0 +1,19 @@
+$mode: advanced
+$directives: ./api/directives.ts
+$externals:
+  - map: 🚀
+    file: ./api/interceptors.ts
+  - map: 🛡️
+    file: ./api/guards.ts
+  - map: 🕵️
+    file: ./api/modifiers.ts
+
+$types: 💉./types.yml
+$args: 💉./args.yml
+$resolvers: 💉./resolvers.yml
+
+$views:
+  home:
+    query: findUser2
+    payload: UserPayload
+    html: 💉./test.html

@@ -2,3 +2,10 @@ node_modules/
 .gj
 projects
 .cache
+
+args.yml
+gj.yml
+resolvers.yml
+test.html
+types.yml
+api

@@ -44,13 +44,4 @@ $resolvers:
     type: User
     args:
       payload: UserPayload
-    resolve:
-      name: Kristiyan Tachev
-      email: test@gmail.com
-      phone: 414141
-      arrayOfNumbers: 
-        - 515152
-        - 412414
-      arrayOfStrings:
-        - '515151'
-        - '412414'
+    resolve: 💉./findUser2.js

@@ -9,19 +9,13 @@ import { TypesToken, Config, Roots, GlobalUnion } from '../app/app.tokens';
 import { ParseArgs } from './parse-ast';
 import { buildArgumentsSchema } from './parse-args-schema';
 import { ParseTypesSchema } from './parse-types.schema';
-import { TranspileAndLoad } from './transpile-and-load';
-import { promisify } from 'util';
-import { exists, readFile } from 'fs';
-import { load } from 'js-yaml';
 
 export async function MakeAdvancedSchema(
   config: Config,
   bootstrap: BootstrapService
 ) {
   const types = {};
-  const Types = Container.get(TypesToken);
   const Arguments = Container.get(TypesToken);
-  const Resolvers = Container.get(TypesToken);
   config.$args = config.$args || {};
   Object.keys(config.$args).forEach(reusableArgumentKey => {
     const args = {};
@@ -117,7 +111,18 @@ export async function MakeAdvancedSchema(
         ).toString()}'`
       );
     }
-    const resolve = config.$resolvers[resolver].resolve;
+    let resolve = config.$resolvers[resolver].resolve;
+    if (typeof resolve !== 'function') {
+      /* Take the first method inside file for resolver */
+      const r = resolve[Object.keys(resolve)[0]];
+      if (!r) {
+        throw new Error(
+          `Missing resolver for ${JSON.stringify(config.$resolvers[resolver])}`
+        );
+      }
+      resolve = r;
+    }
+
     bootstrap.Fields.query[resolver] = {
       type: types[type],
       method_name: resolver,

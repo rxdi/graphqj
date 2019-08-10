@@ -424,6 +424,75 @@ $views:
       A rich framework for building applications and services with GraphQL and Apollo inspired by Angular
 ```
 
+#### Magics
+
+With Syringe `💉` operator you can inject `yml`, `js`, `ts`, `json`, `graphql` and `html` files,
+
+```yml
+$views:
+  home:
+    query: findUser2
+    payload: UserPayload
+    html: 💉./my.html
+```
+
+You can compose anything inside `gj.yml`
+
+```yml
+$mode: advanced
+$directives: ./directives.ts
+$externals:
+  - map: 🚀
+    file: ./interceptors.ts
+  - map: 🛡️
+    file: ./guards.ts
+  - map: 🕵️
+    file: ./modifiers.ts
+
+$types: 💉./types.yml
+$args: 💉./args.yml
+$resolvers: 💉./resolvers.yml
+
+$views:
+  home:
+    query: findUser2
+    payload: UserPayload
+    html: 💉./test.html
+```
+
+Even defining `Graphql` resolvers is simply easy
+
+```yml
+$mode: advanced
+$resolvers:
+  findUser:
+    type: User
+    args:
+      payload: UserPayload
+    resolve: 💉./findUser.ts
+```
+
+#### Resolver
+
+```typescript
+import { Observable } from 'rxjs';
+import { IUserType } from '@api';
+
+export async function findUser():
+  | Promise<Observable<IUserType>>
+  | Promise<IUserType>
+  | Observable<IUserType>
+  | IUserType {
+  return {
+    name: 'dada',
+    email: 'dada',
+    phone: 13131,
+    arrayOfNumbers: [111, 222],
+    arrayOfStrings: ['dada', 'dada']
+  };
+}
+```
+
 
 #### Guard
 
