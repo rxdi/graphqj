@@ -1,14 +1,6 @@
 import { BootstrapFramework } from '@rxdi/core';
 import { AppModule } from './app/app.module';
-import {
-  CoreModule,
-  GraphQLNonNull,
-  GraphQLString,
-  DirectiveLocation,
-  Injectable,
-  GraphQLCustomDirectiveInterface,
-  GraphQLCustomDirective
-} from '@gapi/core';
+import { CoreModule } from '@gapi/core';
 import { nextOrDefault, includes } from './helpers/args-extractors';
 import { writeFile, existsSync } from 'fs';
 import { promisify } from 'util';

@@ -8,48 +8,6 @@ $externals:
   - map: 🕵️
     file: ./examples/ts/modifiers.ts
 
-$types:
-  User:
-    name: String => {🕵️OnlyAdmin}
-    email: String => {🚀LoggerInterceptor}
-    phone: Number => {🛡️IsLogged}
-    arrayOfNumbers: Number[] => {🕵️OnlyAdmin}
-    arrayOfStrings: String[]
-
-$args:
-  UserPayload:
-    userId: String!
-    userId2: String
-    userId3: String
-    userId4: String
-
-$resolvers:
-  findUser:
-    type: User
-    args:
-      payload: UserPayload
-    resolve:
-      name: Kristiyan Tachev
-      email: test@gmail.com
-      phone: 414141
-      arrayOfNumbers: 
-        - 515151
-        - 412414
-      arrayOfStrings:
-        - '515151'
-        - '412414'
-
-  findUser2:
-    type: User
-    args:
-      payload: UserPayload
-    resolve:
-      name: Kristiyan Tachev
-      email: test@gmail.com
-      phone: 414141
-      arrayOfNumbers: 
-        - 515152
-        - 412414
-      arrayOfStrings:
-        - '515151'
-        - '412414'
+$types: ./types.yml
+$args: ./args.yml
+$resolvers: ./resolvers.yml

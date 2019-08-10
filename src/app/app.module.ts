@@ -18,7 +18,7 @@ import { getConfig } from '../helpers/set-config';
 import { basicTemplate } from '../helpers/basic.template';
 import { MakeAdvancedSchema } from '../helpers/advanced-schema';
 import { MakeBasicSchema } from '../helpers/basic-schema';
-import { join, parse } from 'path';
+import { join } from 'path';
 import {
   TypesToken,
   ResolversToken,
@@ -177,11 +177,11 @@ ${printSchema(mergedSchemas)}
         }
 
         if (config.$mode === 'basic') {
-          MakeBasicSchema(config, bootstrap);
+          await MakeBasicSchema(config, bootstrap);
         }
 
         if (config.$mode === 'advanced') {
-          MakeAdvancedSchema(config, bootstrap);
+          await MakeAdvancedSchema(config, bootstrap);
         }
         return true;
       }
