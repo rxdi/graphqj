@@ -6,9 +6,11 @@ import {
   printSchema,
   buildSchema,
   mergeSchemas,
-  Container
+  Container,
+  GRAPHQL_PLUGIN_CONFIG,
+
 } from '@gapi/core';
-import { writeFile, readFileSync } from 'fs';
+import { writeFile, readFileSync, exists } from 'fs';
 import { promisify } from 'util';
 import { includes, nextOrDefault } from '../helpers/args-extractors';
 import { VoyagerModule } from '@gapi/voyager';
@@ -56,9 +58,16 @@ import { TypesToken, ResolversToken, ArgumentsToken, Config, GuardsToken } from 
             externalSchema = buildSchema(externalSchema);
           }
         } catch (e) {}
-        const mergedSchemas = mergeSchemas({
-          schemas: [externalSchema, schema].filter(i => !!i)
-        });
+        const schemas = [externalSchema, schema].filter(i => !!i);
+        let mergedSchemas: GraphQLSchema;
+        if (schemas.length === 1) {
+          mergedSchemas = schema
+        } else {
+          mergedSchemas = mergeSchemas({
+            schemas
+          });
+        }
+
         if (includes('--verbose')) {
           console.log(`
 Schema:
@@ -98,7 +107,7 @@ ${printSchema(mergedSchemas)}
     },
     {
       provide: 'Run',
-      deps: [Config, BootstrapService, TypesToken, ResolversToken, ArgumentsToken, GuardsToken],
+      deps: [Config, BootstrapService, TypesToken, ResolversToken, ArgumentsToken, GuardsToken, GRAPHQL_PLUGIN_CONFIG],
       lazy: true,
       useFactory: async (
         config: Config,
@@ -106,7 +115,8 @@ ${printSchema(mergedSchemas)}
         types: TypesToken,
         resolvers: ResolversToken,
         args: ArgumentsToken,
-        guards: GuardsToken
+        guards: GuardsToken,
+        graphqlConfig: GRAPHQL_PLUGIN_CONFIG,
       ) => {
         config = await config
         config.$externals.map(external => {
@@ -114,6 +124,14 @@ ${printSchema(mergedSchemas)}
           external.module = m['default'] || m
           Container.set(external.map, external.module);
         })
+
+        const filePath = join(process.cwd(), config.$directives);
+        if (await promisify(exists)(filePath)) {
+          const directives = require('esm')(module)(filePath)
+          graphqlConfig.directives = await Promise.all(Object.keys(directives).map(d => directives[d]()) as any)
+          console.log(graphqlConfig)
+        }
+
         if (config.$mode === 'basic') {
           MakeBasicSchema(config, bootstrap);
         }

@@ -1,0 +1,24 @@
+type Query {
+  findUser(payload: UserPayload): User
+  findUser2(payload: UserPayload): User
+  status: StatusQueryType
+}
+
+type StatusQueryType {
+  status: String
+}
+
+type User {
+  name: String
+  email: String
+  phone: Int
+  arrayOfNumbers: [Int]
+  arrayOfStrings: [String]
+}
+
+input UserPayload {
+  userId: String!
+  userId2: String
+  userId3: String
+  userId4: String
+}

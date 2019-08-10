@@ -1,3 +1,8 @@
+import {
+  DirectiveLocation,
+  GraphQLCustomDirective
+} from '@gapi/core';
+
 export async function toUppercase() {
   return new GraphQLCustomDirective({
     name: 'toUpperCase',

@@ -16,7 +16,6 @@ export function MakeAdvancedSchema(
   bootstrap: BootstrapService
 ) {
   const types = {};
-  console.log(config.$externals);
   const Types = Container.get(TypesToken);
   const Arguments = Container.get(TypesToken);
   const Resolvers = Container.get(TypesToken);
@@ -39,7 +38,7 @@ export function MakeAdvancedSchema(
       const hasSymbol = config.$externals.filter(symbol =>
         resolver.includes(symbol.map)
       );
-      const validators = [];
+      const interceptors = [];
 
       if (hasSymbol.length) {
         const isCurlyPresent = resolver.includes('{');
@@ -76,7 +75,8 @@ export function MakeAdvancedSchema(
           createUniqueHash(`${m[methodToExecute]}`)
         );
         Container.set(containerSymbol, m[methodToExecute]);
-        validators.push(containerSymbol);
+
+        interceptors.push(containerSymbol);
         resolver = Object.keys(Roots)
           .map(node => {
             const types = Object.keys(Roots[node]).filter(key =>
@@ -89,7 +89,7 @@ export function MakeAdvancedSchema(
           .filter(i => !!i)[0] as GlobalUnion;
       }
 
-      types[type][key] = ParseTypesSchema(resolver, key, validators);
+      types[type][key] = ParseTypesSchema(resolver, key, interceptors);
     });
     types[type] = new GraphQLObjectType({
       name: type,

@@ -7,12 +7,12 @@ import {
 } from 'graphql';
 import { GlobalUnion } from '../app/app.tokens';
 import { Container, InjectionToken } from '@rxdi/core';
+import { of, isObservable } from 'rxjs';
 
 export function ParseTypesSchema(
   ck: GlobalUnion,
   key: string,
-  validators: InjectionToken<((value: any) => any)>[],
-  interceptor?: (value: any) => any
+  interceptors: InjectionToken<(...args: any[]) => any>[]
 ) {
   let type: { type: GraphQLScalarType | GraphQLList<GraphQLType> };
   if (ck === 'string' || ck === 'String') {
@@ -40,11 +40,16 @@ export function ParseTypesSchema(
   }
   type['resolve'] = async function(...args) {
     let defaultValue = args[0][key];
-    for (const validator of validators) {
-      await Container.get(validator)(defaultValue);
-    }
-    if (interceptor) {
-      defaultValue = await interceptor(defaultValue)
+    for (const interceptor of interceptors) {
+      defaultValue = await Container.get(interceptor)(
+        of(defaultValue),
+        args[1],
+        args[2],
+        args[3]
+      );
+      if (isObservable(defaultValue)) {
+        defaultValue = await defaultValue.toPromise();
+      }
     }
     return defaultValue;
   };

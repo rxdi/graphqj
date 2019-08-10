@@ -10,21 +10,21 @@ export async function getConfig(configFilename: string) {
     config = require('esm')(module)(
       join(process.cwd(), `${configFilename}.js`)
     );
-    console.log('JS Config', config)
+    // console.log('JS Config', config)
   } catch (e) {}
   if (await promisify(exists)(`./${configFilename}.yml`)) {
     const file = readFileSync(`./${configFilename}.yml`, {encoding: 'utf-8'})
     config = load(file);
-    console.log('YML Config', config)
+    // console.log('YML Config', config)
   }
   if (await promisify(exists)(`./${configFilename}.ts`)) {
-    console.log('Typescript Config', config)
+    // console.log('Typescript Config', config)
     const isMigrateTempConfigExists = await promisify(exists)(
       './.gj/config.temp'
     );
     const TranspileAndWriteTemp = async (stats: Stats) => {
       await TranspileTypescript([`/${configFilename}.ts`], './.gj');
-      console.log('Transpile complete!');
+      // console.log('Transpile complete!');
       await promisify(writeFile)(
         './.gj/config.temp',
         stats.mtime.toISOString(),
@@ -37,11 +37,11 @@ export async function getConfig(configFilename: string) {
         encoding: 'utf-8'
       });
       if (new Date(temp).toISOString() !== stats.mtime.toISOString()) {
-        console.log(`${configFilename} configuration is new transpiling...`);
+        // console.log(`${configFilename} configuration is new transpiling...`);
         await TranspileAndWriteTemp(stats);
       }
     } else {
-      console.log(`Transpile ${configFilename}.ts...`);
+      // console.log(`Transpile ${configFilename}.ts...`);
       await TranspileAndWriteTemp(stats);
     }
     config = require(join(process.cwd(), `./.gj`, `${configFilename}.js`));
@@ -56,7 +56,7 @@ export async function getConfig(configFilename: string) {
         encoding: 'utf-8'
       })
     );
-    console.log('Json Config', config)
+    // console.log('Json Config', config)
   } catch (e) {}
 
   return config;

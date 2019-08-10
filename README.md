@@ -372,14 +372,53 @@ Folder `.gj` is working directory when we store transpiled `typescript` configur
 
 ```yml
 $mode: advanced
+$directives: ./directives.js
 $externals:
   - map: 🗡️
-    file: ./directives.js
+    file: ./interceptors.js
   - map: 🛡️
     file: ./guards.js
+  - map: 🕵️
+    file: ./modifiers.js
 
 $types:
   User:
-    phone: Number {🛡️@isAuthorized}
-    phone2: Number (🛡️@isAuthorized)
+    name: String {🕵️@OnlyAdmin}
+    email: String {🗡️@LoggerInterceptor}
+    phone: Number {🛡️@IsAuthorized}
+    arrayOfNumbers: Number[]
+    arrayOfStrings: String[]
+```
+
+
+#### Guard
+
+```typescript
+export async function IsAuthorized() {
+  throw new Error('OH MY GOD IT WORKS2');
+}
+```
+
+#### Interceptor
+
+```typescript
+import { tap } from 'rxjs/operators';
+
+export async function LoggerInterceptor(chainable$, context, payload, descriptor) {
+  console.log('Before...');
+  const now = Date.now();
+  return chainable$.pipe(
+    tap(() => console.log(`After... ${Date.now() - now}ms`))
+  );
+}
+```
+
+#### Modifier
+
+```typescript
+import { map } from 'rxjs/operators';
+
+export async function OnlyAdmin(chainable$, context, payload, descriptor) {
+  return chainable$.pipe(map(() => null));
+}
 ```

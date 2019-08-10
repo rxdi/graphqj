@@ -108,6 +108,7 @@ export interface Config {
             resolve: any;
         };
     };
+    $directives: string;
     $externals: {
         map: string;
         file: string;

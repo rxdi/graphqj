@@ -1,6 +1,14 @@
 import { BootstrapFramework } from '@rxdi/core';
 import { AppModule } from './app/app.module';
-import { CoreModule } from '@gapi/core';
+import {
+  CoreModule,
+  GraphQLNonNull,
+  GraphQLString,
+  DirectiveLocation,
+  Injectable,
+  GraphQLCustomDirectiveInterface,
+  GraphQLCustomDirective
+} from '@gapi/core';
 import { nextOrDefault, includes } from './helpers/args-extractors';
 import { writeFile, existsSync } from 'fs';
 import { promisify } from 'util';
@@ -134,7 +142,7 @@ export default {
 `,
       { encoding: 'utf-8' }
     );
-  }else if (includes('yml')) {
+  } else if (includes('yml')) {
     promisify(writeFile)(
       './gj.yml',
       `
@@ -206,7 +214,8 @@ $resolvers:
       graphql: {
         openBrowser: nextOrDefault('--random', true, v =>
           v === 'true' ? false : true
-        )
+        ),
+        buildAstDefinitions: false // Removed ast definition since directives are lost
       },
       server: {
         randomPort: nextOrDefault('--random', false),

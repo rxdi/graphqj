@@ -1,4 +1,5 @@
 import { InjectionToken } from '@rxdi/core';
+import { GraphQLDirective } from 'graphql';
 
 function strEnum<T extends string>(o: Array<T>): { [K in T]: K } {
   return o.reduce((res, key) => {
@@ -76,6 +77,7 @@ export interface Config {
       resolve: any;
     };
   };
+  $directives: string;
   $externals: { map: string; file: string; module?: any }[];
   $args: any;
 }

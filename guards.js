@@ -1,5 +1,3 @@
-export async function isAuthorized(value) {
-  console.log('VUTREEE', value);
-  value = ' dadadadadada';
+export async function IsAuthorized() {
   throw new Error('OH MY GOD IT WORKS2');
 }

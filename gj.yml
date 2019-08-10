@@ -1,16 +1,19 @@
 
 $mode: advanced
+$directives: ./directives.js
 $externals:
   - map: 🗡️
-    file: ./directives.js
+    file: ./interceptors.js
   - map: 🛡️
     file: ./guards.js
+  - map: 🕵️
+    file: ./modifiers.js
 
 $types:
   User:
-    name: String
-    email: String
-    phone: Number (🛡️@isAuthorized)
+    name: String {🕵️@OnlyAdmin}
+    email: String {🗡️@LoggerInterceptor}
+    phone: Number {🛡️@IsAuthorized}
     arrayOfNumbers: Number[]
     arrayOfStrings: String[]
 
