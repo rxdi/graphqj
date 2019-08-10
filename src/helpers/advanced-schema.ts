@@ -22,26 +22,6 @@ export async function MakeAdvancedSchema(
   const Types = Container.get(TypesToken);
   const Arguments = Container.get(TypesToken);
   const Resolvers = Container.get(TypesToken);
-  // Refactor
-  if (typeof config.$args === 'string') {
-    if (!(await promisify(exists)(config.$args))) {
-      throw new Error(`Missing external file for types ${config.$args}`);
-    }
-    if ((config.$args as string).includes('.ts')) {
-      config.$args = await TranspileAndLoad(
-        (config.$args as string).replace('.', ''),
-        './.gj/out'
-      );
-    } else if ((config.$args as string).includes('.yml')) {
-      config.$args = load(
-        await promisify(readFile)(config.$args, { encoding: 'utf-8' })
-      );
-    } else {
-      config.$args = require('esm')(module)(config.$args);
-    }
-  }
-  // Refactor
-
   config.$args = config.$args || {};
   Object.keys(config.$args).forEach(reusableArgumentKey => {
     const args = {};
@@ -50,25 +30,6 @@ export async function MakeAdvancedSchema(
       Arguments.set(reusableArgumentKey, args);
     });
   });
-  // Refactor
-  if (typeof config.$types === 'string') {
-    if (!(await promisify(exists)(config.$types))) {
-      throw new Error(`Missing external file for types ${config.$types}`);
-    }
-    if ((config.$types as string).includes('.ts')) {
-      config.$types = await TranspileAndLoad(
-        (config.$types as string).replace('.', ''),
-        './.gj/out'
-      );
-    } else if ((config.$types as string).includes('.yml')) {
-      config.$types = load(
-        await promisify(readFile)(config.$types, { encoding: 'utf-8' })
-      );
-    } else {
-      config.$types = require('esm')(module)(config.$types);
-    }
-  }
-  // Refactor
   Object.keys(config.$types).forEach(type => {
     if (types[type]) {
       return;
@@ -146,25 +107,7 @@ export async function MakeAdvancedSchema(
       fields: types[type]
     });
   });
-  // Refactor
-  if (typeof config.$resolvers === 'string') {
-    if (!(await promisify(exists)(config.$resolvers))) {
-      throw new Error(`Missing external file for types ${config.$resolvers}`);
-    }
-    if ((config.$resolvers as string).includes('.ts')) {
-      config.$resolvers = await TranspileAndLoad(
-        (config.$resolvers as string).replace('.', ''),
-        './.gj/out'
-      );
-    } else if ((config.$resolvers as string).includes('.yml')) {
-      config.$resolvers = load(
-        await promisify(readFile)(config.$resolvers, { encoding: 'utf-8' })
-      );
-    } else {
-      config.$resolvers = require('esm')(module)(config.$resolvers);
-    }
-  }
-  // Refactor
+
   Object.keys(config.$resolvers).forEach(resolver => {
     const type = config.$resolvers[resolver].type;
     if (!types[type]) {

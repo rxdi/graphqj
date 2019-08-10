@@ -1,6 +1,6 @@
 User:
-  name: String => {🕵️OnlyAdmin}
-  email: String => {🚀LoggerInterceptor}
-  phone: Number => {🛡️IsLogged}
-  arrayOfNumbers: Number[] => {🕵️OnlyAdmin}
+  name: String => (🕵️OnlyAdmin)
+  email: String => (🚀LoggerInterceptor)
+  phone: Number => (🛡️IsLogged)
+  arrayOfNumbers: Number[] => (🕵️OnlyAdmin)
   arrayOfStrings: String[]

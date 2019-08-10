@@ -117,6 +117,13 @@ export interface Config {
     $directives: string;
     $externals: Externals[];
     $args: any;
+    $views?: {
+        [key: string]: {
+            query: string;
+            payload: any;
+            html: string;
+        };
+    };
 }
 export declare const TypesToken: InjectionToken<Map<string, Args>>;
 export declare const ArgumentsToken: InjectionToken<Map<string, Args>>;

@@ -8,6 +8,15 @@ $externals:
   - map: 🕵️
     file: ./examples/ts/modifiers.ts
 
-$types: ./types.yml
-$args: ./args.yml
-$resolvers: ./resolvers.yml
+$types: 💉./types.yml
+$args: 💉./args.yml
+$resolvers: 💉./resolvers.yml
+
+$views:
+  home:
+    query: findUser2
+    payload: UserPayload
+    html: |
+      <bla-component></bla-component>
+      {name} {email} {phone} {createdAt}
+      A rich framework for building applications and services with GraphQL and Apollo inspired by Angular

@@ -414,6 +414,14 @@ $resolvers:
       arrayOfStrings:
         - '515151'
         - '412414'
+$views:
+  home:
+    query: findUser2
+    payload: UserPayload
+    html: |
+      <bla-component></bla-component>
+      {name} {email} {phone} {createdAt}
+      A rich framework for building applications and services with GraphQL and Apollo inspired by Angular
 ```
 
 

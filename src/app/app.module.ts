@@ -10,7 +10,7 @@ import {
   GRAPHQL_PLUGIN_CONFIG,
   GraphQLDirective
 } from '@gapi/core';
-import { writeFile, readFileSync, exists } from 'fs';
+import { writeFile, readFileSync, exists, readFile } from 'fs';
 import { promisify } from 'util';
 import { includes, nextOrDefault } from '../helpers/args-extractors';
 import { VoyagerModule } from '@gapi/voyager';
@@ -30,6 +30,7 @@ import {
   TranspileAndLoad,
   TranspileAndGetAll
 } from '../helpers/transpile-and-load';
+import { traverseAndLoadConfigs } from '../helpers/traverse';
 
 @Module({
   imports: [VoyagerModule.forRoot()],
@@ -137,7 +138,7 @@ ${printSchema(mergedSchemas)}
         graphqlConfig: GRAPHQL_PLUGIN_CONFIG
       ) => {
         config = await config;
-
+        await traverseAndLoadConfigs(config);
         if (config.$externals) {
           const compiledPaths = await TranspileAndGetAll(
             config.$externals,
