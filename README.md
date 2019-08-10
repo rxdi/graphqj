@@ -372,30 +372,64 @@ Folder `.gj` is working directory when we store transpiled `typescript` configur
 
 ```yml
 $mode: advanced
-$directives: ./directives.js
+$directives: ./examples/ts/directives.ts
 $externals:
-  - map: 🗡️
-    file: ./interceptors.js
+  - map: 🚀
+    file: ./examples/ts/interceptors.ts
   - map: 🛡️
-    file: ./guards.js
+    file: ./examples/ts/guards.ts
   - map: 🕵️
-    file: ./modifiers.js
+    file: ./examples/ts/modifiers.ts
+  - map: ⌛
+    file: ./node_modules/moment/moment.js
 
 $types:
   User:
-    name: String {🕵️@OnlyAdmin}
-    email: String {🗡️@LoggerInterceptor}
-    phone: Number {🛡️@IsAuthorized}
-    arrayOfNumbers: Number[]
+    name: String => {🕵️OnlyAdmin}
+    email: String => {🚀LoggerInterceptor}
+    phone: Number => {🛡️IsLogged}
+    arrayOfNumbers: Number[] => {🕵️OnlyAdmin}
     arrayOfStrings: String[]
+    createdAt: String {⌛ToISO}
+
+$args:
+  UserPayload:
+    userId: String!
+    userId2: String
+    userId3: String
+    userId4: String
+
+$resolvers:
+  findUser:
+    type: User
+    args:
+      payload: UserPayload
+    resolve:
+      name: Kristiyan Tachev
+      email: test@gmail.com
+      phone: 414141
+      arrayOfNumbers:
+        - 515151
+        - 412414
+      arrayOfStrings:
+        - '515151'
+        - '412414'
 ```
 
 
 #### Guard
 
 ```typescript
-export async function IsAuthorized() {
-  throw new Error('OH MY GOD IT WORKS2');
+import { Observable } from 'rxjs';
+
+export async function IsLogged(
+  chainable$: Observable<any>,
+  payload,
+  context
+) {
+  if (!context.user) {
+    throw new Error('Unauthorized');
+  }
 }
 ```
 
@@ -403,8 +437,14 @@ export async function IsAuthorized() {
 
 ```typescript
 import { tap } from 'rxjs/operators';
+import { Observable } from 'rxjs';
 
-export async function LoggerInterceptor(chainable$, context, payload, descriptor) {
+export async function LoggerInterceptor(
+  chainable$: Observable<any>,
+  context,
+  payload,
+  descriptor
+) {
   console.log('Before...');
   const now = Date.now();
   return chainable$.pipe(
@@ -417,8 +457,48 @@ export async function LoggerInterceptor(chainable$, context, payload, descriptor
 
 ```typescript
 import { map } from 'rxjs/operators';
+import { Observable } from 'rxjs';
 
-export async function OnlyAdmin(chainable$, context, payload, descriptor) {
+export async function OnlyAdmin(
+  chainable$: Observable<any>,
+  context,
+  payload,
+  descriptor
+) {
   return chainable$.pipe(map(() => null));
+}
+```
+
+
+#### Directives
+
+```typescript
+import {
+  DirectiveLocation,
+  GraphQLCustomDirective
+} from '@gapi/core';
+
+export async function toUppercase() {
+  return new GraphQLCustomDirective<string>({
+    name: 'toUpperCase',
+    description: 'change the case of a string to uppercase',
+    locations: [DirectiveLocation.FIELD],
+    resolve: async resolve => (await resolve()).toUpperCase()
+  });
+}
+```
+
+
+#### Possible query
+
+```graphql
+{
+  findUser {
+    name
+    email @toUpperCase @AddTextDirective(inside: "dada", outside: "dadada")
+    phone
+    arrayOfNumbers
+    arrayOfStrings
+  }
 }
 ```

@@ -67,6 +67,12 @@ export const Roots = {
 };
 
 export type Args = { [key: string]: GlobalUnion };
+export type Externals = {
+  map: string;
+  file: string;
+  module?: any;
+  transpiledFile?: string;
+};
 export interface Config {
   $mode: 'basic' | 'advanced';
   $types: { [key: string]: Args };
@@ -78,7 +84,7 @@ export interface Config {
     };
   };
   $directives: string;
-  $externals: { map: string; file: string; module?: any }[];
+  $externals: Externals[];
   $args: any;
 }
 

@@ -96,6 +96,12 @@ export declare const Roots: {
 export declare type Args = {
     [key: string]: GlobalUnion;
 };
+export declare type Externals = {
+    map: string;
+    file: string;
+    module?: any;
+    transpiledFile?: string;
+};
 export interface Config {
     $mode: 'basic' | 'advanced';
     $types: {
@@ -109,11 +115,7 @@ export interface Config {
         };
     };
     $directives: string;
-    $externals: {
-        map: string;
-        file: string;
-        module?: any;
-    }[];
+    $externals: Externals[];
     $args: any;
 }
 export declare const TypesToken: InjectionToken<Map<string, Args>>;

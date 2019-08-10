@@ -8,7 +8,7 @@ import {
   mergeSchemas,
   Container,
   GRAPHQL_PLUGIN_CONFIG,
-
+  GraphQLDirective
 } from '@gapi/core';
 import { writeFile, readFileSync, exists } from 'fs';
 import { promisify } from 'util';
@@ -18,8 +18,18 @@ import { getConfig } from '../helpers/set-config';
 import { basicTemplate } from '../helpers/basic.template';
 import { MakeAdvancedSchema } from '../helpers/advanced-schema';
 import { MakeBasicSchema } from '../helpers/basic-schema';
-import { join } from 'path';
-import { TypesToken, ResolversToken, ArgumentsToken, Config, GuardsToken } from './app.tokens';
+import { join, parse } from 'path';
+import {
+  TypesToken,
+  ResolversToken,
+  ArgumentsToken,
+  Config,
+  GuardsToken
+} from './app.tokens';
+import {
+  TranspileAndLoad,
+  TranspileAndGetAll
+} from '../helpers/transpile-and-load';
 
 @Module({
   imports: [VoyagerModule.forRoot()],
@@ -61,7 +71,7 @@ import { TypesToken, ResolversToken, ArgumentsToken, Config, GuardsToken } from 
         const schemas = [externalSchema, schema].filter(i => !!i);
         let mergedSchemas: GraphQLSchema;
         if (schemas.length === 1) {
-          mergedSchemas = schema
+          mergedSchemas = schema;
         } else {
           mergedSchemas = mergeSchemas({
             schemas
@@ -107,7 +117,15 @@ ${printSchema(mergedSchemas)}
     },
     {
       provide: 'Run',
-      deps: [Config, BootstrapService, TypesToken, ResolversToken, ArgumentsToken, GuardsToken, GRAPHQL_PLUGIN_CONFIG],
+      deps: [
+        Config,
+        BootstrapService,
+        TypesToken,
+        ResolversToken,
+        ArgumentsToken,
+        GuardsToken,
+        GRAPHQL_PLUGIN_CONFIG
+      ],
       lazy: true,
       useFactory: async (
         config: Config,
@@ -116,20 +134,46 @@ ${printSchema(mergedSchemas)}
         resolvers: ResolversToken,
         args: ArgumentsToken,
         guards: GuardsToken,
-        graphqlConfig: GRAPHQL_PLUGIN_CONFIG,
+        graphqlConfig: GRAPHQL_PLUGIN_CONFIG
       ) => {
-        config = await config
-        config.$externals.map(external => {
-          const m = require('esm')(module)(join(process.cwd(), external.file));
-          external.module = m['default'] || m
-          Container.set(external.map, external.module);
-        })
+        config = await config;
 
-        const filePath = join(process.cwd(), config.$directives);
-        if (await promisify(exists)(filePath)) {
-          const directives = require('esm')(module)(filePath)
-          graphqlConfig.directives = await Promise.all(Object.keys(directives).map(d => directives[d]()) as any)
-          console.log(graphqlConfig)
+        if (config.$externals) {
+          const compiledPaths = await TranspileAndGetAll(
+            config.$externals,
+            './.gj/out'
+          );
+          config.$externals = compiledPaths.map(external => {
+            if (external.file.includes('.ts')) {
+              external.module = require(external.transpiledFile);
+            } else {
+              const m = require('esm')(module)(
+                join(process.cwd(), external.file)
+              );
+              external.module = m['default'] || m;
+            }
+            Container.set(external.map, external.module);
+            return external;
+          });
+        }
+
+        let filePath = join(process.cwd(), config.$directives || '');
+        let directives: GraphQLDirective[] | any[];
+
+        if ((await promisify(exists)(filePath)) && filePath !== process.cwd()) {
+          if (filePath.includes('.ts')) {
+            directives = await TranspileAndLoad(
+              config.$directives.replace('.', ''),
+              './.gj/out'
+            );
+          } else {
+            directives = require('esm')(module)(filePath);
+          }
+          graphqlConfig.directives = (await Promise.all(
+            Object.keys(directives).map(d =>
+              typeof directives[d] === 'function' ? directives[d]() : null
+            )
+          )).filter(i => !!i);
         }
 
         if (config.$mode === 'basic') {

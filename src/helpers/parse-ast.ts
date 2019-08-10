@@ -30,7 +30,7 @@ export function ParseArgs(ck: GlobalUnion) {
   }
 
   if (ck === 'boolean!' || ck === 'Boolean!') {
-    type = { type: new GraphQLNonNull(GraphQLString) };
+    type = { type: new GraphQLNonNull(GraphQLBoolean) };
   }
 
   if (ck === 'number!' || ck === 'Number!' || ck === 'Int') {

@@ -19,6 +19,7 @@ export function MakeAdvancedSchema(
   const Types = Container.get(TypesToken);
   const Arguments = Container.get(TypesToken);
   const Resolvers = Container.get(TypesToken);
+  config.$args = config.$args || {};
   Object.keys(config.$args).forEach(reusableArgumentKey => {
     const args = {};
     Object.keys(config.$args[reusableArgumentKey]).forEach(o => {
@@ -34,59 +35,66 @@ export function MakeAdvancedSchema(
     Object.keys(currentType).forEach(key => {
       types[type] = types[type] || {};
       let resolver = currentType[key];
-
-      const hasSymbol = config.$externals.filter(symbol =>
-        resolver.includes(symbol.map)
-      );
       const interceptors = [];
 
-      if (hasSymbol.length) {
-        const isCurlyPresent = resolver.includes('{');
-        let stringLeft = '(';
-        let stringRight = ')';
-
-        if (isCurlyPresent) {
-          stringLeft = '{';
-          stringRight = '}';
-        }
-        const directive = resolver.split(stringLeft);
-        const decorator = directive[1].replace(stringRight, '').split('@');
-        const symbol = decorator[0];
-        const methodToExecute = decorator[1].replace(/ +?/g, '');
-        const usedExternalModule = config.$externals.find(
-          s => s.map === symbol
+      if (config.$externals) {
+        const hasSymbol = config.$externals.filter(symbol =>
+          resolver.includes(symbol.map)
         );
-        let m: any;
-        if (process.env.LAZY) {
-          m = require('esm')(module)(
-            join(process.cwd(), usedExternalModule.file)
-          );
-        } else {
-          m = usedExternalModule.module;
-        }
-        if (!m[methodToExecute]) {
-          throw new Error(
-            `Missing method ${methodToExecute} inside ${
-              usedExternalModule.file
-            }`
-          );
-        }
-        const containerSymbol = new InjectionToken(
-          createUniqueHash(`${m[methodToExecute]}`)
-        );
-        Container.set(containerSymbol, m[methodToExecute]);
 
-        interceptors.push(containerSymbol);
-        resolver = Object.keys(Roots)
-          .map(node => {
-            const types = Object.keys(Roots[node]).filter(key =>
-              resolver.includes(key)
-            );
-            if (types.length) {
-              return types[0];
+        if (hasSymbol.length) {
+          const isCurlyPresent = resolver.includes('{');
+          let stringLeft = '(';
+          let stringRight = ')';
+
+          if (isCurlyPresent) {
+            stringLeft = '{';
+            stringRight = '}';
+          }
+
+          const directive = resolver.split(stringLeft);
+          let decorator: string[];
+          if (resolver.includes('@')) {
+            decorator = directive[1].replace(stringRight, '').split('@');
+          } else {
+            const parts = directive[1]
+              .replace(stringRight, '')
+              .split(hasSymbol[0].map);
+            for (var i = parts.length; i-- > 1; ) {
+              parts.splice(i, 0, hasSymbol[0].map);
             }
-          })
-          .filter(i => !!i)[0] as GlobalUnion;
+            decorator = parts;
+          }
+          decorator = decorator.filter(i => !!i);
+          const symbol = decorator[0];
+          const methodToExecute = decorator[1].replace(/ +?/g, '');
+          const usedExternalModule = config.$externals.find(
+            s => s.map === symbol
+          );
+          let m = usedExternalModule.module;
+          if (!m[methodToExecute]) {
+            throw new Error(
+              `Missing method ${methodToExecute} inside ${
+                usedExternalModule.file
+              }`
+            );
+          }
+          const containerSymbol = new InjectionToken(
+            createUniqueHash(`${m[methodToExecute]}`)
+          );
+          Container.set(containerSymbol, m[methodToExecute]);
+          interceptors.push(containerSymbol);
+          resolver = Object.keys(Roots)
+            .map(node => {
+              const types = Object.keys(Roots[node]).filter(key =>
+                resolver.includes(key)
+              );
+              if (types.length) {
+                return types[0];
+              }
+            })
+            .filter(i => !!i)[0] as GlobalUnion;
+        }
       }
 
       types[type][key] = ParseTypesSchema(resolver, key, interceptors);
