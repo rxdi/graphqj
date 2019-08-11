@@ -1,4 +1,5 @@
 import { InjectionToken } from '@rxdi/core';
+import { GraphQLInputFieldConfigMap } from 'graphql';
 export declare const BooleanUnion: {
     boolean: "boolean";
     Boolean: "Boolean";
@@ -125,7 +126,7 @@ export interface Config {
         };
     };
 }
-export declare const TypesToken: InjectionToken<Map<string, Args>>;
+export declare const TypesToken: InjectionToken<Map<string, GraphQLInputFieldConfigMap>>;
 export declare const ArgumentsToken: InjectionToken<Map<string, Args>>;
 export declare const ResolversToken: InjectionToken<Map<string, Args>>;
 export declare const GuardsToken: InjectionToken<Map<string, Args>>;

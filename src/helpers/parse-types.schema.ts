@@ -43,6 +43,7 @@ export function ParseTypesSchema(
     for (const interceptor of interceptors) {
       defaultValue = await Container.get(interceptor)(
         of(defaultValue),
+        args[0],
         args[1],
         args[2],
         args[3]

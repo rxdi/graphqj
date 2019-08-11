@@ -501,8 +501,10 @@ import { Observable } from 'rxjs';
 
 export async function IsLogged(
   chainable$: Observable<any>,
+  root,
   payload,
-  context
+  context,
+  descriptor
 ) {
   if (!context.user) {
     throw new Error('Unauthorized');
@@ -518,8 +520,9 @@ import { Observable } from 'rxjs';
 
 export async function LoggerInterceptor(
   chainable$: Observable<any>,
-  context,
+  root,
   payload,
+  context,
   descriptor
 ) {
   console.log('Before...');
@@ -538,8 +541,9 @@ import { Observable } from 'rxjs';
 
 export async function OnlyAdmin(
   chainable$: Observable<any>,
-  context,
+  root,
   payload,
+  context,
   descriptor
 ) {
   return chainable$.pipe(map(() => null));

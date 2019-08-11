@@ -14,7 +14,7 @@ export const buildArgumentsSchema = (config: Config, resolver: string) => {
     if (Arguments.has(name)) {
       let reusableType = new GraphQLInputObjectType({
         name,
-        fields: () => Arguments.get(name) as any
+        fields: () => Arguments.get(name)
       });
       if (InputObjectTypes.has(name)) {
         reusableType = InputObjectTypes.get(name);

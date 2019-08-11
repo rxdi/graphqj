@@ -1,4 +1,5 @@
 import { InjectionToken } from '@rxdi/core';
+import { GraphQLInputFieldConfigMap } from 'graphql';
 
 function strEnum<T extends string>(o: Array<T>): { [K in T]: K } {
   return o.reduce((res, key) => {
@@ -88,7 +89,7 @@ export interface Config {
   $views?: { [key: string]: { query: string; payload: any; html: string } };
 }
 
-export const TypesToken = new InjectionToken<Map<string, Args>>(
+export const TypesToken = new InjectionToken<Map<string, GraphQLInputFieldConfigMap>>(
   '(@rxdi/graphqj): types-token'
 );
 export const ArgumentsToken = new InjectionToken<Map<string, Args>>(
