@@ -131,7 +131,9 @@ export async function MakeAdvancedSchema(
           .filter(s => resolver.includes(s));
         if (symbol) {
           const hasMultipleSymbols = [
-            ...new Set(resolver.split('=>').map(r => r.replace(/ +?/g, '').trim()))
+            ...new Set(
+              resolver.split('=>').map(r => r.replace(/ +?/g, '').trim())
+            )
           ];
           if (hasMultipleSymbols.length > 2) {
             const directives = hasMultipleSymbols.slice(
@@ -184,15 +186,19 @@ export async function MakeAdvancedSchema(
       );
     }
     let resolve = config.$resolvers[resolver].resolve;
-    if (typeof resolve !== 'function') {
+    if (typeof resolve !== 'function' && !Array.isArray(resolve)) {
       /* Take the first method inside file for resolver */
-      const firstMethod = resolve[Object.keys(resolve)[0]];
-      if (!firstMethod) {
+      let firstKey: string;
+      for (var key in resolve) {
+        firstKey = key;
+        break;
+      }
+      if (!resolve[firstKey]) {
         throw new Error(
           `Missing resolver for ${JSON.stringify(config.$resolvers[resolver])}`
         );
       }
-      resolve = firstMethod;
+      resolve = resolve[firstKey];
     }
 
     bootstrap.Fields.query[resolver] = {
