@@ -15,6 +15,7 @@ import {
 import { ParseArgs } from './parse-ast';
 import { buildArgumentsSchema } from './parse-args-schema';
 import { ParseTypesSchema } from './parse-types.schema';
+import { isFunction } from './isFunction';
 
 function getInjectorSymbols(symbols: Externals[] = [], directives: string[]) {
   return symbols
@@ -186,7 +187,7 @@ export async function MakeAdvancedSchema(
       );
     }
     let resolve = config.$resolvers[resolver].resolve;
-    if (typeof resolve !== 'function' && !Array.isArray(resolve)) {
+    if (!isFunction(resolve) && !Array.isArray(resolve)) {
       /* Take the first method inside file for resolver */
       let firstKey: string;
       for (var key in resolve) {
@@ -198,7 +199,9 @@ export async function MakeAdvancedSchema(
           `Missing resolver for ${JSON.stringify(config.$resolvers[resolver])}`
         );
       }
-      resolve = resolve[firstKey];
+      if (isFunction(resolve[firstKey])) {
+        resolve = resolve[firstKey];
+      }
     }
 
     bootstrap.Fields.query[resolver] = {
@@ -208,7 +211,7 @@ export async function MakeAdvancedSchema(
       public: true,
       method_type: 'query',
       target: () => {},
-      resolve: typeof resolve === 'function' ? resolve : () => resolve
+      resolve: isFunction(resolve) ? resolve : () => resolve
     } as any;
   });
 }
