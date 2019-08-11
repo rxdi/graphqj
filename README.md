@@ -390,7 +390,7 @@ $types:
     phone: Number => {🛡️IsLogged}
     arrayOfNumbers: Number[] => {🕵️OnlyAdmin}
     arrayOfStrings: String[]
-    createdAt: String {⌛ToISO}
+    createdAt: String => {⌛ToISO}
 
 $args:
   UserPayload:

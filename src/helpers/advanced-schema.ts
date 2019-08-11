@@ -5,11 +5,102 @@ import {
   InjectionToken,
   createUniqueHash
 } from '@gapi/core';
-import { TypesToken, Config, Roots, GlobalUnion } from '../app/app.tokens';
+import {
+  TypesToken,
+  Config,
+  Roots,
+  GlobalUnion,
+  Externals
+} from '../app/app.tokens';
 import { ParseArgs } from './parse-ast';
 import { buildArgumentsSchema } from './parse-args-schema';
 import { ParseTypesSchema } from './parse-types.schema';
 
+function getInjectorSymbols(symbols: Externals[] = [], directives: string[]) {
+  return symbols
+    .map(symbol => {
+      const [isPresent] = directives.filter(d => d.includes(symbol.map));
+      if (isPresent) {
+        const injector = isPresent.replace(/[^\w\s]/gi, '').replace(/ +?/g, '');
+        const method = symbol.module[injector];
+        if (!method) {
+          throw new Error(`Missing method ${injector} inside ${symbol.file}`);
+        }
+        return {
+          symbol: symbol.map,
+          token: new InjectionToken(createUniqueHash(`${method}`)),
+          module: symbol.module,
+          method,
+          injector
+        };
+      }
+    })
+    .filter(i => !!i);
+}
+
+function findInterceptor(
+  symbol: string,
+  method: string,
+  externals: Externals[]
+) {
+  const usedExternalModule = externals.find(s => s.map === symbol);
+  if (!usedExternalModule.module[method]) {
+    throw new Error(
+      `Missing method ${method} inside ${usedExternalModule.file}`
+    );
+  }
+  return usedExternalModule.module[method];
+}
+
+function getSymbolInjectionToken(
+  symbol: string,
+  method: string,
+  externals: Externals[]
+) {
+  const interceptor = findInterceptor(symbol, method, externals);
+  return {
+    token: new InjectionToken(createUniqueHash(`${interceptor}`)),
+    interceptor
+  };
+}
+
+function setPart(externals: Externals[], resolver, symbolMap) {
+  const isCurlyPresent = resolver.includes('{');
+  let leftBracket = '(';
+  let rightBracket = ')';
+
+  if (isCurlyPresent) {
+    leftBracket = '{';
+    rightBracket = '}';
+  }
+
+  const directive = resolver.split(leftBracket);
+  let decorator: string[];
+
+  if (resolver.includes('@')) {
+    decorator = directive[1].replace(rightBracket, '').split('@');
+  } else {
+    const parts = directive[1].replace(rightBracket, '').split(symbolMap);
+    for (var i = parts.length; i-- > 1; ) {
+      parts.splice(i, 0, symbolMap);
+    }
+    decorator = parts;
+  }
+  decorator = decorator.filter(i => !!i);
+
+  const symbol = decorator[0];
+  const methodToExecute = decorator[1].replace(/ +?/g, '');
+
+  const { token, interceptor } = getSymbolInjectionToken(
+    symbol,
+    methodToExecute,
+    externals
+  );
+  return {
+    token,
+    interceptor
+  };
+}
 export async function MakeAdvancedSchema(
   config: Config,
   bootstrap: BootstrapService
@@ -35,52 +126,34 @@ export async function MakeAdvancedSchema(
       const interceptors = [];
 
       if (config.$externals) {
-        const hasSymbol = config.$externals.filter(symbol =>
-          resolver.includes(symbol.map)
-        );
-
-        if (hasSymbol.length) {
-          const isCurlyPresent = resolver.includes('{');
-          let stringLeft = '(';
-          let stringRight = ')';
-
-          if (isCurlyPresent) {
-            stringLeft = '{';
-            stringRight = '}';
-          }
-
-          const directive = resolver.split(stringLeft);
-          let decorator: string[];
-          if (resolver.includes('@')) {
-            decorator = directive[1].replace(stringRight, '').split('@');
-          } else {
-            const parts = directive[1]
-              .replace(stringRight, '')
-              .split(hasSymbol[0].map);
-            for (var i = parts.length; i-- > 1; ) {
-              parts.splice(i, 0, hasSymbol[0].map);
-            }
-            decorator = parts;
-          }
-          decorator = decorator.filter(i => !!i);
-          const symbol = decorator[0];
-          const methodToExecute = decorator[1].replace(/ +?/g, '');
-          const usedExternalModule = config.$externals.find(
-            s => s.map === symbol
-          );
-          let m = usedExternalModule.module;
-          if (!m[methodToExecute]) {
-            throw new Error(
-              `Missing method ${methodToExecute} inside ${
-                usedExternalModule.file
-              }`
+        const [symbol] = config.$externals
+          .map(e => e.map)
+          .filter(s => resolver.includes(s));
+        if (symbol) {
+          const hasMultipleSymbols = [
+            ...new Set(resolver.split('=>').map(r => r.replace(/ +?/g, '')))
+          ];
+          if (hasMultipleSymbols.length > 2) {
+            const directives = hasMultipleSymbols.slice(
+              1,
+              hasMultipleSymbols.length
             );
+            for (const injectorSymbol of getInjectorSymbols(
+              config.$externals,
+              directives
+            )) {
+              Container.set(injectorSymbol.token, injectorSymbol.method);
+              interceptors.push(injectorSymbol.token);
+            }
+          } else {
+            const { token, interceptor } = setPart(
+              config.$externals,
+              resolver,
+              symbol
+            );
+            Container.set(token, interceptor);
+            interceptors.push(token);
           }
-          const containerSymbol = new InjectionToken(
-            createUniqueHash(`${m[methodToExecute]}`)
-          );
-          Container.set(containerSymbol, m[methodToExecute]);
-          interceptors.push(containerSymbol);
           resolver = Object.keys(Roots)
             .map(node => {
               const types = Object.keys(Roots[node]).filter(key =>
@@ -93,7 +166,6 @@ export async function MakeAdvancedSchema(
             .filter(i => !!i)[0] as GlobalUnion;
         }
       }
-
       types[type][key] = ParseTypesSchema(resolver, key, interceptors);
     });
     types[type] = new GraphQLObjectType({
@@ -114,13 +186,13 @@ export async function MakeAdvancedSchema(
     let resolve = config.$resolvers[resolver].resolve;
     if (typeof resolve !== 'function') {
       /* Take the first method inside file for resolver */
-      const r = resolve[Object.keys(resolve)[0]];
-      if (!r) {
+      const firstMethod = resolve[Object.keys(resolve)[0]];
+      if (!firstMethod) {
         throw new Error(
           `Missing resolver for ${JSON.stringify(config.$resolvers[resolver])}`
         );
       }
-      resolve = r;
+      resolve = firstMethod;
     }
 
     bootstrap.Fields.query[resolver] = {
