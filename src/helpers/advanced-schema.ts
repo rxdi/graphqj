@@ -16,6 +16,7 @@ import { ParseArgs } from './parse-ast';
 import { buildArgumentsSchema } from './parse-args-schema';
 import { ParseTypesSchema } from './parse-types.schema';
 import { isFunction } from './isFunction';
+import { resolversMap } from './resolvers.map';
 
 function getInjectorSymbols(symbols: Externals[] = [], directives: string[]) {
   return symbols
@@ -123,6 +124,7 @@ export async function MakeAdvancedSchema(
     const currentType = config.$types[type];
     Object.keys(currentType).forEach(key => {
       types[type] = types[type] || {};
+
       let resolver = currentType[key];
       const interceptors = [];
 
@@ -203,7 +205,8 @@ export async function MakeAdvancedSchema(
         resolve = resolve[firstKey];
       }
     }
-
+    const resolveSymbol = new InjectionToken(resolver);
+    Container.set(resolveSymbol, isFunction(resolve) ? resolve : () => resolve);
     bootstrap.Fields.query[resolver] = {
       type: types[type],
       method_name: resolver,
@@ -211,7 +214,7 @@ export async function MakeAdvancedSchema(
       public: true,
       method_type: 'query',
       target: () => {},
-      resolve: isFunction(resolve) ? resolve : () => resolve
+      resolve: Container.get(resolveSymbol)
     } as any;
   });
 }

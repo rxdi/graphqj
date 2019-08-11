@@ -1,0 +1,20 @@
+$mode: advanced
+$directives: ./api/directives.js
+$externals:
+  - map: 🛰
+    file: ./api/interceptors.js
+  - map: 🛡️
+    file: ./api/guards.js
+  - map: 🕵️
+    file: ./api/modifiers.js
+  - map: ⌛
+    file: ./api/helpers/moment.js
+
+$types: 💉./types.yml
+$args: 💉./args.yml
+$resolvers: 💉./resolvers.yml
+$views:
+  home:
+    query: findUser2
+    payload: UserPayload
+    html: 💉./test.html

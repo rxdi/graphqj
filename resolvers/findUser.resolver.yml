@@ -1,0 +1,4 @@
+type: User
+args:
+  payload: UserPayload
+resolve: 💉./proba/test2.js
