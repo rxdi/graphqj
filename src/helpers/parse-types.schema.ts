@@ -38,6 +38,9 @@ export function ParseTypesSchema(
   if (ck === 'number[]' || ck === 'Number[]' || ck === '[Number]') {
     type = { type: new GraphQLList(GraphQLInt) };
   }
+  if (!type) {
+    throw new Error(`Wrong plugged type ${ck}`)
+  }
   type['resolve'] = async function(...args) {
     let defaultValue = args[0][key];
     for (const interceptor of interceptors) {
