@@ -30,7 +30,7 @@ import {
   TranspileAndLoad,
   TranspileAndGetAll
 } from '../helpers/transpile-and-load';
-import { traverseAndLoadConfigs } from '../helpers/traverse';
+import { traverseAndLoadConfigs } from '../helpers/traverse/traverse';
 
 @Module({
   imports: [VoyagerModule.forRoot()],
