@@ -12,3 +12,4 @@ api
 resolvers
 gj.json
 gj.js
+findUser.resolver.yml

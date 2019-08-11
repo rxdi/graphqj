@@ -1,22 +1,34 @@
 import { TranspileTypescript } from './typescript.builder';
-import { join, parse } from 'path';
+import { join, parse, isAbsolute } from 'path';
 import { Externals } from '../app/app.tokens';
+import { Container } from '@rxdi/core';
 
 export async function TranspileAndLoad(path: string, outDir: string) {
+  path = convertToRelative(path);
+  if (Container.has(path)) {
+    return Container.get(path);
+  }
   await TranspileTypescript([path], outDir);
-  return require(join(
+  const something = require(join(
     process.cwd(),
     outDir,
     parse(join(process.cwd(), outDir, path)).base.replace('ts', 'js')
   ));
+  Container.set(path, something);
+  return Container.get(path);
 }
 
-export async function TranspileAndGetAll(paths: Externals[], outDir: string) {
+function convertToRelative(path: string) {
+  path = path[0] === '.' ? path.substr(1) : path;
+  return isAbsolute(path) ? (path = path.replace(process.cwd(), '')) : path;
+}
+
+export async function TranspileAndGetAll(externals: Externals[], outDir: string) {
   await TranspileTypescript(
-    paths.map(external => external.file).map(f => f.replace('.', '')),
+    externals.map(external => external.file).map(path => convertToRelative(path)),
     outDir
   );
-  return paths.map(path => ({
+  return externals.map(path => ({
     ...path,
     transpiledFile: join(
       process.cwd(),

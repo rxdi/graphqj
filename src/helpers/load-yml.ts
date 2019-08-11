@@ -12,8 +12,9 @@ export async function loadFile(path: string) {
   if (!(await promisify(exists)(path))) {
     throw new Error(`Missing external file for types ${path}`);
   }
+
   if (path.includes('.ts')) {
-    m = await TranspileAndLoad(path.replace('.', ''), './.gj/out');
+    m = await TranspileAndLoad(path, './.gj/out');
   } else if (path.includes('.yml')) {
     m = load(await promisify(readFile)(path, { encoding: 'utf-8' }));
   } else if (path.includes('.json')) {
