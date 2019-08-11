@@ -368,29 +368,29 @@ Exclude `.gj` folder inside your `.gitignore` or `.dockerignore` files
 Folder `.gj` is working directory when we store transpiled `typescript` configuration file
 
 
-## Experimental
+## Experimental 📡
 
 ```yml
 $mode: advanced
-$directives: ./examples/ts/directives.ts
+$directives: ./directives.ts
 $externals:
-  - map: 🚀
-    file: ./examples/ts/interceptors.ts
+  - map: 🛰
+    file: ./interceptors.ts
   - map: 🛡️
-    file: ./examples/ts/guards.ts
+    file: ./guards.ts
   - map: 🕵️
-    file: ./examples/ts/modifiers.ts
+    file: ./modifiers.ts
   - map: ⌛
-    file: ./node_modules/moment/moment.js
+    file: ./helpers/moment.js
 
 $types:
   User:
     name: String => {🕵️OnlyAdmin}
-    email: String => {🚀LoggerInterceptor}
+    email: String => {🛰LoggerInterceptor}
     phone: Number => {🛡️IsLogged}
     arrayOfNumbers: Number[] => {🕵️OnlyAdmin}
     arrayOfStrings: String[]
-    createdAt: String => {⌛ToISO}
+    createdAt: String => {⌛fromNow}
 
 $args:
   UserPayload:
@@ -424,6 +424,22 @@ $views:
       A rich framework for building applications and services with GraphQL and Apollo inspired by Angular
 ```
 
+Moment helper
+
+```typescript
+import moment from 'moment';
+
+export function fromNow() {
+  return moment('20111031', 'YYYYMMDD').fromNow();
+}
+```
+
+Chaining multiple `$externals` is quite easy
+
+```yml
+email: String => {🛰LoggerInterceptor} => {🛡️IsLogged} => {🕵️OnlyAdmin}
+```
+
 #### Magics
 
 With Syringe `💉` operator you can inject `yml`, `js`, `ts`, `json`, `graphql` and `html` files,
@@ -442,7 +458,7 @@ You can compose anything inside `gj.yml`
 $mode: advanced
 $directives: ./directives.ts
 $externals:
-  - map: 🚀
+  - map: 🛰
     file: ./interceptors.ts
   - map: 🛡️
     file: ./guards.ts

@@ -131,7 +131,7 @@ export async function MakeAdvancedSchema(
           .filter(s => resolver.includes(s));
         if (symbol) {
           const hasMultipleSymbols = [
-            ...new Set(resolver.split('=>').map(r => r.replace(/ +?/g, '')))
+            ...new Set(resolver.split('=>').map(r => r.replace(/ +?/g, '').trim()))
           ];
           if (hasMultipleSymbols.length > 2) {
             const directives = hasMultipleSymbols.slice(

@@ -8,6 +8,8 @@ $externals:
     file: ./guards.ts
   - map: 🕵️
     file: ./modifiers.ts
+  - map: ⌛
+    file: ./helpers/moment.js
 
 $types:
   User:
@@ -16,6 +18,7 @@ $types:
     phone: Number {🛡️@IsAuthorized}
     arrayOfNumbers: Number[]
     arrayOfStrings: String[]
+    createdAt: String => {⌛fromNow}
 
 $args:
   UserPayload:
