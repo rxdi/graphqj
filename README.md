@@ -599,3 +599,88 @@ export async function toUppercase() {
   }
 }
 ```
+
+#### Omg YML
+Defining `javascript` function in `yml`
+
+```yml
+$omg: !!js/function >
+  function foobar() {
+    return 'Wow! JS-YAML Rocks!';
+  }
+```
+
+Defining JS function in resolver
+
+```yml
+$resolvers:
+  findUser:
+    type: User
+    args:
+      payload: UserPayload
+    resolve: !!js/function >
+      function foobar() {
+        console.log('OMG')
+        return {
+          "name": "Kristiyan Tachev",
+          "email": "test@gmail.com",
+          "phone": 414141,
+          "arrayOfNumbers": [515151, 412414],
+          "arrayOfStrings": ['515151', '412414']
+        }
+      }
+```
+
+
+
+Possible flows
+
+```yml
+seq:
+  # Ordered sequence of nodes
+  Block style: !!seq
+  - Mercury   # Rotates - no light/dark sides.
+  - Venus     # Deadliest. Aptly named.
+  - Earth     # Mostly dirt.
+  - Mars      # Seems empty.
+  - Jupiter   # The king.
+  - Saturn    # Pretty.
+  - Uranus    # Where the sun hardly shines.
+  - Neptune   # Boring. No rings.
+  - Pluto     # You call this a planet?
+  Flow style: !!seq [ Mercury, Venus, Earth, Mars,      # Rocks
+                      Jupiter, Saturn, Uranus, Neptune, # Gas
+                      Pluto ]                           # Overrated
+```
+
+Will create the following json object
+
+```json
+{
+   "seq":{
+      "Block style":[
+         "Mercury",
+         "Venus",
+         "Earth",
+         "Mars",
+         "Jupiter",
+         "Saturn",
+         "Uranus",
+         "Neptune",
+         "Pluto"
+      ],
+      "Flow style":[
+         "Mercury",
+         "Venus",
+         "Earth",
+         "Mars",
+         "Jupiter",
+         "Saturn",
+         "Uranus",
+         "Neptune",
+         "Pluto"
+      ]
+   }
+}
+```
+

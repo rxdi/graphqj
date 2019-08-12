@@ -3,13 +3,14 @@ node_modules/
 projects
 .cache
 
-# args.yml
-# gj.yml
-# resolvers.yml
-# test.html
-# types.yml
-# api
-# resolvers
-# gj.json
-# gj.js
-# findUser.resolver.yml
+args.yml
+gj.yml
+resolvers.yml
+test.html
+types.yml
+api
+resolvers
+gj.json
+gj.js
+findUser.resolver.yml
+fn.yml

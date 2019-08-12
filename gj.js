@@ -1,1 +1,0 @@
-module.exports = 'String => {🕵️OnlyAdmin} => {🛰LoggerInterceptor} => {🛡️IsLogged}'

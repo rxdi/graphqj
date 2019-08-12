@@ -6,13 +6,8 @@ import { isInValidPath } from './is-invalid-path';
 import { traverseMap } from './traverse-map';
 import { join } from 'path';
 
-const moduleCache = new Map();
-
 export async function loadFile(path: string) {
   let loadedModule: any;
-  if (moduleCache.has(path)) {
-    return moduleCache.get(path);
-  }
   if (isInValidPath(path)) {
     return path;
   }
@@ -43,8 +38,6 @@ export async function loadFile(path: string) {
     .substring(0, path.lastIndexOf('/'))
     .replace(process.cwd(), '');
 
-  loadedModule.constructor.$parent = parent;
   traverseMap.push({ parent, path });
-  moduleCache.set(path, loadedModule);
   return loadedModule;
 }

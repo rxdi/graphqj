@@ -205,8 +205,9 @@ export async function MakeAdvancedSchema(
         resolve = resolve[firstKey];
       }
     }
-    const resolveSymbol = new InjectionToken(resolver);
-    Container.set(resolveSymbol, isFunction(resolve) ? resolve : () => resolve);
+
+    resolve =  isFunction(resolve) ? resolve : () => resolve;
+
     bootstrap.Fields.query[resolver] = {
       type: types[type],
       method_name: resolver,
@@ -214,7 +215,7 @@ export async function MakeAdvancedSchema(
       public: true,
       method_type: 'query',
       target: () => {},
-      resolve: Container.get(resolveSymbol)
+      resolve
     } as any;
   });
 }

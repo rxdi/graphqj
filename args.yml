@@ -1,5 +1,0 @@
-UserPayload:
-  userId: String!
-  userId2: String
-  userId3: String
-  userId4: String

@@ -41,7 +41,7 @@ export function ParseTypesSchema(
   if (!type) {
     throw new Error(`Wrong plugged type ${ck}`)
   }
-  console.log(key)
+
   type['resolve'] = async function(...args) {
     let defaultValue = args[0][key];
     for (const interceptor of interceptors) {

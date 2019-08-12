@@ -1,4 +1,0 @@
-type: User
-args:
-  payload: UserPayload
-resolve: 💉./api/methods/findUser.ts
