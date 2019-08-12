@@ -15,7 +15,7 @@ export function ParseTypesSchema(
   key: string,
   parentType: string,
   interceptors: InjectionToken<(...args: any[]) => any>[],
-  types
+  types: {[key: string]: any}
 ) {
   let type: { type: GraphQLScalarType | GraphQLList<GraphQLType> };
   if (ck === 'string' || ck === 'String') {

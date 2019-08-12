@@ -67,7 +67,7 @@ function getSymbolInjectionToken(
   };
 }
 
-function setPart(externals: Externals[], resolver, symbolMap) {
+function setPart(externals: Externals[], resolver: string, symbolMap: string) {
   const isCurlyPresent = resolver.includes('{');
   let leftBracket = '(';
   let rightBracket = ')';
@@ -173,7 +173,13 @@ export async function MakeAdvancedSchema(
             .filter(i => !!i)[0] as GlobalUnion;
         }
       }
-      types[type][key] = ParseTypesSchema(resolver, key, type, interceptors, types);
+      types[type][key] = ParseTypesSchema(
+        resolver,
+        key,
+        type,
+        interceptors,
+        types
+      );
     });
     buildedSchema[type] = new GraphQLObjectType({
       name: type,
@@ -183,6 +189,9 @@ export async function MakeAdvancedSchema(
 
   Object.keys(config.$resolvers).forEach(resolver => {
     const type = config.$resolvers[resolver].type;
+    const method = (
+      config.$resolvers[resolver].method || 'query'
+    ).toLocaleLowerCase();
     let deps = config.$resolvers[resolver].deps || [];
 
     const mapDependencies = <T>(
@@ -229,12 +238,12 @@ export async function MakeAdvancedSchema(
         // types[type].getFields()[k].resolve = resolve;
       });
     });
-    bootstrap.Fields.query[resolver] = {
+    bootstrap.Fields[method][resolver] = {
       type: buildedSchema[type],
       method_name: resolver,
       args: buildArgumentsSchema(config, resolver),
       public: true,
-      method_type: 'query',
+      method_type: method,
       target: mapDependencies(deps),
       resolve
     } as any;

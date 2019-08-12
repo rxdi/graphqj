@@ -85,6 +85,7 @@ export interface Resolver {
     type: string;
     args: Args;
     resolve: any;
+    method: 'Query' | 'Mutation' | 'Subscription' | 'query' | 'mutation' | 'subscription'
     deps?: ResolverDependencies[];
   };
 }
