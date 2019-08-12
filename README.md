@@ -494,7 +494,7 @@ $resolvers:
 import { Observable } from 'rxjs';
 import { IUserType } from '@api';
 
-export async function findUser():
+export async function findUser(root, payload, context, info):
   | Promise<Observable<IUserType>>
   | Promise<IUserType>
   | Observable<IUserType>
@@ -644,7 +644,7 @@ $resolvers:
     args:
       payload: UserPayload
     resolve: !!js/function >
-      function foobar() {
+      function foobar(root, payload, context, info) {
         console.log('OMG')
         return {
           "name": "Kristiyan Tachev",

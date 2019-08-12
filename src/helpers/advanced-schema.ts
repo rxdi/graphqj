@@ -17,6 +17,7 @@ import { ParseArgs } from './parse-ast';
 import { buildArgumentsSchema } from './parse-args-schema';
 import { ParseTypesSchema } from './parse-types.schema';
 import { isFunction } from './isFunction';
+import { lazyTypes } from './lazy-types';
 
 function getInjectorSymbols(symbols: Externals[] = [], directives: string[]) {
   return symbols
@@ -108,6 +109,7 @@ export async function MakeAdvancedSchema(
   bootstrap: BootstrapService
 ) {
   const types = {};
+  const buildedSchema = {};
   const Arguments = Container.get(TypesToken);
   config.$args = config.$args || {};
   Object.keys(config.$args).forEach(reusableArgumentKey => {
@@ -171,11 +173,11 @@ export async function MakeAdvancedSchema(
             .filter(i => !!i)[0] as GlobalUnion;
         }
       }
-      types[type][key] = ParseTypesSchema(resolver, key, interceptors);
+      types[type][key] = ParseTypesSchema(resolver, key, type, interceptors, types);
     });
-    types[type] = new GraphQLObjectType({
+    buildedSchema[type] = new GraphQLObjectType({
       name: type,
-      fields: types[type]
+      fields: () => types[type]
     });
   });
 
@@ -194,7 +196,7 @@ export async function MakeAdvancedSchema(
         }))
         .reduce((acc, curr) => ({ ...acc, [curr.map]: curr.container }), {});
 
-    if (!types[type]) {
+    if (!buildedSchema[type]) {
       throw new Error(
         `Missing type '${type}', Available types: '${Object.keys(
           types
@@ -221,8 +223,14 @@ export async function MakeAdvancedSchema(
 
     resolve = isFunction(resolve) ? resolve : () => resolve;
 
+    Array.from(lazyTypes.keys()).forEach(type => {
+      Object.keys(lazyTypes.get(type)).forEach(k => {
+        buildedSchema[type].getFields()[k].type = buildedSchema[type];
+        // types[type].getFields()[k].resolve = resolve;
+      });
+    });
     bootstrap.Fields.query[resolver] = {
-      type: types[type],
+      type: buildedSchema[type],
       method_name: resolver,
       args: buildArgumentsSchema(config, resolver),
       public: true,

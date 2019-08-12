@@ -79,17 +79,19 @@ export interface ResolverDependencies {
   map: string;
   container: any;
 }
+
+export interface Resolver {
+  [key: string]: {
+    type: string;
+    args: Args;
+    resolve: any;
+    deps?: ResolverDependencies[];
+  };
+}
 export interface Config {
   $mode: 'basic' | 'advanced';
   $types: { [key: string]: Args };
-  $resolvers: {
-    [key: string]: {
-      type: string;
-      args: Args;
-      resolve: any;
-      deps?: ResolverDependencies[];
-    };
-  };
+  $resolvers: Resolver;
   $directives: string;
   $externals: Externals[];
   $args: any;

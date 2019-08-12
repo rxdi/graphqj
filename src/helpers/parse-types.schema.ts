@@ -8,11 +8,14 @@ import {
 import { GlobalUnion } from '../app/app.tokens';
 import { Container, InjectionToken } from '@rxdi/core';
 import { of, isObservable } from 'rxjs';
+import { lazyTypes } from './lazy-types';
 
 export function ParseTypesSchema(
   ck: GlobalUnion,
   key: string,
-  interceptors: InjectionToken<(...args: any[]) => any>[]
+  parentType: string,
+  interceptors: InjectionToken<(...args: any[]) => any>[],
+  types
 ) {
   let type: { type: GraphQLScalarType | GraphQLList<GraphQLType> };
   if (ck === 'string' || ck === 'String') {
@@ -38,10 +41,21 @@ export function ParseTypesSchema(
   if (ck === 'number[]' || ck === 'Number[]' || ck === '[Number]') {
     type = { type: new GraphQLList(GraphQLInt) };
   }
-  if (!type) {
-    throw new Error(`Wrong plugged type ${ck}`)
+  const isRecursiveType = ck
+    .replace('[]', '')
+    .replace('!', '')
+    .replace('[', '')
+    .replace(']', '');
+  if (parentType === isRecursiveType) {
+    lazyTypes.set(parentType, {
+      ...lazyTypes.get(parentType),
+      [key]: isRecursiveType
+    });
+    type = { type: types[parentType]} as any; // хмм
   }
-
+  if (!type) {
+    throw new Error(`Wrong plugged type ${ck}`);
+  }
   type['resolve'] = async function(...args) {
     let defaultValue = args[0][key];
     for (const interceptor of interceptors) {
