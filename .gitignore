@@ -13,3 +13,5 @@ resolvers
 gj.json
 gj.js
 findUser.resolver.yml
+fn.yml
+schema.graphql

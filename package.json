@@ -1,7 +1,7 @@
 {
   "name": "@rxdi/graphqj",
   "main": "./lib/main.js",
-  "version": "0.7.16",
+  "version": "0.7.17",
   "scripts": {
     "start": "gapi start --local --inspect --minify=false",
     "build": "gapi build",
@@ -14,6 +14,11 @@
     "esm": "^3.2.25",
     "fast-glob": "^3.0.4",
     "js-yaml": "^3.13.1"
+  },
+  "esm": {
+    "cjs": {
+      "cache": false
+    }
   },
   "repository": {
     "type": "git",

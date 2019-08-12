@@ -572,15 +572,40 @@ export async function OnlyAdmin(
 ```typescript
 import {
   DirectiveLocation,
-  GraphQLCustomDirective
+  GraphQLCustomDirective,
+  GraphQLNonNull,
+  GraphQLString
 } from '@gapi/core';
 
 export async function toUppercase() {
-  return new GraphQLCustomDirective<string>({
+  return new GraphQLCustomDirective({
     name: 'toUpperCase',
     description: 'change the case of a string to uppercase',
     locations: [DirectiveLocation.FIELD],
     resolve: async resolve => (await resolve()).toUpperCase()
+  });
+}
+
+export async function AddTextDirective() {
+  return new GraphQLCustomDirective({
+    name: 'AddTextDirective',
+    description: 'change the case of a string to uppercase',
+    locations: [DirectiveLocation.FIELD],
+    args: {
+      inside: {
+        type: new GraphQLNonNull(GraphQLString),
+        description: 'the times to duplicate the string'
+      },
+      outside: {
+        type: new GraphQLNonNull(GraphQLString),
+        description: 'the times to duplicate the string'
+      }
+    },
+    resolve: async (
+      resolve,
+      root,
+      args
+    ) => args.inside + (await resolve()) + args.outside
   });
 }
 ```
@@ -598,4 +623,138 @@ export async function toUppercase() {
     arrayOfStrings
   }
 }
+```
+
+#### Omg YML
+Defining `javascript` function in `yml`
+
+```yml
+$omg: !!js/function >
+  function foobar() {
+    return 'Wow! JS-YAML Rocks!';
+  }
+```
+
+Defining JS function in resolver
+
+```yml
+$resolvers:
+  findUser:
+    type: User
+    args:
+      payload: UserPayload
+    resolve: !!js/function >
+      function foobar() {
+        console.log('OMG')
+        return {
+          "name": "Kristiyan Tachev",
+          "email": "test@gmail.com",
+          "phone": 414141,
+          "arrayOfNumbers": [515151, 412414],
+          "arrayOfStrings": ['515151', '412414']
+        }
+      }
+```
+
+
+
+Possible flows
+
+```yml
+seq:
+  # Ordered sequence of nodes
+  Block style: !!seq
+  - Mercury   # Rotates - no light/dark sides.
+  - Venus     # Deadliest. Aptly named.
+  - Earth     # Mostly dirt.
+  - Mars      # Seems empty.
+  - Jupiter   # The king.
+  - Saturn    # Pretty.
+  - Uranus    # Where the sun hardly shines.
+  - Neptune   # Boring. No rings.
+  - Pluto     # You call this a planet?
+  Flow style: !!seq [ Mercury, Venus, Earth, Mars,      # Rocks
+                      Jupiter, Saturn, Uranus, Neptune, # Gas
+                      Pluto ]                           # Overrated
+```
+
+Will create the following json object
+
+```json
+{
+   "seq":{
+      "Block style":[
+         "Mercury",
+         "Venus",
+         "Earth",
+         "Mars",
+         "Jupiter",
+         "Saturn",
+         "Uranus",
+         "Neptune",
+         "Pluto"
+      ],
+      "Flow style":[
+         "Mercury",
+         "Venus",
+         "Earth",
+         "Mars",
+         "Jupiter",
+         "Saturn",
+         "Uranus",
+         "Neptune",
+         "Pluto"
+      ]
+   }
+}
+```
+
+
+
+Dependencies can be injected also
+
+Define inside `$externals` following:
+```yml
+$externals:
+  - map: 🕵️
+    file: ./my-functions.js
+```
+
+Where `./my-functions.js` looks like this
+
+```typescript
+export async function test() {
+  return {};
+}
+export async function test2() {
+  return {};
+}
+export async function test3() {
+  return {};
+}
+```
+
+Then you can inject these functions and use them
+
+```yml
+findUser:
+  deps: [{ provide: 🕵️, map: 'myFunctions'}]
+  type: User
+  args:
+    payload: UserPayload
+  resolve: !!js/function >
+    function foobar(root, payload, context, info) {
+      console.log(this.myFunctions.test()) // {}
+      console.log(this.myFunctions.test2()) // {}
+      console.log(this.myFunctions.test3()) // {}
+      return {
+        "name": "Kristiyan Tachev",
+        "email": "test@gmail.com",
+        "phone": 414141,
+        "arrayOfNumbers": [515151, 412414],
+        "arrayOfStrings": ['515151', '412414']
+      }
+    }
+
+findUser2: 💉./resolvers/findUser.resolver.yml
 ```

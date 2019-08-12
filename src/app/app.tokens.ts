@@ -73,6 +73,12 @@ export type Externals = {
   module?: any;
   transpiledFile?: string;
 };
+
+export interface ResolverDependencies {
+  provide: string;
+  map: string;
+  container: any;
+}
 export interface Config {
   $mode: 'basic' | 'advanced';
   $types: { [key: string]: Args };
@@ -81,6 +87,7 @@ export interface Config {
       type: string;
       args: Args;
       resolve: any;
+      deps?: ResolverDependencies[];
     };
   };
   $directives: string;
@@ -89,9 +96,9 @@ export interface Config {
   $views?: { [key: string]: { query: string; payload: any; html: string } };
 }
 
-export const TypesToken = new InjectionToken<Map<string, GraphQLInputFieldConfigMap>>(
-  '(@rxdi/graphqj): types-token'
-);
+export const TypesToken = new InjectionToken<
+  Map<string, GraphQLInputFieldConfigMap>
+>('(@rxdi/graphqj): types-token');
 export const ArgumentsToken = new InjectionToken<Map<string, Args>>(
   '(@rxdi/graphqj): arguments-token'
 );

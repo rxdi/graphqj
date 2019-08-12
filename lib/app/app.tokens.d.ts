@@ -103,6 +103,11 @@ export declare type Externals = {
     module?: any;
     transpiledFile?: string;
 };
+export interface ResolverDependencies {
+    provide: string;
+    map: string;
+    container: any;
+}
 export interface Config {
     $mode: 'basic' | 'advanced';
     $types: {
@@ -113,6 +118,7 @@ export interface Config {
             type: string;
             args: Args;
             resolve: any;
+            deps?: ResolverDependencies[];
         };
     };
     $directives: string;

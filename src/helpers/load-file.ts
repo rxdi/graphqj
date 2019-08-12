@@ -38,7 +38,6 @@ export async function loadFile(path: string) {
     .substring(0, path.lastIndexOf('/'))
     .replace(process.cwd(), '');
 
-  loadedModule.constructor.$parent = parent;
   traverseMap.push({ parent, path });
   return loadedModule;
 }

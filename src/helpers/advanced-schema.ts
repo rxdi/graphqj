@@ -10,7 +10,8 @@ import {
   Config,
   Roots,
   GlobalUnion,
-  Externals
+  Externals,
+  ResolverDependencies
 } from '../app/app.tokens';
 import { ParseArgs } from './parse-ast';
 import { buildArgumentsSchema } from './parse-args-schema';
@@ -123,6 +124,7 @@ export async function MakeAdvancedSchema(
     const currentType = config.$types[type];
     Object.keys(currentType).forEach(key => {
       types[type] = types[type] || {};
+
       let resolver = currentType[key];
       const interceptors = [];
 
@@ -179,6 +181,19 @@ export async function MakeAdvancedSchema(
 
   Object.keys(config.$resolvers).forEach(resolver => {
     const type = config.$resolvers[resolver].type;
+    let deps = config.$resolvers[resolver].deps || [];
+
+    const mapDependencies = <T>(
+      dependencies: ResolverDependencies[]
+    ): { [map: string]: ResolverDependencies } =>
+      dependencies
+        .map(({ provide, map }) => ({
+          container: Container.get<keyof T>(provide),
+          provide,
+          map
+        }))
+        .reduce((acc, curr) => ({ ...acc, [curr.map]: curr.container }), {});
+
     if (!types[type]) {
       throw new Error(
         `Missing type '${type}', Available types: '${Object.keys(
@@ -204,14 +219,16 @@ export async function MakeAdvancedSchema(
       }
     }
 
+    resolve = isFunction(resolve) ? resolve : () => resolve;
+
     bootstrap.Fields.query[resolver] = {
       type: types[type],
       method_name: resolver,
       args: buildArgumentsSchema(config, resolver),
       public: true,
       method_type: 'query',
-      target: () => {},
-      resolve: isFunction(resolve) ? resolve : () => resolve
+      target: mapDependencies(deps),
+      resolve
     } as any;
   });
 }

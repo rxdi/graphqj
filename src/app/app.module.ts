@@ -31,6 +31,8 @@ import {
   TranspileAndGetAll
 } from '../helpers/transpile-and-load';
 import { traverseAndLoadConfigs } from '../helpers/traverse/traverse';
+import { traverseMap } from '../helpers/traverse-map';
+import { watchBundles } from '../helpers/watch-bundles';
 
 @Module({
   imports: [VoyagerModule.forRoot()],
@@ -139,6 +141,7 @@ ${printSchema(mergedSchemas)}
       ) => {
         config = await config;
         await traverseAndLoadConfigs(config);
+
         if (config.$externals) {
           const compiledPaths = await TranspileAndGetAll(
             config.$externals,
@@ -180,10 +183,10 @@ ${printSchema(mergedSchemas)}
         if (config.$mode === 'basic') {
           await MakeBasicSchema(config, bootstrap);
         }
-
         if (config.$mode === 'advanced') {
           await MakeAdvancedSchema(config, bootstrap);
         }
+        watchBundles(traverseMap.map(f => f.path), config, bootstrap)
         return true;
       }
     }
