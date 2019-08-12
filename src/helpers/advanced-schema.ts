@@ -182,16 +182,17 @@ export async function MakeAdvancedSchema(
   Object.keys(config.$resolvers).forEach(resolver => {
     const type = config.$resolvers[resolver].type;
     let deps = config.$resolvers[resolver].deps || [];
-    const mapDependencies = (
-      a: ResolverDependencies[]
-    ): { [key: string]: ResolverDependencies } =>
-      a.reduce((acc, curr) => ({ ...acc, [curr.map]: curr.container }), {});
 
-    deps = deps.map(({ provide, map }) => ({
-      container: Container.get(provide),
-      provide,
-      map
-    }));
+    const mapDependencies = <T>(
+      dependencies: ResolverDependencies[]
+    ): { [map: string]: ResolverDependencies } =>
+      dependencies
+        .map(({ provide, map }) => ({
+          container: Container.get<keyof T>(provide),
+          provide,
+          map
+        }))
+        .reduce((acc, curr) => ({ ...acc, [curr.map]: curr.container }), {});
 
     if (!types[type]) {
       throw new Error(
