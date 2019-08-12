@@ -684,3 +684,41 @@ Will create the following json object
 }
 ```
 
+
+
+Dependencies can be injected also
+
+Define inside `$externals` following:
+```yml
+$externals:
+  - map: 🕵️
+    file: ./my-function.js
+```
+
+Where `./my-function.js` looks like this
+
+```typescript
+
+```
+
+Or you can load it directly inside YML
+```yml
+findUser:
+  deps: !!seq [{provide: 🕵️, map: 'myFunction'}]
+  type: User
+  args:
+    payload: UserPayload
+  resolve: !!js/function >
+    function findUser() {
+      console.log(this.myFunction)
+      return {
+        "name": "Kristiyan Tachev",
+        "email": "test@gmail.com",
+        "phone": 414141,
+        "arrayOfNumbers": [515151, 412414],
+        "arrayOfStrings": ['515151', '412414']
+      }
+    }
+
+findUser2: 💉./resolvers/findUser.resolver.yml
+```
