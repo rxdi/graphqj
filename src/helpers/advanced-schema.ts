@@ -218,8 +218,8 @@ export async function MakeAdvancedSchema(
       /* Take the first method inside file for resolver */
       resolve = getFirstItem(resolve)
     }
-
-    resolve = isFunction(resolve) ? resolve : () => resolve;
+    const oldResolve = resolve;
+    resolve = isFunction(resolve) ? resolve : () => oldResolve;
 
     Array.from(lazyTypes.keys()).forEach(type => {
       Object.keys(lazyTypes.get(type)).forEach(k => {
