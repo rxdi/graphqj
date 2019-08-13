@@ -238,5 +238,6 @@ export async function MakeAdvancedSchema(
     } as any;
 
   });
+  console.log(bootstrap.Fields.query.findUser3)
   return buildedSchema;
 }

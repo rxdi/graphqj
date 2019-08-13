@@ -2,7 +2,7 @@
 config:
   app:
     local:
-      API_PORT: 9001
+      API_PORT: 9000
       GOOGLE_APPLICATION_CREDENTIALS: ./graphql-server-c12e968bfbac.json
       LINODE_CLI_TOKEN: 7b5c025872ff56922e065cdbc2a54486f418159d65a2333baff69d068c6fff4c
     prod:
@@ -15,5 +15,5 @@ config:
     dryRun: false
 
   schema:
-    introspectionEndpoint: http://localhost:9001/graphql
+    introspectionEndpoint: http://localhost:9000/graphql
     introspectionOutputFolder: ./src/app/core/api-introspection
