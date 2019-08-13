@@ -3,7 +3,7 @@
   "main": "./lib/main.js",
   "version": "0.7.18",
   "scripts": {
-    "start": "gapi start --local --inspect --minify=false",
+    "start": "gapi start --local --minify=false --inspect ",
     "build": "gapi build",
     "patch": "npm version patch && npm publish --update-readme --access public"
   },

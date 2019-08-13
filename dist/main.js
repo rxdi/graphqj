@@ -346,51 +346,25 @@ type: new graphql_1.GraphQLNonNull(new graphql_1.GraphQLList(graphql_1.GraphQLIn
 return type;
 }
 exports.ParseArgs = ParseArgs;
-},{}],"helpers/parse-args-schema.ts":[function(require,module,exports) {
+},{}],"helpers/dynamic-schema/mutators/build-arguments.ts":[function(require,module,exports) {
 "use strict";
 Object.defineProperty(exports, "__esModule", {
 value: true
 });
-const graphql_1 = require("graphql");
+const app_tokens_1 = require("../../../app/app.tokens");
+const parse_ast_1 = require("../../parse-ast");
 const core_1 = require("@rxdi/core");
-const parse_ast_1 = require("./parse-ast");
-const app_tokens_1 = require("../app/app.tokens");
-const InputObjectTypes = new Map();
-exports.buildArgumentsSchema = (config, resolver) => {
-let args = config.$resolvers[resolver].args || {};
-let fields = {};
-const Arguments = core_1.Container.get(app_tokens_1.TypesToken);
-Object.keys(args).forEach(a => {
-const name = args[a].replace('!', '');
-if (Arguments.has(name)) {
-let reusableType = new graphql_1.GraphQLInputObjectType({
-name,
-fields: () => Arguments.get(name)
+function buildArguments(config) {
+Object.keys(config.$args).forEach(reusableArgumentKey => {
+const args = {};
+Object.keys(config.$args[reusableArgumentKey]).forEach(o => {
+args[o] = parse_ast_1.ParseArgs(config.$args[reusableArgumentKey][o]);
+core_1.Container.get(app_tokens_1.TypesToken).set(reusableArgumentKey, args);
 });
-if (InputObjectTypes.has(name)) {
-reusableType = InputObjectTypes.get(name);
-}
-InputObjectTypes.set(name, reusableType);
-if (args[a].includes('!')) {
-fields = {
-payload: {
-type: new graphql_1.GraphQLNonNull(reusableType)
-}
-};
-} else {
-fields = {
-payload: {
-type: reusableType
-}
-};
-}
-return;
-}
-fields[a] = parse_ast_1.ParseArgs(args[a]);
 });
-return fields;
-};
-},{"./parse-ast":"helpers/parse-ast.ts","../app/app.tokens":"app/app.tokens.ts"}],"helpers/lazy-types.ts":[function(require,module,exports) {
+}
+exports.buildArguments = buildArguments;
+},{"../../../app/app.tokens":"app/app.tokens.ts","../../parse-ast":"helpers/parse-ast.ts"}],"helpers/lazy-types.ts":[function(require,module,exports) {
 "use strict";
 Object.defineProperty(exports, "__esModule", {
 value: true
@@ -488,7 +462,125 @@ return defaultValue;
 return type;
 }
 exports.ParseTypesSchema = ParseTypesSchema;
-},{"./lazy-types":"helpers/lazy-types.ts"}],"helpers/isFunction.ts":[function(require,module,exports) {
+},{"./lazy-types":"helpers/lazy-types.ts"}],"helpers/dynamic-schema/mutators/build-types.ts":[function(require,module,exports) {
+"use strict";
+Object.defineProperty(exports, "__esModule", {
+value: true
+});
+const app_tokens_1 = require("../../../app/app.tokens");
+const parse_types_schema_1 = require("../../parse-types.schema");
+const core_1 = require("@rxdi/core");
+const graphql_1 = require("graphql");
+function setPart(externals, resolver, symbolMap) {
+const isCurlyPresent = resolver.includes('{');
+let leftBracket = '(';
+let rightBracket = ')';
+if (isCurlyPresent) {
+leftBracket = '{';
+rightBracket = '}';
+}
+const directive = resolver.split(leftBracket);
+let decorator;
+if (resolver.includes('@')) {
+decorator = directive[1].replace(rightBracket, '').split('@');
+} else {
+const parts = directive[1].replace(rightBracket, '').split(symbolMap);
+for (var i = parts.length; i-- > 1;) {
+parts.splice(i, 0, symbolMap);
+}
+decorator = parts;
+}
+decorator = decorator.filter(i => !!i);
+const symbol = decorator[0];
+const methodToExecute = decorator[1].replace(/ +?/g, '');
+const {
+token,
+interceptor
+} = getSymbolInjectionToken(symbol, methodToExecute, externals);
+return {
+token,
+interceptor
+};
+}
+function getSymbolInjectionToken(symbol, method, externals) {
+const interceptor = findInterceptor(symbol, method, externals);
+return {
+token: new core_1.InjectionToken(core_1.createUniqueHash(`${interceptor}`)),
+interceptor
+};
+}
+function getInjectorSymbols(symbols = [], directives) {
+return symbols.map(symbol => {
+const [isPresent] = directives.filter(d => d.includes(symbol.map));
+if (isPresent) {
+const injector = isPresent.replace(/[^\w\s]/gi, '').replace(/ +?/g, '');
+const method = symbol.module[injector];
+if (!method) {
+throw new Error(`Missing method ${injector} inside ${symbol.file}`);
+}
+return {
+symbol: symbol.map,
+token: new core_1.InjectionToken(core_1.createUniqueHash(`${method}`)),
+module: symbol.module,
+method,
+injector
+};
+}
+}).filter(i => !!i);
+}
+function findInterceptor(symbol, method, externals) {
+const usedExternalModule = externals.find(s => s.map === symbol);
+if (!usedExternalModule.module[method]) {
+throw new Error(`Missing method ${method} inside ${usedExternalModule.file}`);
+}
+return usedExternalModule.module[method];
+}
+function buildTypes(config, types, buildedSchema) {
+Object.keys(config.$types).forEach(type => {
+if (types[type]) {
+return;
+}
+const currentType = config.$types[type];
+Object.keys(currentType).forEach(key => {
+types[type] = types[type] || {};
+let resolver = currentType[key];
+const interceptors = [];
+if (config.$externals) {
+const [symbol] = config.$externals.map(e => e.map).filter(s => resolver.includes(s));
+if (symbol) {
+const hasMultipleSymbols = [...new Set(resolver.split('=>').map(r => r.replace(/ +?/g, '').trim()))];
+if (hasMultipleSymbols.length > 2) {
+const directives = hasMultipleSymbols.slice(1, hasMultipleSymbols.length);
+for (const injectorSymbol of getInjectorSymbols(config.$externals, directives)) {
+core_1.Container.set(injectorSymbol.token, injectorSymbol.method);
+interceptors.push(injectorSymbol.token);
+}
+} else {
+const {
+token,
+interceptor
+} = setPart(config.$externals, resolver, symbol);
+core_1.Container.set(token, interceptor);
+interceptors.push(token);
+}
+resolver = Object.keys(app_tokens_1.Roots).map(node => {
+const types = Object.keys(app_tokens_1.Roots[node]).filter(key => resolver.includes(key));
+if (types.length) {
+return types[0];
+}
+}).filter(i => !!i)[0];
+}
+}
+types[type][key] = parse_types_schema_1.ParseTypesSchema(resolver, key, type, interceptors, types);
+});
+buildedSchema[type] = new graphql_1.GraphQLObjectType({
+name: type,
+fields: () => types[type]
+});
+});
+}
+exports.buildTypes = buildTypes;
+},{"../../../app/app.tokens":"app/app.tokens.ts","../../parse-types.schema":"helpers/parse-types.schema.ts"}],"helpers/isFunction.ts":[function(require,module,exports) {
 "use strict";
 Object.defineProperty(exports, "__esModule", {
 value: true
@@ -519,7 +611,104 @@ object = object[firstKey];
 return object;
 }
 exports.getFirstItem = getFirstItem;
-},{"./isFunction":"helpers/isFunction.ts"}],"helpers/advanced-schema.ts":[function(require,module,exports) {
+},{"./isFunction":"helpers/isFunction.ts"}],"helpers/parse-args-schema.ts":[function(require,module,exports) {
+"use strict";
+Object.defineProperty(exports, "__esModule", {
+value: true
+});
+const graphql_1 = require("graphql");
+const core_1 = require("@rxdi/core");
+const parse_ast_1 = require("./parse-ast");
+const app_tokens_1 = require("../app/app.tokens");
+const InputObjectTypes = new Map();
+exports.buildArgumentsSchema = (config, resolver) => {
+let args = config.$resolvers[resolver].args || {};
+let fields = {};
+const Arguments = core_1.Container.get(app_tokens_1.TypesToken);
+Object.keys(args).forEach(a => {
+const name = args[a].replace('!', '');
+if (Arguments.has(name)) {
+let reusableType = new graphql_1.GraphQLInputObjectType({
+name,
+fields: () => Arguments.get(name)
+});
+if (InputObjectTypes.has(name)) {
+reusableType = InputObjectTypes.get(name);
+}
+InputObjectTypes.set(name, reusableType);
+if (args[a].includes('!')) {
+fields = {
+payload: {
+type: new graphql_1.GraphQLNonNull(reusableType)
+}
+};
+} else {
+fields = {
+payload: {
+type: reusableType
+}
+};
+}
+return;
+}
+fields[a] = parse_ast_1.ParseArgs(args[a]);
+});
+return fields;
+};
+},{"./parse-ast":"helpers/parse-ast.ts","../app/app.tokens":"app/app.tokens.ts"}],"helpers/dynamic-schema/mutators/build-resolvers.ts":[function(require,module,exports) {
+"use strict";
+Object.defineProperty(exports, "__esModule", {
+value: true
+});
+const isFunction_1 = require("../../isFunction");
+const lazy_types_1 = require("../../lazy-types");
+const get_first_item_1 = require("../../get-first-item");
+const parse_args_schema_1 = require("../../parse-args-schema");
+const core_1 = require("@rxdi/core");
+const core_2 = require("@gapi/core");
+function buildResolvers(config, types, buildedSchema) {
+Object.keys(config.$resolvers).forEach(resolver => {
+const type = config.$resolvers[resolver].type;
+const method = (config.$resolvers[resolver].method || 'query').toLocaleLowerCase();
+let deps = config.$resolvers[resolver].deps || [];
+const mapDependencies = dependencies => dependencies.map(({
+provide,
+map
+}) => ({
+container: core_1.Container.get(provide),
+provide,
+map
+})).reduce((acc, curr) => Object.assign({}, acc, {
+[curr.map]: curr.container
+}), {});
+if (!buildedSchema[type]) {
+throw new Error(`Missing type '${type}', Available types: '${Object.keys(types).toString()}'`);
+}
+let resolve = config.$resolvers[resolver].resolve;
+if (!isFunction_1.isFunction(resolve) && !Array.isArray(resolve)) {
+/* Take the first method inside file for resolver */
+resolve = get_first_item_1.getFirstItem(resolve);
+}
+const oldResolve = resolve;
+resolve = isFunction_1.isFunction(resolve) ? resolve : () => oldResolve;
+Array.from(lazy_types_1.lazyTypes.keys()).forEach(type => {
+Object.keys(lazy_types_1.lazyTypes.get(type)).forEach(k => {
+buildedSchema[type].getFields()[k].type = buildedSchema[type]; // types[type].getFields()[k].resolve = resolve;
+});
+});
+core_1.Container.get(core_2.BootstrapService).Fields[method][resolver] = {
+type: buildedSchema[type],
+method_name: resolver,
+args: parse_args_schema_1.buildArgumentsSchema(config, resolver),
+public: true,
+method_type: method,
+target: mapDependencies(deps),
+resolve
+};
+});
+}
+exports.buildResolvers = buildResolvers;
+},{"../../isFunction":"helpers/isFunction.ts","../../lazy-types":"helpers/lazy-types.ts","../../get-first-item":"helpers/get-first-item.ts","../../parse-args-schema":"helpers/parse-args-schema.ts"}],"helpers/advanced-schema.ts":[function(require,module,exports) {
 "use strict";
 var __awaiter = this && this.__awaiter || function (thisArg, _arguments, P, generator) {
 return new (P || (P = Promise))(function (resolve, reject) {
@@ -548,15 +737,10 @@ step((generator = generator.apply(thisArg, _arguments || [])).next());
 Object.defineProperty(exports, "__esModule", {
 value: true
 });
-const graphql_1 = require("graphql");
 const core_1 = require("@gapi/core");
-const app_tokens_1 = require("../app/app.tokens");
-const parse_ast_1 = require("./parse-ast");
-const parse_args_schema_1 = require("./parse-args-schema");
-const parse_types_schema_1 = require("./parse-types.schema");
-const isFunction_1 = require("./isFunction");
-const lazy_types_1 = require("./lazy-types");
-const get_first_item_1 = require("./get-first-item");
+const build_arguments_1 = require("../helpers/dynamic-schema/mutators/build-arguments");
+const build_types_1 = require("../helpers/dynamic-schema/mutators/build-types");
+const build_resolvers_1 = require("../helpers/dynamic-schema/mutators/build-resolvers");
 function getInjectorSymbols(symbols = [], directives) {
 return symbols.map(symbol => {
 const [isPresent] = directives.filter(d => d.includes(symbol.map));
@@ -621,106 +805,19 @@ token,
 interceptor
 };
 }
-function MakeAdvancedSchema(config, bootstrap) {
+function MakeAdvancedSchema(config) {
 return __awaiter(this, void 0, void 0, function* () {
 const types = {};
 const buildedSchema = {};
-const Arguments = core_1.Container.get(app_tokens_1.TypesToken);
 config.$args = config.$args || {};
-Object.keys(config.$args).forEach(reusableArgumentKey => {
-const args = {};
-Object.keys(config.$args[reusableArgumentKey]).forEach(o => {
-args[o] = parse_ast_1.ParseArgs(config.$args[reusableArgumentKey][o]);
-Arguments.set(reusableArgumentKey, args);
-});
-});
-Object.keys(config.$types).forEach(type => {
-if (types[type]) {
-return;
-}
-const currentType = config.$types[type];
-Object.keys(currentType).forEach(key => {
-types[type] = types[type] || {};
-let resolver = currentType[key];
-const interceptors = [];
-if (config.$externals) {
-const [symbol] = config.$externals.map(e => e.map).filter(s => resolver.includes(s));
-if (symbol) {
-const hasMultipleSymbols = [...new Set(resolver.split('=>').map(r => r.replace(/ +?/g, '').trim()))];
-if (hasMultipleSymbols.length > 2) {
-const directives = hasMultipleSymbols.slice(1, hasMultipleSymbols.length);
-for (const injectorSymbol of getInjectorSymbols(config.$externals, directives)) {
-core_1.Container.set(injectorSymbol.token, injectorSymbol.method);
-interceptors.push(injectorSymbol.token);
-}
-} else {
-const {
-token,
-interceptor
-} = setPart(config.$externals, resolver, symbol);
-core_1.Container.set(token, interceptor);
-interceptors.push(token);
-}
-resolver = Object.keys(app_tokens_1.Roots).map(node => {
-const types = Object.keys(app_tokens_1.Roots[node]).filter(key => resolver.includes(key));
-if (types.length) {
-return types[0];
-}
-}).filter(i => !!i)[0];
-}
-}
-types[type][key] = parse_types_schema_1.ParseTypesSchema(resolver, key, type, interceptors, types);
-});
-buildedSchema[type] = new graphql_1.GraphQLObjectType({
-name: type,
-fields: () => types[type]
-});
-});
-Object.keys(config.$resolvers).forEach(resolver => {
-const type = config.$resolvers[resolver].type;
-const method = (config.$resolvers[resolver].method || 'query').toLocaleLowerCase();
-let deps = config.$resolvers[resolver].deps || [];
-const mapDependencies = dependencies => dependencies.map(({
-provide,
-map
-}) => ({
-container: core_1.Container.get(provide),
-provide,
-map
-})).reduce((acc, curr) => Object.assign({}, acc, {
-[curr.map]: curr.container
-}), {});
-if (!buildedSchema[type]) {
-throw new Error(`Missing type '${type}', Available types: '${Object.keys(types).toString()}'`);
-}
-let resolve = config.$resolvers[resolver].resolve;
-if (!isFunction_1.isFunction(resolve) && !Array.isArray(resolve)) {
-/* Take the first method inside file for resolver */
-resolve = get_first_item_1.getFirstItem(resolve);
-}
-const oldResolve = resolve;
-resolve = isFunction_1.isFunction(resolve) ? resolve : () => oldResolve;
-Array.from(lazy_types_1.lazyTypes.keys()).forEach(type => {
-Object.keys(lazy_types_1.lazyTypes.get(type)).forEach(k => {
-buildedSchema[type].getFields()[k].type = buildedSchema[type]; // types[type].getFields()[k].resolve = resolve;
-});
-});
-bootstrap.Fields[method][resolver] = {
-type: buildedSchema[type],
-method_name: resolver,
-args: parse_args_schema_1.buildArgumentsSchema(config, resolver),
-public: true,
-method_type: method,
-target: mapDependencies(deps),
-resolve
-};
-});
-console.log(bootstrap.Fields.query.findUser3);
+build_arguments_1.buildArguments(config);
+build_types_1.buildTypes(config, types, buildedSchema);
+build_resolvers_1.buildResolvers(config, types, buildedSchema);
 return buildedSchema;
 });
 }
 exports.MakeAdvancedSchema = MakeAdvancedSchema;
-},{"../app/app.tokens":"app/app.tokens.ts","./parse-ast":"helpers/parse-ast.ts","./parse-args-schema":"helpers/parse-args-schema.ts","./parse-types.schema":"helpers/parse-types.schema.ts","./isFunction":"helpers/isFunction.ts","./lazy-types":"helpers/lazy-types.ts","./get-first-item":"helpers/get-first-item.ts"}],"helpers/basic-schema.ts":[function(require,module,exports) {
+},{"../helpers/dynamic-schema/mutators/build-arguments":"helpers/dynamic-schema/mutators/build-arguments.ts","../helpers/dynamic-schema/mutators/build-types":"helpers/dynamic-schema/mutators/build-types.ts","../helpers/dynamic-schema/mutators/build-resolvers":"helpers/dynamic-schema/mutators/build-resolvers.ts"}],"helpers/basic-schema.ts":[function(require,module,exports) {
 "use strict";
 Object.defineProperty(exports, "__esModule", {
 value: true
@@ -848,54 +945,7 @@ transpiledFile: path_1.join(process.cwd(), outDir, path_1.parse(path.file).base.
 });
 }
 exports.TranspileAndGetAll = TranspileAndGetAll;
-},{"./typescript.builder":"helpers/typescript.builder.ts"}],"helpers/is-array.ts":[function(require,module,exports) {
-"use strict";
-Object.defineProperty(exports, "__esModule", {
-value: true
-});
-function isArray(o) {
-return Object.prototype.toString.call(o) === '[object Array]';
-}
-exports.isArray = isArray;
-},{}],"helpers/traverse/traverse-array.ts":[function(require,module,exports) {
-"use strict";
-var __awaiter = this && this.__awaiter || function (thisArg, _arguments, P, generator) {
-return new (P || (P = Promise))(function (resolve, reject) {
-function fulfilled(value) {
-try {
-step(generator.next(value));
-} catch (e) {
-reject(e);
-}
-}
-function rejected(value) {
-try {
-step(generator["throw"](value));
-} catch (e) {
-reject(e);
-}
-}
-function step(result) {
-result.done ? resolve(result.value) : new P(function (resolve) {
-resolve(result.value);
-}).then(fulfilled, rejected);
-}
-step((generator = generator.apply(thisArg, _arguments || [])).next());
-});
-};
-Object.defineProperty(exports, "__esModule", {
-value: true
-});
-const traverse_1 = require("./traverse");
-function traverseArray(arr) {
-return __awaiter(this, void 0, void 0, function* () {
-for (const x of arr) {
-yield traverse_1.traverseAndLoadConfigs(x);
-}
-});
-}
-exports.traverseArray = traverseArray;
-},{"./traverse":"helpers/traverse/traverse.ts"}],"helpers/is-invalid-path.ts":[function(require,module,exports) {
+},{"./typescript.builder":"helpers/typescript.builder.ts"}],"helpers/is-invalid-path.ts":[function(require,module,exports) {
 "use strict";
 Object.defineProperty(exports, "__esModule", {
 value: true
@@ -1032,7 +1082,7 @@ return loadedModule;
 });
 }
 exports.loadFile = loadFile;
-},{"./transpile-and-load":"helpers/transpile-and-load.ts","./is-invalid-path":"helpers/is-invalid-path.ts","./traverse-map":"helpers/traverse-map.ts","./load-yml":"helpers/load-yml.ts"}],"helpers/traverse/traverse-object.ts":[function(require,module,exports) {
+},{"./transpile-and-load":"helpers/transpile-and-load.ts","./is-invalid-path":"helpers/is-invalid-path.ts","./traverse-map":"helpers/traverse-map.ts","./load-yml":"helpers/load-yml.ts"}],"helpers/traverse/test.ts":[function(require,module,exports) {
 "use strict";
 var __awaiter = this && this.__awaiter || function (thisArg, _arguments, P, generator) {
 return new (P || (P = Promise))(function (resolve, reject) {
@@ -1061,40 +1111,67 @@ step((generator = generator.apply(thisArg, _arguments || [])).next());
 Object.defineProperty(exports, "__esModule", {
 value: true
 });
-const traverse_1 = require("./traverse");
 const load_file_1 = require("../load-file");
 const path_1 = require("path");
-function traverseObject(obj) {
+function replaceInjectSymbol(path) {
+return path.replace('💉', '');
+}
+exports.replaceInjectSymbol = replaceInjectSymbol;
+function deep(value) {
 return __awaiter(this, void 0, void 0, function* () {
-for (let [k, v] of Object.entries(obj)) {
-if (obj.hasOwnProperty(k)) {
-if (typeof obj[k] === 'string' && obj[k].includes('💉')) {
-obj[k] = yield load_file_1.loadFile(path_1.join(process.cwd(), obj[k].replace('💉', '')));
+if (typeof value !== 'object' || value === null) {
+return value;
 }
-yield traverse_1.traverseAndLoadConfigs(obj[k]);
+if (Array.isArray(value)) {
+return deepArray(value);
 }
-}
+return deepObject(value);
 });
 }
-exports.traverseObject = traverseObject;
-function traverseObjectForInjectables(obj, paths) {
+exports.deep = deep;
+exports.meta = new Map();
+function deepObject(source) {
 return __awaiter(this, void 0, void 0, function* () {
-for (let [k, v] of Object.entries(obj)) {
-if (obj.hasOwnProperty(k)) {
-if (typeof obj[k] === 'string' && obj[k].includes('💉')) {
-console.log(obj);
-paths.push({
-query: null,
-filePath: obj[k].replace('💉', '')
+const result = {};
+let path;
+let meta = {};
+for (let [key, value] of Object.entries(source)) {
+if (typeof value === 'string' && value.includes('💉')) {
+path = `${replaceInjectSymbol(value)}`;
+const mod = yield load_file_1.loadFile(path_1.join(process.cwd(), path));
+result[key] = yield deep(mod);
+meta[key] = path;
+Object.defineProperty(result, `_meta`, {
+value: meta,
+enumerable: false,
+writable: true
+});
+} else {
+result[key] = yield deep(value);
+}
+}
+return result;
 });
 }
-yield traverse_1.traverseAndLoadConfigs(obj[k]);
-}
-}
+exports.deepObject = deepObject;
+function deepArray(collection) {
+return __awaiter(this, void 0, void 0, function* () {
+return yield Promise.all(collection.map(value => __awaiter(this, void 0, void 0, function* () {
+return deep(value);
+})));
 });
 }
-exports.traverseObjectForInjectables = traverseObjectForInjectables;
-},{"./traverse":"helpers/traverse/traverse.ts","../load-file":"helpers/load-file.ts"}],"helpers/traverse/traverse.ts":[function(require,module,exports) {
+exports.deepArray = deepArray;
+},{"../load-file":"helpers/load-file.ts"}],"helpers/is-array.ts":[function(require,module,exports) {
+"use strict";
+Object.defineProperty(exports, "__esModule", {
+value: true
+});
+function isArray(o) {
+return Object.prototype.toString.call(o) === '[object Array]';
+}
+exports.isArray = isArray;
+},{}],"helpers/traverse/traverse.ts":[function(require,module,exports) {
 "use strict";
 var __awaiter = this && this.__awaiter || function (thisArg, _arguments, P, generator) {
 return new (P || (P = Promise))(function (resolve, reject) {
@@ -1124,27 +1201,40 @@ Object.defineProperty(exports, "__esModule", {
 value: true
 });
 const is_array_1 = require("../is-array");
-const traverse_array_1 = require("./traverse-array");
-const traverse_object_1 = require("./traverse-object");
-function traverseAndLoadConfigs(x) {
+function traverse(x, find) {
 return __awaiter(this, void 0, void 0, function* () {
 if (is_array_1.isArray(x)) {
-yield traverse_array_1.traverseArray(x);
+yield traverseArray(x, find);
 } else if (typeof x === 'object' && x !== null) {
-yield traverse_object_1.traverseObject(x);
+yield traverseObject(x, find);
 }
+null;
 });
 }
-exports.traverseAndLoadConfigs = traverseAndLoadConfigs;
-function traverseAndGetInjectables(x, paths) {
+exports.traverse = traverse;
+function traverseObject(obj, find) {
 return __awaiter(this, void 0, void 0, function* () {
-if (typeof x === 'object' && x !== null) {
-yield traverse_object_1.traverseObjectForInjectables(x, paths);
+for (let [k, v] of Object.entries(obj)) {
+if (obj.hasOwnProperty(k)) {
+if (find(k, v)) {
+break;
+} else {
+yield traverse(obj[k], find);
+}
+}
 }
 });
 }
-exports.traverseAndGetInjectables = traverseAndGetInjectables;
-},{"../is-array":"helpers/is-array.ts","./traverse-array":"helpers/traverse/traverse-array.ts","./traverse-object":"helpers/traverse/traverse-object.ts"}],"helpers/react-to-changes.ts":[function(require,module,exports) {
+exports.traverseObject = traverseObject;
+function traverseArray(arr, find) {
+return __awaiter(this, void 0, void 0, function* () {
+for (const x of arr) {
+return yield traverse(x, find);
+}
+});
+}
+exports.traverseArray = traverseArray;
+},{"../is-array":"helpers/is-array.ts"}],"helpers/react-to-changes.ts":[function(require,module,exports) {
 "use strict";
 var __awaiter = this && this.__awaiter || function (thisArg, _arguments, P, generator) {
 return new (P || (P = Promise))(function (resolve, reject) {
@@ -1175,21 +1265,41 @@ value: true
 });
 const traverse_1 = require("./traverse/traverse");
 const core_1 = require("@gapi/core");
+const get_first_item_1 = require("./get-first-item");
 const load_file_1 = require("./load-file");
 const advanced_schema_1 = require("./advanced-schema");
+const test_1 = require("./traverse/test");
+function findMetaKey(path, meta) {
+return Object.keys(meta).find(k => meta[k] === path);
+}
+function getMetaPath(path) {
+return `.${path.replace(process.cwd(), '')}`;
+}
 function reactToChanges(path, config) {
 return __awaiter(this, void 0, void 0, function* () {
-const newModule = yield load_file_1.loadFile(path);
-yield traverse_1.traverseAndLoadConfigs(config);
-console.log(config.$resolvers.findUser2);
-const bootstrap = core_1.Container.get(core_1.BootstrapService);
-const apollo = core_1.Container.get(core_1.ApolloService);
-yield advanced_schema_1.MakeAdvancedSchema(config, bootstrap);
-apollo.init(); // await SchemaIntrospection()
+const newFile = yield load_file_1.loadFile(path);
+const metaKey = findMetaKey(getMetaPath(path), config._meta);
+if (metaKey) {
+config[metaKey] = newFile;
+config[metaKey] = yield test_1.deep(config[metaKey]);
+} else {
+yield traverse_1.traverse(config, (k, v) => {
+if (typeof v === 'object' && v._meta) {
+const foundMetaKey = findMetaKey(getMetaPath(path), v._meta);
+if (foundMetaKey) {
+v[foundMetaKey] = get_first_item_1.getFirstItem(newFile);
+return true;
+}
+}
+return false;
+});
+}
+yield advanced_schema_1.MakeAdvancedSchema(config);
+core_1.Container.get(core_1.ApolloService).init(); // await SchemaIntrospection()
 });
 }
 exports.reactToChanges = reactToChanges;
-},{"./traverse/traverse":"helpers/traverse/traverse.ts","./load-file":"helpers/load-file.ts","./advanced-schema":"helpers/advanced-schema.ts"}],"helpers/watch-bundles.ts":[function(require,module,exports) {
+},{"./traverse/traverse":"helpers/traverse/traverse.ts","./get-first-item":"helpers/get-first-item.ts","./load-file":"helpers/load-file.ts","./advanced-schema":"helpers/advanced-schema.ts","./traverse/test":"helpers/traverse/test.ts"}],"helpers/watch-bundles.ts":[function(require,module,exports) {
 "use strict";
 var __awaiter = this && this.__awaiter || function (thisArg, _arguments, P, generator) {
 return new (P || (P = Promise))(function (resolve, reject) {
@@ -1277,7 +1387,7 @@ const basic_schema_1 = require("../helpers/basic-schema");
 const path_1 = require("path");
 const app_tokens_1 = require("./app.tokens");
 const transpile_and_load_1 = require("../helpers/transpile-and-load");
-const traverse_1 = require("../helpers/traverse/traverse");
+const test_1 = require("../helpers/traverse/test");
 const traverse_map_1 = require("../helpers/traverse-map");
 const watch_bundles_1 = require("../helpers/watch-bundles");
 let AppModule = class AppModule {};
@@ -1355,10 +1465,8 @@ provide: 'Run',
 deps: [app_tokens_1.Config, core_1.BootstrapService, app_tokens_1.TypesToken, app_tokens_1.ResolversToken, app_tokens_1.ArgumentsToken, app_tokens_1.GuardsToken, core_1.GRAPHQL_PLUGIN_CONFIG],
 lazy: true,
 useFactory: (config, bootstrap, types, resolvers, args, guards, graphqlConfig) => __awaiter(this, void 0, void 0, function* () {
-config = yield config; // const paths = [];
-// await traverseAndGetInjectables(config, paths)
-// console.log(paths);
-yield traverse_1.traverseAndLoadConfigs(config);
+config = yield config;
+config = yield test_1.deep(config);
 if (config.$externals) {
 const compiledPaths = yield transpile_and_load_1.TranspileAndGetAll(config.$externals, './.gj/out');
 config.$externals = compiledPaths.map(external => {
@@ -1386,7 +1494,7 @@ if (config.$mode === 'basic') {
 yield basic_schema_1.MakeBasicSchema(config, bootstrap);
 }
 if (config.$mode === 'advanced') {
-yield advanced_schema_1.MakeAdvancedSchema(config, bootstrap);
+yield advanced_schema_1.MakeAdvancedSchema(config);
 }
 watch_bundles_1.watchBundles(traverse_map_1.traverseMap.map(f => f.path), config);
 return true;
@@ -1394,7 +1502,7 @@ return true;
 }]
 })], AppModule);
 exports.AppModule = AppModule;
-},{"../helpers/args-extractors":"helpers/args-extractors.ts","../helpers/set-config":"helpers/set-config.ts","../helpers/basic.template":"helpers/basic.template.ts","../helpers/advanced-schema":"helpers/advanced-schema.ts","../helpers/basic-schema":"helpers/basic-schema.ts","./app.tokens":"app/app.tokens.ts","../helpers/transpile-and-load":"helpers/transpile-and-load.ts","../helpers/traverse/traverse":"helpers/traverse/traverse.ts","../helpers/traverse-map":"helpers/traverse-map.ts","../helpers/watch-bundles":"helpers/watch-bundles.ts"}],"helpers/self-child.ts":[function(require,module,exports) {
+},{"../helpers/args-extractors":"helpers/args-extractors.ts","../helpers/set-config":"helpers/set-config.ts","../helpers/basic.template":"helpers/basic.template.ts","../helpers/advanced-schema":"helpers/advanced-schema.ts","../helpers/basic-schema":"helpers/basic-schema.ts","./app.tokens":"app/app.tokens.ts","../helpers/transpile-and-load":"helpers/transpile-and-load.ts","../helpers/traverse/test":"helpers/traverse/test.ts","../helpers/traverse-map":"helpers/traverse-map.ts","../helpers/watch-bundles":"helpers/watch-bundles.ts"}],"helpers/self-child.ts":[function(require,module,exports) {
 "use strict";
 Object.defineProperty(exports, "__esModule", {
 value: true
