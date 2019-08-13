@@ -21,8 +21,8 @@ export async function loadFile(path: string) {
       );
     }
   }
-
-  if (path.includes('.ts')) {
+  console.log(path)
+  if (path.includes('.ts') || path.includes('.js')) {
     loadedModule = await TranspileAndLoad(path, './.gj/out');
   } else if (path.includes('.yml')) {
     loadedModule = load(await promisify(readFile)(path, { encoding: 'utf-8' }));
@@ -31,7 +31,7 @@ export async function loadFile(path: string) {
   } else if (path.includes('.html')) {
     loadedModule = await promisify(readFile)(path, { encoding: 'utf-8' });
   } else {
-    loadedModule = require('esm')(module)(path);
+    loadedModule = require(path);
   }
 
   const parent = path

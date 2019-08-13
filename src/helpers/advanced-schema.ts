@@ -1,4 +1,4 @@
-import { GraphQLObjectType } from 'graphql';
+import { GraphQLObjectType, GraphQLSchema } from 'graphql';
 import {
   BootstrapService,
   Container,
@@ -109,7 +109,7 @@ export async function MakeAdvancedSchema(
   bootstrap: BootstrapService
 ) {
   const types = {};
-  const buildedSchema = {};
+  const buildedSchema: GraphQLSchema = {} as any;
   const Arguments = Container.get(TypesToken);
   config.$args = config.$args || {};
   Object.keys(config.$args).forEach(reusableArgumentKey => {
@@ -247,5 +247,7 @@ export async function MakeAdvancedSchema(
       target: mapDependencies(deps),
       resolve
     } as any;
+
   });
+  return buildedSchema;
 }

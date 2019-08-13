@@ -184,9 +184,10 @@ ${printSchema(mergedSchemas)}
           await MakeBasicSchema(config, bootstrap);
         }
         if (config.$mode === 'advanced') {
-          await MakeAdvancedSchema(config, bootstrap);
+          const schema = await MakeAdvancedSchema(config, bootstrap);
+          console.log(schema)
         }
-        watchBundles(traverseMap.map(f => f.path), config, bootstrap)
+        watchBundles(traverseMap.map(f => f.path), config)
         return true;
       }
     }

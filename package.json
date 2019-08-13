@@ -11,8 +11,10 @@
     "@gapi/core": "^1.8.5",
     "@gapi/voyager": "^1.8.5",
     "chokidar": "^3.0.2",
+    "clear-module": "^4.0.0",
     "esm": "^3.2.25",
     "fast-glob": "^3.0.4",
+    "jquery": "^3.4.1",
     "js-yaml": "^3.13.1"
   },
   "esm": {
@@ -33,6 +35,7 @@
     "@rxdi/parcel-plugin-shebang": "0.7.5",
     "@types/graphql": "^14.2.3",
     "@types/js-yaml": "^3.12.1",
+    "moment": "^2.24.0",
     "typescript": "^3.5.3"
   },
   "types": "./lib/index.d.ts",
