@@ -18,6 +18,7 @@ import { buildArgumentsSchema } from './parse-args-schema';
 import { ParseTypesSchema } from './parse-types.schema';
 import { isFunction } from './isFunction';
 import { lazyTypes } from './lazy-types';
+import { getFirstItem } from './get-first-item';
 
 function getInjectorSymbols(symbols: Externals[] = [], directives: string[]) {
   return symbols
@@ -215,19 +216,7 @@ export async function MakeAdvancedSchema(
     let resolve = config.$resolvers[resolver].resolve;
     if (!isFunction(resolve) && !Array.isArray(resolve)) {
       /* Take the first method inside file for resolver */
-      let firstKey: string;
-      for (var key in resolve) {
-        firstKey = key;
-        break;
-      }
-      if (!resolve[firstKey]) {
-        throw new Error(
-          `Missing resolver for ${JSON.stringify(config.$resolvers[resolver])}`
-        );
-      }
-      if (isFunction(resolve[firstKey])) {
-        resolve = resolve[firstKey];
-      }
+      resolve = getFirstItem(resolve)
     }
 
     resolve = isFunction(resolve) ? resolve : () => resolve;

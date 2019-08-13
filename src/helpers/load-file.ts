@@ -21,7 +21,7 @@ export async function loadFile(path: string) {
       );
     }
   }
-  console.log(path)
+
   if (path.includes('.ts') || path.includes('.js')) {
     loadedModule = await TranspileAndLoad(path, './.gj/out');
   } else if (path.includes('.yml')) {
