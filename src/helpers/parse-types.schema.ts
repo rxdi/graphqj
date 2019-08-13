@@ -15,7 +15,7 @@ export function ParseTypesSchema(
   key: string,
   parentType: string,
   interceptors: InjectionToken<(...args: any[]) => any>[],
-  types: {[key: string]: any}
+  types: { [key: string]: any }
 ) {
   let type: { type: GraphQLScalarType | GraphQLList<GraphQLType> };
   if (ck === 'string' || ck === 'String') {
@@ -42,7 +42,8 @@ export function ParseTypesSchema(
     type = { type: new GraphQLList(GraphQLInt) };
   }
   const isRecursiveType = ck
-    .replace('[]', '')
+    .replace('(', '')
+    .replace(')', '')
     .replace('!', '')
     .replace('[', '')
     .replace(']', '');
@@ -51,7 +52,7 @@ export function ParseTypesSchema(
       ...lazyTypes.get(parentType),
       [key]: isRecursiveType
     });
-    type = { type: types[parentType]} as any; // хмм
+    type = { type: types[parentType] } as any; // хмм
   }
   if (!type) {
     throw new Error(`Wrong plugged type ${ck}`);

@@ -9,11 +9,14 @@ export async function TranspileAndLoad(path: string, outDir: string) {
   // if (transpilerCache.has(path)) {
   //   return transpilerCache.get(path);
   // }
+  // console.log('Before');
   await TranspileTypescript([path], outDir);
   Object.keys(require.cache).forEach(function(key) { delete require.cache[key] })
-  clearModule(getTranspiledFilePath(path, outDir))
-  const file = require(getTranspiledFilePath(path, outDir));
+  const transpiledPath = getTranspiledFilePath(path, outDir);
+  clearModule(transpiledPath)
+  const file = require(transpiledPath);
   // transpilerCache.set(path, file);
+  // console.log(file);
   return file;
 }
 
@@ -34,6 +37,7 @@ export async function TranspileAndGetAll(
   externals: Externals[],
   outDir: string
 ) {
+  // console.log('Before All');
   await TranspileTypescript(
     externals
       .map(external => external.file)

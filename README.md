@@ -758,10 +758,3 @@ findUser:
 
 findUser2: 💉./resolvers/findUser.resolver.yml
 ```
-
-
-{
-  "findUser": {
-    "deps": 
-  }
-}
