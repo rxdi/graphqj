@@ -97,6 +97,7 @@ export interface Config {
   $externals: Externals[];
   $args: any;
   $views?: { [key: string]: { query: string; payload: any; html: string } };
+  _meta: {[key: string]: string}; // Folder mapping for every module
 }
 
 export const TypesToken = new InjectionToken<

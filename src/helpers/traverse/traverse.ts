@@ -1,17 +1,34 @@
 import { isArray } from '../is-array';
-import { traverseArray } from './traverse-array';
-import { traverseObject, traverseObjectForInjectables } from './traverse-object';
 
-export async function traverseAndLoadConfigs<T>(x: T) {
+export async function traverse<T>(x: T, find: (k: string, v: T) => boolean) {
   if (isArray(x)) {
-    await traverseArray(x);
+    await traverseArray(x, find);
   } else if (typeof x === 'object' && x !== null) {
-    await traverseObject(x);
+    await traverseObject(x, find);
+  }
+  null;
+}
+
+export async function traverseObject<T>(
+  obj: T,
+  find: (k: string, v: T) => boolean
+) {
+  for (let [k, v] of Object.entries(obj)) {
+    if (obj.hasOwnProperty(k)) {
+      if (find(k, v)) {
+        break;
+      } else {
+        await traverse(obj[k], find);
+      }
+    }
   }
 }
 
-export async function traverseAndGetInjectables<T>(x: T, paths: {query: string; filePath: string;}[]) {
-  if (typeof x === 'object' && x !== null) {
-    await traverseObjectForInjectables(x, paths);
+export async function traverseArray<T>(
+  arr: T,
+  find: (k: string, v: T) => boolean
+) {
+  for (const x of arr as any) {
+    return await traverse(x, find);
   }
 }

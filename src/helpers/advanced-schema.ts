@@ -13,12 +13,14 @@ import {
   Externals,
   ResolverDependencies
 } from '../app/app.tokens';
-import { ParseArgs } from './parse-ast';
 import { buildArgumentsSchema } from './parse-args-schema';
 import { ParseTypesSchema } from './parse-types.schema';
 import { isFunction } from './isFunction';
 import { lazyTypes } from './lazy-types';
 import { getFirstItem } from './get-first-item';
+import { buildArguments } from '../helpers/dynamic-schema/mutators/build-arguments';
+import { buildTypes } from '../helpers/dynamic-schema/mutators/build-types';
+import { buildResolvers } from '../helpers/dynamic-schema/mutators/build-resolvers';
 
 function getInjectorSymbols(symbols: Externals[] = [], directives: string[]) {
   return symbols
@@ -105,138 +107,13 @@ function setPart(externals: Externals[], resolver: string, symbolMap: string) {
     interceptor
   };
 }
-export async function MakeAdvancedSchema(
-  config: Config,
-  bootstrap: BootstrapService
-) {
+
+export async function MakeAdvancedSchema(config: Config) {
   const types = {};
   const buildedSchema: GraphQLSchema = {} as any;
-  const Arguments = Container.get(TypesToken);
   config.$args = config.$args || {};
-  Object.keys(config.$args).forEach(reusableArgumentKey => {
-    const args = {};
-    Object.keys(config.$args[reusableArgumentKey]).forEach(o => {
-      args[o] = ParseArgs(config.$args[reusableArgumentKey][o]);
-      Arguments.set(reusableArgumentKey, args);
-    });
-  });
-  Object.keys(config.$types).forEach(type => {
-    if (types[type]) {
-      return;
-    }
-    const currentType = config.$types[type];
-    Object.keys(currentType).forEach(key => {
-      types[type] = types[type] || {};
-
-      let resolver = currentType[key];
-      const interceptors = [];
-
-      if (config.$externals) {
-        const [symbol] = config.$externals
-          .map(e => e.map)
-          .filter(s => resolver.includes(s));
-        if (symbol) {
-          const hasMultipleSymbols = [
-            ...new Set(
-              resolver.split('=>').map(r => r.replace(/ +?/g, '').trim())
-            )
-          ];
-          if (hasMultipleSymbols.length > 2) {
-            const directives = hasMultipleSymbols.slice(
-              1,
-              hasMultipleSymbols.length
-            );
-            for (const injectorSymbol of getInjectorSymbols(
-              config.$externals,
-              directives
-            )) {
-              Container.set(injectorSymbol.token, injectorSymbol.method);
-              interceptors.push(injectorSymbol.token);
-            }
-          } else {
-            const { token, interceptor } = setPart(
-              config.$externals,
-              resolver,
-              symbol
-            );
-            Container.set(token, interceptor);
-            interceptors.push(token);
-          }
-          resolver = Object.keys(Roots)
-            .map(node => {
-              const types = Object.keys(Roots[node]).filter(key =>
-                resolver.includes(key)
-              );
-              if (types.length) {
-                return types[0];
-              }
-            })
-            .filter(i => !!i)[0] as GlobalUnion;
-        }
-      }
-      types[type][key] = ParseTypesSchema(
-        resolver,
-        key,
-        type,
-        interceptors,
-        types
-      );
-    });
-    buildedSchema[type] = new GraphQLObjectType({
-      name: type,
-      fields: () => types[type]
-    });
-  });
-
-  Object.keys(config.$resolvers).forEach(resolver => {
-    const type = config.$resolvers[resolver].type;
-    const method = (
-      config.$resolvers[resolver].method || 'query'
-    ).toLocaleLowerCase();
-    let deps = config.$resolvers[resolver].deps || [];
-
-    const mapDependencies = <T>(
-      dependencies: ResolverDependencies[]
-    ): { [map: string]: ResolverDependencies } =>
-      dependencies
-        .map(({ provide, map }) => ({
-          container: Container.get<keyof T>(provide),
-          provide,
-          map
-        }))
-        .reduce((acc, curr) => ({ ...acc, [curr.map]: curr.container }), {});
-
-    if (!buildedSchema[type]) {
-      throw new Error(
-        `Missing type '${type}', Available types: '${Object.keys(
-          types
-        ).toString()}'`
-      );
-    }
-    let resolve = config.$resolvers[resolver].resolve;
-    if (!isFunction(resolve) && !Array.isArray(resolve)) {
-      /* Take the first method inside file for resolver */
-      resolve = getFirstItem(resolve)
-    }
-    const oldResolve = resolve;
-    resolve = isFunction(resolve) ? resolve : () => oldResolve;
-
-    Array.from(lazyTypes.keys()).forEach(type => {
-      Object.keys(lazyTypes.get(type)).forEach(k => {
-        buildedSchema[type].getFields()[k].type = buildedSchema[type];
-        // types[type].getFields()[k].resolve = resolve;
-      });
-    });
-    bootstrap.Fields[method][resolver] = {
-      type: buildedSchema[type],
-      method_name: resolver,
-      args: buildArgumentsSchema(config, resolver),
-      public: true,
-      method_type: method,
-      target: mapDependencies(deps),
-      resolve
-    } as any;
-
-  });
+  buildArguments(config);
+  buildTypes(config, types, buildedSchema);
+  buildResolvers(config, types, buildedSchema);
   return buildedSchema;
 }

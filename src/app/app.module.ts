@@ -30,7 +30,8 @@ import {
   TranspileAndLoad,
   TranspileAndGetAll
 } from '../helpers/transpile-and-load';
-import { traverseAndLoadConfigs, traverseAndGetInjectables } from '../helpers/traverse/traverse';
+import { deep } from '../helpers/traverse/test';
+
 import { traverseMap } from '../helpers/traverse-map';
 import { watchBundles } from '../helpers/watch-bundles';
 
@@ -140,11 +141,9 @@ ${printSchema(mergedSchemas)}
         graphqlConfig: GRAPHQL_PLUGIN_CONFIG
       ) => {
         config = await config;
-        // const paths = [];
-        // await traverseAndGetInjectables(config, paths)
-        // console.log(paths);
-        await traverseAndLoadConfigs(config);
 
+        config = await deep(config)
+        
         if (config.$externals) {
           const compiledPaths = await TranspileAndGetAll(
             config.$externals,
@@ -187,7 +186,7 @@ ${printSchema(mergedSchemas)}
           await MakeBasicSchema(config, bootstrap);
         }
         if (config.$mode === 'advanced') {
-          await MakeAdvancedSchema(config, bootstrap);
+          await MakeAdvancedSchema(config);
         }
         watchBundles(traverseMap.map(f => f.path), config)
         return true;
