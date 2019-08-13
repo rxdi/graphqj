@@ -1,4 +1,4 @@
-import { GraphQLObjectType } from 'graphql';
+import { GraphQLObjectType, GraphQLSchema } from 'graphql';
 import {
   BootstrapService,
   Container,
@@ -17,6 +17,8 @@ import { ParseArgs } from './parse-ast';
 import { buildArgumentsSchema } from './parse-args-schema';
 import { ParseTypesSchema } from './parse-types.schema';
 import { isFunction } from './isFunction';
+import { lazyTypes } from './lazy-types';
+import { getFirstItem } from './get-first-item';
 
 function getInjectorSymbols(symbols: Externals[] = [], directives: string[]) {
   return symbols
@@ -66,7 +68,7 @@ function getSymbolInjectionToken(
   };
 }
 
-function setPart(externals: Externals[], resolver, symbolMap) {
+function setPart(externals: Externals[], resolver: string, symbolMap: string) {
   const isCurlyPresent = resolver.includes('{');
   let leftBracket = '(';
   let rightBracket = ')';
@@ -108,6 +110,7 @@ export async function MakeAdvancedSchema(
   bootstrap: BootstrapService
 ) {
   const types = {};
+  const buildedSchema: GraphQLSchema = {} as any;
   const Arguments = Container.get(TypesToken);
   config.$args = config.$args || {};
   Object.keys(config.$args).forEach(reusableArgumentKey => {
@@ -171,16 +174,25 @@ export async function MakeAdvancedSchema(
             .filter(i => !!i)[0] as GlobalUnion;
         }
       }
-      types[type][key] = ParseTypesSchema(resolver, key, interceptors);
+      types[type][key] = ParseTypesSchema(
+        resolver,
+        key,
+        type,
+        interceptors,
+        types
+      );
     });
-    types[type] = new GraphQLObjectType({
+    buildedSchema[type] = new GraphQLObjectType({
       name: type,
-      fields: types[type]
+      fields: () => types[type]
     });
   });
 
   Object.keys(config.$resolvers).forEach(resolver => {
     const type = config.$resolvers[resolver].type;
+    const method = (
+      config.$resolvers[resolver].method || 'query'
+    ).toLocaleLowerCase();
     let deps = config.$resolvers[resolver].deps || [];
 
     const mapDependencies = <T>(
@@ -194,7 +206,7 @@ export async function MakeAdvancedSchema(
         }))
         .reduce((acc, curr) => ({ ...acc, [curr.map]: curr.container }), {});
 
-    if (!types[type]) {
+    if (!buildedSchema[type]) {
       throw new Error(
         `Missing type '${type}', Available types: '${Object.keys(
           types
@@ -204,31 +216,27 @@ export async function MakeAdvancedSchema(
     let resolve = config.$resolvers[resolver].resolve;
     if (!isFunction(resolve) && !Array.isArray(resolve)) {
       /* Take the first method inside file for resolver */
-      let firstKey: string;
-      for (var key in resolve) {
-        firstKey = key;
-        break;
-      }
-      if (!resolve[firstKey]) {
-        throw new Error(
-          `Missing resolver for ${JSON.stringify(config.$resolvers[resolver])}`
-        );
-      }
-      if (isFunction(resolve[firstKey])) {
-        resolve = resolve[firstKey];
-      }
+      resolve = getFirstItem(resolve)
     }
 
     resolve = isFunction(resolve) ? resolve : () => resolve;
 
-    bootstrap.Fields.query[resolver] = {
-      type: types[type],
+    Array.from(lazyTypes.keys()).forEach(type => {
+      Object.keys(lazyTypes.get(type)).forEach(k => {
+        buildedSchema[type].getFields()[k].type = buildedSchema[type];
+        // types[type].getFields()[k].resolve = resolve;
+      });
+    });
+    bootstrap.Fields[method][resolver] = {
+      type: buildedSchema[type],
       method_name: resolver,
       args: buildArgumentsSchema(config, resolver),
       public: true,
-      method_type: 'query',
+      method_type: method,
       target: mapDependencies(deps),
       resolve
     } as any;
+
   });
+  return buildedSchema;
 }

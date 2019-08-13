@@ -1,10 +1,10 @@
 import { promisify } from 'util';
 import { TranspileAndLoad } from './transpile-and-load';
 import { exists, readFile } from 'fs';
-import { load } from 'js-yaml';
 import { isInValidPath } from './is-invalid-path';
 import { traverseMap } from './traverse-map';
 import { join } from 'path';
+import { loadYml } from './load-yml';
 
 export async function loadFile(path: string) {
   let loadedModule: any;
@@ -22,16 +22,17 @@ export async function loadFile(path: string) {
     }
   }
 
-  if (path.includes('.ts')) {
+  if (path.includes('.ts') || path.includes('.js')) {
     loadedModule = await TranspileAndLoad(path, './.gj/out');
   } else if (path.includes('.yml')) {
-    loadedModule = load(await promisify(readFile)(path, { encoding: 'utf-8' }));
+    loadedModule = loadYml(path);
   } else if (path.includes('.json')) {
     loadedModule = require(path);
   } else if (path.includes('.html')) {
     loadedModule = await promisify(readFile)(path, { encoding: 'utf-8' });
   } else {
-    loadedModule = require('esm')(module)(path);
+    // loadedModule = require('esm')(module)(path);
+    throw new Error(`Unrecognized file type ${path}`);
   }
 
   const parent = path

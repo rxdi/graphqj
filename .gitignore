@@ -2,7 +2,7 @@ node_modules/
 .gj
 projects
 .cache
-
+lib
 args.yml
 gj.yml
 resolvers.yml
