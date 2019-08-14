@@ -4,15 +4,15 @@ Create easy Graphql server from `json`, `yml`, `graphql`, `js` or `ts` files
 
 ## Features
 
-- Helps with prototyping MVP
-- Creates graphql server from JSON file
-- In about a minute you have working graphql API
 - Graphql Voyager available
+- Helps with prototyping MVP
+- In about a minute you have working graphql API
 - Graphiql included in the pack for easy development
-
+- Watch and rebuild GQL Schema dynamically without restarting server
+- It provides HotRealod of Graphql Schema without rebuilding or restarting application.Everyting is happening on Runtime.
 ### What is `@rxdi/graphqj`
 
-- Tool for creating Graphql backend from JSON for testing purposes and Client MVP's
+- Tool for creating Graphql backend from Different source for testing purposes and Client MVP's
 
 ### What is not `@rxdi/graphqj`
 
@@ -416,11 +416,12 @@ $resolvers:
         - '412414'
 $views:
   home:
-    query: findUser2
-    payload: UserPayload
+    query: findUser
+    props: User
+    output: UserPayload
     html: |
       <bla-component></bla-component>
-      {name} {email} {phone} {createdAt}
+      {userId} {name} {email} {phone} {createdAt}
       A rich framework for building applications and services with GraphQL and Apollo inspired by Angular
 ```
 

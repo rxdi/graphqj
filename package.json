@@ -1,7 +1,7 @@
 {
   "name": "@rxdi/graphqj",
   "main": "./lib/main.js",
-  "version": "0.7.20",
+  "version": "0.7.21",
   "scripts": {
     "start": "gapi start --local --minify=false --inspect ",
     "build": "gapi build",

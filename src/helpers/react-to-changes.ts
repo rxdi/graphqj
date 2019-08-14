@@ -17,22 +17,26 @@ function getMetaPath(path: string) {
 
 export async function reactToChanges(path: string, config: Config) {
   const newFile = await loadFile(path);
-  const metaKey = findMetaKey(getMetaPath(path), config._meta);
-  if (metaKey) {
-    config[metaKey] = newFile;
-    config[metaKey] = await deep(config[metaKey]);
-  } else {
-    await traverse(config, (k, v) => {
-      if (typeof v === 'object' && v._meta) {
-        const foundMetaKey = findMetaKey(getMetaPath(path), v._meta);
-        if (foundMetaKey) {
-          v[foundMetaKey] = getFirstItem(newFile);
-          return true;
+  if (config._meta) {
+    const metaKey = findMetaKey(getMetaPath(path), config._meta);
+    if (metaKey) {
+      config[metaKey] = await deep(newFile);
+    } else {
+      await traverse(config, (k, v) => {
+        if (typeof v === 'object' && v._meta) {
+          const foundMetaKey = findMetaKey(getMetaPath(path), v._meta);
+          if (foundMetaKey) {
+            v[foundMetaKey] = getFirstItem(newFile);
+            return true;
+          }
         }
-      }
-      return false;
-    });
+        return false;
+      });
+    }
+  } else {
+    config = await deep(newFile);;
   }
+
   lazyTypes.clear();
   Container.get(BootstrapService).Fields = {
     mutation: {},
