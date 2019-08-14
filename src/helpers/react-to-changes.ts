@@ -6,6 +6,8 @@ import { Config } from '../app/app.tokens';
 import { MakeAdvancedSchema } from './advanced-schema';
 import { deep } from './traverse/test';
 import { lazyTypes } from './lazy-types';
+import { configWatchers } from './watch-bundles';
+import { MakeBasicSchema } from './basic-schema';
 
 function findMetaKey(path: string, meta: { [key: string]: string }) {
   return Object.keys(meta).find(k => meta[k] === path);
@@ -28,24 +30,26 @@ export async function reactToChanges(path: string, config: Config) {
   isRunning = true;
   try {
     const newFile = await loadFile(path);
-    if (config._meta) {
+    if (configWatchers.filter(p => path.includes(p)).length) {
+      config = await deep(newFile);
+    } else if (config._meta) {
+      // First level deepnest
       const metaKey = findMetaKey(getMetaPath(path), config._meta);
       if (metaKey) {
         config[metaKey] = await deep(newFile);
-      } else {
-        await traverse(config, (k, v) => {
-          if (typeof v === 'object' && v._meta) {
-            const foundMetaKey = findMetaKey(getMetaPath(path), v._meta);
-            if (foundMetaKey) {
-              v[foundMetaKey] = getFirstItem(newFile);
-              return true;
-            }
-          }
-          return false;
-        });
       }
     } else {
-      config = await deep(newFile);
+      // Traverse recursive and find metadata for specific file and update it
+      await traverse(config, async (k, v) => {
+        if (typeof v === 'object' && v._meta) {
+          const foundMetaKey = findMetaKey(getMetaPath(path), v._meta);
+          if (foundMetaKey) {
+            v[foundMetaKey] = await deep(getFirstItem(newFile));
+            return true;
+          }
+        }
+        return false;
+      });
     }
 
     lazyTypes.clear();
@@ -54,7 +58,12 @@ export async function reactToChanges(path: string, config: Config) {
       query: {},
       subscription: {}
     };
-    await MakeAdvancedSchema(config);
+    if (config.$mode === 'basic') {
+      await MakeBasicSchema(config);
+    }
+    if (config.$mode === 'advanced') {
+      await MakeAdvancedSchema(config);
+    }
     Container.get(ApolloService).init();
     console.log(`📦  Bundle realoaded! ${Date.now() - timer}ms`, path);
     isRunning = false;

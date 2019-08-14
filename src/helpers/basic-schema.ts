@@ -5,9 +5,10 @@ import {
   GraphQLObjectType,
   GraphQLBoolean
 } from 'graphql';
-import { BootstrapService } from '@gapi/core';
+import { BootstrapService, Container } from '@gapi/core';
+import { Config } from '../app/app.tokens';
 
-export function MakeBasicSchema(config, bootstrap: BootstrapService) {
+export function MakeBasicSchema(config: Config) {
   Object.keys(config.$resolvers).forEach(method_name => {
     const resolve = config.$resolvers[method_name];
     const fields = {};
@@ -38,7 +39,7 @@ export function MakeBasicSchema(config, bootstrap: BootstrapService) {
         }
       }
     });
-    bootstrap.Fields.query[method_name] = {
+    Container.get(BootstrapService).Fields.query[method_name] = {
       type: new GraphQLObjectType({
         name: `${method_name}_type`,
         fields: () => fields

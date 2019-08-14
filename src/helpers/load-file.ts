@@ -3,7 +3,7 @@ import { TranspileAndLoad } from './transpile-and-load';
 import { exists, readFile } from 'fs';
 import { isInValidPath } from './is-invalid-path';
 import { traverseMap } from './traverse-map';
-import { join } from 'path';
+import { join, normalize } from 'path';
 import { loadYml } from './load-yml';
 import { isGapiInstalled } from './is-runner-installed';
 
@@ -23,11 +23,14 @@ export async function loadFile(path: string) {
     }
   }
 
-  if (await isGapiInstalled() && (path.includes('.ts') || path.includes('.js'))) {
+  if (await isGapiInstalled() && path.includes('.ts')) {
     loadedModule = await TranspileAndLoad(path, './.gj/out');
   } else if (path.includes('.yml')) {
     loadedModule = loadYml(path);
   } else if (path.includes('.json')) {
+    const clearModule = require('clear-module');
+    path = normalize(join(process.cwd(), path));
+    clearModule(path)
     loadedModule = require(path);
   } else if (path.includes('.html')) {
     loadedModule = await promisify(readFile)(path, { encoding: 'utf-8' });

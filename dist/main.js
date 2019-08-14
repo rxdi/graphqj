@@ -1,63 +1,1825 @@
 #!/usr/bin/env node
-parcelRequire=function(e,r,t,n){var i,o="function"==typeof parcelRequire&&parcelRequire,u="function"==typeof require&&require;function f(t,n){if(!r[t]){if(!e[t]){var i="function"==typeof parcelRequire&&parcelRequire;if(!n&&i)return i(t,!0);if(o)return o(t,!0);if(u&&"string"==typeof t)return u(t);var c=new Error("Cannot find module '"+t+"'");throw c.code="MODULE_NOT_FOUND",c}p.resolve=function(r){return e[t][1][r]||r},p.cache={};var l=r[t]=new f.Module(t);e[t][0].call(l.exports,p,l,l.exports,this)}return r[t].exports;function p(e){return f(p.resolve(e))}}f.isParcelRequire=!0,f.Module=function(e){this.id=e,this.bundle=f,this.exports={}},f.modules=e,f.cache=r,f.parent=o,f.register=function(r,t){e[r]=[function(e,r){r.exports=t},{}]};for(var c=0;c<t.length;c++)try{f(t[c])}catch(e){i||(i=e)}if(t.length){var l=f(t[t.length-1]);"object"==typeof exports&&"undefined"!=typeof module?module.exports=l:"function"==typeof define&&define.amd?define(function(){return l}):n&&(this[n]=l)}if(parcelRequire=f,i)throw i;return f}({"helpers/args-extractors.ts":[function(require,module,exports) {
-"use strict";Object.defineProperty(exports,"__esModule",{value:!0}),exports.includes=(e=>process.argv.toString().includes(e)),exports.nextOrDefault=((e,r=!0,s=(e=>e))=>{if(process.argv.toString().includes(e)){const t=process.argv[process.argv.indexOf(e)+1];return t?t.includes("--")?r:s(t):r}return r});
+// modules are defined as an array
+// [ module function, map of requires ]
+//
+// map of requires is short require name -> numeric require
+//
+// anything defined in a previous bundle is accessed via the
+// orig method which is the require for previous bundles
+parcelRequire = (function (modules, cache, entry, globalName) {
+// Save the require from previous bundle to this closure if any
+var previousRequire = typeof parcelRequire === 'function' && parcelRequire;
+var nodeRequire = typeof require === 'function' && require;
+function newRequire(name, jumped) {
+if (!cache[name]) {
+if (!modules[name]) {
+// if we cannot find the module within our internal map or
+// cache jump to the current global require ie. the last bundle
+// that was added to the page.
+var currentRequire = typeof parcelRequire === 'function' && parcelRequire;
+if (!jumped && currentRequire) {
+return currentRequire(name, true);
+}
+// If there are other bundles on this page the require from the
+// previous one is saved to 'previousRequire'. Repeat this as
+// many times as there are bundles until the module is found or
+// we exhaust the require chain.
+if (previousRequire) {
+return previousRequire(name, true);
+}
+// Try the node require function if it exists.
+if (nodeRequire && typeof name === 'string') {
+return nodeRequire(name);
+}
+var err = new Error('Cannot find module \'' + name + '\'');
+err.code = 'MODULE_NOT_FOUND';
+throw err;
+}
+localRequire.resolve = resolve;
+localRequire.cache = {};
+var module = cache[name] = new newRequire.Module(name);
+modules[name][0].call(module.exports, localRequire, module, module.exports, this);
+}
+return cache[name].exports;
+function localRequire(x){
+return newRequire(localRequire.resolve(x));
+}
+function resolve(x){
+return modules[name][1][x] || x;
+}
+}
+function Module(moduleName) {
+this.id = moduleName;
+this.bundle = newRequire;
+this.exports = {};
+}
+newRequire.isParcelRequire = true;
+newRequire.Module = Module;
+newRequire.modules = modules;
+newRequire.cache = cache;
+newRequire.parent = previousRequire;
+newRequire.register = function (id, exports) {
+modules[id] = [function (require, module) {
+module.exports = exports;
+}, {}];
+};
+var error;
+for (var i = 0; i < entry.length; i++) {
+try {
+newRequire(entry[i]);
+} catch (e) {
+// Save first error but execute all entries
+if (!error) {
+error = e;
+}
+}
+}
+if (entry.length) {
+// Expose entry point to Node, AMD or browser globals
+// Based on https://github.com/ForbesLindesay/umd/blob/master/template.js
+var mainExports = newRequire(entry[entry.length - 1]);
+// CommonJS
+if (typeof exports === "object" && typeof module !== "undefined") {
+module.exports = mainExports;
+// RequireJS
+} else if (typeof define === "function" && define.amd) {
+define(function () {
+return mainExports;
+});
+// <script>
+} else if (globalName) {
+this[globalName] = mainExports;
+}
+}
+// Override the current require with this new one
+parcelRequire = newRequire;
+if (error) {
+// throw error from earlier, _after updating parcelRequire_
+throw error;
+}
+return newRequire;
+})({"helpers/args-extractors.ts":[function(require,module,exports) {
+"use strict";
+Object.defineProperty(exports, "__esModule", {
+value: true
+});
+exports.includes = i => process.argv.toString().includes(i);
+exports.nextOrDefault = (i, fb = true, type = p => p) => {
+if (process.argv.toString().includes(i)) {
+const isNextArgumentPresent = process.argv[process.argv.indexOf(i) + 1];
+if (!isNextArgumentPresent) {
+return fb;
+}
+if (isNextArgumentPresent.includes('--')) {
+return fb;
+}
+return type(isNextArgumentPresent);
+}
+return fb;
+};
 },{}],"helpers/typescript.builder.ts":[function(require,module,exports) {
-"use strict";Object.defineProperty(exports,"__esModule",{value:!0});const e=require("child_process");exports.TranspileTypescript=((r,s)=>new Promise((o,t)=>{const p=e.spawn("npx",["gapi","build","--glob",`${r.toString()}`,"--outDir",s]);p.stderr.pipe(process.stderr),p.on("close",e=>o(e))}));
+"use strict";
+Object.defineProperty(exports, "__esModule", {
+value: true
+});
+const child_process_1 = require("child_process");
+exports.TranspileTypescript = (paths, outDir) => {
+return new Promise((resolve, reject) => {
+const child = child_process_1.spawn('npx', ['gapi', 'build', '--glob', `${paths.toString()}`, '--outDir', outDir]); // child.stdout.pipe(process.stdout);
+child.stderr.pipe(process.stderr);
+child.on('close', code => resolve(code));
+});
+};
 },{}],"helpers/set-config.ts":[function(require,module,exports) {
-"use strict";var i=this&&this.__awaiter||function(i,e,t,n){return new(t||(t=Promise))(function(r,o){function s(i){try{u(n.next(i))}catch(e){o(e)}}function c(i){try{u(n.throw(i))}catch(e){o(e)}}function u(i){i.done?r(i.value):new t(function(e){e(i.value)}).then(s,c)}u((n=n.apply(i,e||[])).next())})};Object.defineProperty(exports,"__esModule",{value:!0});const e=require("util"),t=require("fs"),n=require("./typescript.builder"),r=require("path"),o=require("js-yaml");function s(s){return i(this,void 0,void 0,function*(){let c;try{c=require("esm")(module)(r.join(process.cwd(),`${s}.js`))}catch(u){}if(yield e.promisify(t.exists)(`./${s}.yml`)){const i=t.readFileSync(`./${s}.yml`,{encoding:"utf-8"});c=o.load(i)}if(yield e.promisify(t.exists)(`./${s}.ts`)){const o=yield e.promisify(t.exists)("./.gj/config.temp"),y=r=>i(this,void 0,void 0,function*(){yield n.TranspileTypescript([`/${s}.ts`],"./.gj"),yield e.promisify(t.writeFile)("./.gj/config.temp",r.mtime.toISOString(),{encoding:"utf-8"})}),d=yield e.promisify(t.stat)(`./${s}.ts`);if(o){const i=yield e.promisify(t.readFile)("./.gj/config.temp",{encoding:"utf-8"});new Date(i).toISOString()!==d.mtime.toISOString()&&(yield y(d))}else yield y(d);c=require(r.join(process.cwd(),"./.gj",`${s}.js`));try{yield e.promisify(t.unlink)(r.join("./.gj",`${s}.js.map`))}catch(u){}}try{c=JSON.parse(yield e.promisify(t.readFile)(r.join(process.cwd(),`${s}.json`),{encoding:"utf-8"}))}catch(u){}return c})}exports.getConfig=s;
+"use strict";
+var __awaiter = this && this.__awaiter || function (thisArg, _arguments, P, generator) {
+return new (P || (P = Promise))(function (resolve, reject) {
+function fulfilled(value) {
+try {
+step(generator.next(value));
+} catch (e) {
+reject(e);
+}
+}
+function rejected(value) {
+try {
+step(generator["throw"](value));
+} catch (e) {
+reject(e);
+}
+}
+function step(result) {
+result.done ? resolve(result.value) : new P(function (resolve) {
+resolve(result.value);
+}).then(fulfilled, rejected);
+}
+step((generator = generator.apply(thisArg, _arguments || [])).next());
+});
+};
+Object.defineProperty(exports, "__esModule", {
+value: true
+});
+const util_1 = require("util");
+const fs_1 = require("fs");
+const typescript_builder_1 = require("./typescript.builder");
+const path_1 = require("path");
+const js_yaml_1 = require("js-yaml");
+function getConfig(configFilename) {
+return __awaiter(this, void 0, void 0, function* () {
+let config;
+try {
+config = require('esm')(module)(path_1.join(process.cwd(), `${configFilename}.js`)); // console.log('JS Config', config)
+} catch (e) {}
+if (yield util_1.promisify(fs_1.exists)(`./${configFilename}.yml`)) {
+const file = fs_1.readFileSync(`./${configFilename}.yml`, {
+encoding: 'utf-8'
+});
+config = js_yaml_1.load(file); // console.log('YML Config', config)
+}
+if (yield util_1.promisify(fs_1.exists)(`./${configFilename}.ts`)) {
+// console.log('Typescript Config', config)
+const isMigrateTempConfigExists = yield util_1.promisify(fs_1.exists)('./.gj/config.temp');
+const TranspileAndWriteTemp = stats => __awaiter(this, void 0, void 0, function* () {
+yield typescript_builder_1.TranspileTypescript([`/${configFilename}.ts`], './.gj'); // console.log('Transpile complete!');
+yield util_1.promisify(fs_1.writeFile)('./.gj/config.temp', stats.mtime.toISOString(), {
+encoding: 'utf-8'
+});
+});
+const stats = yield util_1.promisify(fs_1.stat)(`./${configFilename}.ts`);
+if (isMigrateTempConfigExists) {
+const temp = yield util_1.promisify(fs_1.readFile)('./.gj/config.temp', {
+encoding: 'utf-8'
+});
+if (new Date(temp).toISOString() !== stats.mtime.toISOString()) {
+// console.log(`${configFilename} configuration is new transpiling...`);
+yield TranspileAndWriteTemp(stats);
+}
+} else {
+// console.log(`Transpile ${configFilename}.ts...`);
+yield TranspileAndWriteTemp(stats);
+}
+config = require(path_1.join(process.cwd(), `./.gj`, `${configFilename}.js`));
+try {
+yield util_1.promisify(fs_1.unlink)(path_1.join('./.gj', `${configFilename}.js.map`));
+} catch (e) {}
+}
+try {
+config = JSON.parse((yield util_1.promisify(fs_1.readFile)(path_1.join(process.cwd(), `${configFilename}.json`), {
+encoding: 'utf-8'
+}))); // console.log('Json Config', config)
+} catch (e) {}
+return config;
+});
+}
+exports.getConfig = getConfig;
 },{"./typescript.builder":"helpers/typescript.builder.ts"}],"helpers/basic.template.ts":[function(require,module,exports) {
-"use strict";Object.defineProperty(exports,"__esModule",{value:!0}),exports.basicTemplate={$mode:"basic",$types:{user:{pesho:"string"}},$schema:"./schema.graphql",$resolvers:{findUser:{gosho:"omg",pesho:515151,pesho2:515151,pesho3:515151,dadadada:515151,pesho4:515151,pesho5:[515151],pesho6:["515151"]},findUser2:{gosho:"omg",pesho:22,pesho2:515151,pesho3:515151,pesho4:515151,pesho5:515151}}};
+"use strict";
+Object.defineProperty(exports, "__esModule", {
+value: true
+});
+exports.basicTemplate = {
+$mode: 'basic',
+$types: {
+user: {
+pesho: 'string'
+}
+},
+$schema: './schema.graphql',
+$resolvers: {
+findUser: {
+gosho: 'omg',
+pesho: 515151,
+pesho2: 515151,
+pesho3: 515151,
+dadadada: 515151,
+pesho4: 515151,
+pesho5: [515151],
+pesho6: ['515151']
+},
+findUser2: {
+gosho: 'omg',
+pesho: 22,
+pesho2: 515151,
+pesho3: 515151,
+pesho4: 515151,
+pesho5: 515151
+}
+}
+};
 },{}],"app/app.tokens.ts":[function(require,module,exports) {
-"use strict";Object.defineProperty(exports,"__esModule",{value:!0});const e=require("@rxdi/core");function n(e){return e.reduce((e,n)=>(e[n]=n,e),Object.create(null))}exports.BooleanUnion=n(["Boolean","Bool","boolean","Boolean[]","boolean[]","[Boolean]","[Bool]","boolean!","Boolean!","[Boolean]!","boolean[]!","Boolean[]!"]),exports.StringUnion=n(["String","string","String[]","string[]","[String]","string!","String!","String[]!","string[]!","[String]!"]),exports.IntegerUnion=n(["Int","integer","number","Number","Num","int","Number[]","number[]","[Number]","number!","[Int]","Number!","number[]!","Number[]!","[Number]!","[Int]!"]),exports.Roots={booleanNode:exports.BooleanUnion,stringNode:exports.StringUnion,numberNode:exports.IntegerUnion},exports.TypesToken=new e.InjectionToken("(@rxdi/graphqj): types-token"),exports.ArgumentsToken=new e.InjectionToken("(@rxdi/graphqj): arguments-token"),exports.ResolversToken=new e.InjectionToken("(@rxdi/graphqj): resolvers-token"),exports.GuardsToken=new e.InjectionToken("(@rxdi/graphqj): resolvers-token"),exports.Config=new e.InjectionToken;
+"use strict";
+Object.defineProperty(exports, "__esModule", {
+value: true
+});
+const core_1 = require("@rxdi/core");
+function strEnum(o) {
+return o.reduce((res, key) => {
+res[key] = key;
+return res;
+}, Object.create(null));
+}
+exports.BooleanUnion = strEnum(['Boolean', 'Bool', 'boolean', 'Boolean[]', 'boolean[]', '[Boolean]', '[Bool]', 'boolean!', 'Boolean!', '[Boolean]!', 'boolean[]!', 'Boolean[]!']);
+exports.StringUnion = strEnum(['String', 'string', 'String[]', 'string[]', '[String]', 'string!', 'String!', 'String[]!', 'string[]!', '[String]!']);
+exports.IntegerUnion = strEnum(['Int', 'integer', 'number', 'Number', 'Num', 'int', 'Number[]', 'number[]', '[Number]', 'number!', '[Int]', 'Number!', 'number[]!', 'Number[]!', '[Number]!', '[Int]!']);
+exports.Roots = {
+booleanNode: exports.BooleanUnion,
+stringNode: exports.StringUnion,
+numberNode: exports.IntegerUnion
+};
+exports.TypesToken = new core_1.InjectionToken('(@rxdi/graphqj): types-token');
+exports.ArgumentsToken = new core_1.InjectionToken('(@rxdi/graphqj): arguments-token');
+exports.ResolversToken = new core_1.InjectionToken('(@rxdi/graphqj): resolvers-token');
+exports.GuardsToken = new core_1.InjectionToken('(@rxdi/graphqj): resolvers-token');
+exports.Config = new core_1.InjectionToken();
 },{}],"helpers/parse-ast.ts":[function(require,module,exports) {
-"use strict";Object.defineProperty(exports,"__esModule",{value:!0});const e=require("graphql");function n(n){let r;return"string"!==n&&"String"!==n||(r={type:e.GraphQLString}),"boolean"!==n&&"Boolean"!==n&&"Bool"!==n||(r={type:e.GraphQLBoolean}),"number"!==n&&"Number"!==n&&"Int"!==n||(r={type:e.GraphQLInt}),"string!"!==n&&"String!"!==n||(r={type:new e.GraphQLNonNull(e.GraphQLString)}),"boolean!"!==n&&"Boolean!"!==n||(r={type:new e.GraphQLNonNull(e.GraphQLBoolean)}),"number!"!==n&&"Number!"!==n&&"Int"!==n||(r={type:new e.GraphQLNonNull(e.GraphQLInt)}),"string[]"!==n&&"String[]"!==n&&"[String]"!==n||(r={type:new e.GraphQLList(e.GraphQLString)}),"boolean[]"!==n&&"Boolean[]"!==n&&"[Boolean]"!==n&&"[Bool]"!==n||(r={type:new e.GraphQLList(e.GraphQLBoolean)}),"number[]"!==n&&"Number[]"!==n&&"[Number]"!==n&&"[Int]"!==n||(r={type:new e.GraphQLList(e.GraphQLInt)}),"string[]!"!==n&&"String[]!"!==n&&"[String]!"!==n||(r={type:new e.GraphQLNonNull(new e.GraphQLList(e.GraphQLString))}),"boolean[]!"!==n&&"Boolean[]!"!==n&&"[Boolean]!"!==n&&"[Bool]"!==n||(r={type:new e.GraphQLNonNull(new e.GraphQLList(e.GraphQLBoolean))}),"number[]!"!==n&&"Number[]!"!==n&&"[Number]!"!==n&&"[Int]!"!==n||(r={type:new e.GraphQLNonNull(new e.GraphQLList(e.GraphQLInt))}),r}exports.ParseArgs=n;
+"use strict";
+Object.defineProperty(exports, "__esModule", {
+value: true
+});
+const graphql_1 = require("graphql");
+function ParseArgs(ck) {
+let type;
+/* Basic */
+if (ck === 'string' || ck === 'String') {
+type = {
+type: graphql_1.GraphQLString
+};
+}
+if (ck === 'boolean' || ck === 'Boolean' || ck === 'Bool') {
+type = {
+type: graphql_1.GraphQLBoolean
+};
+}
+if (ck === 'number' || ck === 'Number' || ck === 'Int') {
+type = {
+type: graphql_1.GraphQLInt
+};
+}
+/* False negative */
+if (ck === 'string!' || ck === 'String!') {
+type = {
+type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLString)
+};
+}
+if (ck === 'boolean!' || ck === 'Boolean!') {
+type = {
+type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLBoolean)
+};
+}
+if (ck === 'number!' || ck === 'Number!' || ck === 'Int') {
+type = {
+type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLInt)
+};
+}
+/* Array */
+if (ck === 'string[]' || ck === 'String[]' || ck === '[String]') {
+type = {
+type: new graphql_1.GraphQLList(graphql_1.GraphQLString)
+};
+}
+if (ck === 'boolean[]' || ck === 'Boolean[]' || ck === '[Boolean]' || ck === '[Bool]') {
+type = {
+type: new graphql_1.GraphQLList(graphql_1.GraphQLBoolean)
+};
+}
+if (ck === 'number[]' || ck === 'Number[]' || ck === '[Number]' || ck === '[Int]') {
+type = {
+type: new graphql_1.GraphQLList(graphql_1.GraphQLInt)
+};
+}
+/* False negative Array */
+if (ck === 'string[]!' || ck === 'String[]!' || ck === '[String]!') {
+type = {
+type: new graphql_1.GraphQLNonNull(new graphql_1.GraphQLList(graphql_1.GraphQLString))
+};
+}
+if (ck === 'boolean[]!' || ck === 'Boolean[]!' || ck === '[Boolean]!' || ck === '[Bool]') {
+type = {
+type: new graphql_1.GraphQLNonNull(new graphql_1.GraphQLList(graphql_1.GraphQLBoolean))
+};
+}
+if (ck === 'number[]!' || ck === 'Number[]!' || ck === '[Number]!' || ck === '[Int]!') {
+type = {
+type: new graphql_1.GraphQLNonNull(new graphql_1.GraphQLList(graphql_1.GraphQLInt))
+};
+}
+return type;
+}
+exports.ParseArgs = ParseArgs;
 },{}],"helpers/dynamic-schema/mutators/build-arguments.ts":[function(require,module,exports) {
-"use strict";Object.defineProperty(exports,"__esModule",{value:!0});const e=require("../../../app/app.tokens"),r=require("../../parse-ast"),s=require("@rxdi/core");function t(t){Object.keys(t.$args).forEach(o=>{const a={};Object.keys(t.$args[o]).forEach(c=>{a[c]=r.ParseArgs(t.$args[o][c]),s.Container.get(e.TypesToken).set(o,a)})})}exports.buildArguments=t;
+"use strict";
+Object.defineProperty(exports, "__esModule", {
+value: true
+});
+const app_tokens_1 = require("../../../app/app.tokens");
+const parse_ast_1 = require("../../parse-ast");
+const core_1 = require("@rxdi/core");
+function buildArguments(config) {
+Object.keys(config.$args).forEach(reusableArgumentKey => {
+const args = {};
+Object.keys(config.$args[reusableArgumentKey]).forEach(o => {
+args[o] = parse_ast_1.ParseArgs(config.$args[reusableArgumentKey][o]);
+core_1.Container.get(app_tokens_1.TypesToken).set(reusableArgumentKey, args);
+});
+});
+}
+exports.buildArguments = buildArguments;
 },{"../../../app/app.tokens":"app/app.tokens.ts","../../parse-ast":"helpers/parse-ast.ts"}],"helpers/lazy-types.ts":[function(require,module,exports) {
-"use strict";Object.defineProperty(exports,"__esModule",{value:!0}),exports.lazyTypes=new Map;
+"use strict";
+Object.defineProperty(exports, "__esModule", {
+value: true
+});
+exports.lazyTypes = new Map();
 },{}],"helpers/parse-types.schema.ts":[function(require,module,exports) {
-"use strict";var e=this&&this.__awaiter||function(e,r,t,n){return new(t||(t=Promise))(function(i,o){function a(e){try{s(n.next(e))}catch(r){o(r)}}function p(e){try{s(n.throw(e))}catch(r){o(r)}}function s(e){e.done?i(e.value):new t(function(r){r(e.value)}).then(a,p)}s((n=n.apply(e,r||[])).next())})};Object.defineProperty(exports,"__esModule",{value:!0});const r=require("graphql"),t=require("@rxdi/core"),n=require("rxjs"),i=require("./lazy-types");function o(o,a,p,s,u){let c;"string"!==o&&"String"!==o||(c={type:r.GraphQLString}),"boolean"!==o&&"Boolean"!==o||(c={type:r.GraphQLString}),"number"!==o&&"Number"!==o||(c={type:r.GraphQLInt}),"string[]"!==o&&"String[]"!==o&&"[String]"!==o||(c={type:new r.GraphQLList(r.GraphQLString)}),"boolean[]"!==o&&"Boolean[]"!==o&&"[Boolean]"!==o||(c={type:new r.GraphQLList(r.GraphQLString)}),"number[]"!==o&&"Number[]"!==o&&"[Number]"!==o||(c={type:new r.GraphQLList(r.GraphQLInt)});const l=o.replace("(","").replace(")","").replace("!","").replace("[","").replace("]","");if(p===l&&(i.lazyTypes.set(p,Object.assign({},i.lazyTypes.get(p),{[a]:l})),c={type:u[p]}),!c)throw new Error(`Wrong plugged type ${o}`);return c.resolve=function(...r){return e(this,void 0,void 0,function*(){let e=r[0][a];for(const i of s)e=yield t.Container.get(i)(n.of(e),r[0],r[1],r[2],r[3]),n.isObservable(e)&&(e=yield e.toPromise());return e})},c}exports.ParseTypesSchema=o;
+"use strict";
+var __awaiter = this && this.__awaiter || function (thisArg, _arguments, P, generator) {
+return new (P || (P = Promise))(function (resolve, reject) {
+function fulfilled(value) {
+try {
+step(generator.next(value));
+} catch (e) {
+reject(e);
+}
+}
+function rejected(value) {
+try {
+step(generator["throw"](value));
+} catch (e) {
+reject(e);
+}
+}
+function step(result) {
+result.done ? resolve(result.value) : new P(function (resolve) {
+resolve(result.value);
+}).then(fulfilled, rejected);
+}
+step((generator = generator.apply(thisArg, _arguments || [])).next());
+});
+};
+Object.defineProperty(exports, "__esModule", {
+value: true
+});
+const graphql_1 = require("graphql");
+const core_1 = require("@rxdi/core");
+const rxjs_1 = require("rxjs");
+const lazy_types_1 = require("./lazy-types");
+function ParseTypesSchema(ck, key, parentType, interceptors, types) {
+let type;
+if (ck === 'string' || ck === 'String') {
+type = {
+type: graphql_1.GraphQLString
+};
+}
+if (ck === 'boolean' || ck === 'Boolean') {
+type = {
+type: graphql_1.GraphQLString
+};
+}
+if (ck === 'number' || ck === 'Number') {
+type = {
+type: graphql_1.GraphQLInt
+};
+}
+if (ck === 'string[]' || ck === 'String[]' || ck === '[String]') {
+type = {
+type: new graphql_1.GraphQLList(graphql_1.GraphQLString)
+};
+}
+if (ck === 'boolean[]' || ck === 'Boolean[]' || ck === '[Boolean]') {
+type = {
+type: new graphql_1.GraphQLList(graphql_1.GraphQLString)
+};
+}
+if (ck === 'number[]' || ck === 'Number[]' || ck === '[Number]') {
+type = {
+type: new graphql_1.GraphQLList(graphql_1.GraphQLInt)
+};
+}
+const isRecursiveType = ck.replace('(', '').replace(')', '').replace('!', '').replace('[', '').replace(']', '');
+if (parentType === isRecursiveType) {
+lazy_types_1.lazyTypes.set(parentType, Object.assign({}, lazy_types_1.lazyTypes.get(parentType), {
+[key]: isRecursiveType
+}));
+type = {
+type: types[parentType]
+}; // хмм
+}
+if (!type) {
+throw new Error(`Wrong plugged type ${ck}`);
+}
+type['resolve'] = function (...args) {
+return __awaiter(this, void 0, void 0, function* () {
+let defaultValue = args[0][key];
+for (const interceptor of interceptors) {
+defaultValue = yield core_1.Container.get(interceptor)(rxjs_1.of(defaultValue), args[0], args[1], args[2], args[3]);
+if (rxjs_1.isObservable(defaultValue)) {
+defaultValue = yield defaultValue.toPromise();
+}
+}
+return defaultValue;
+});
+};
+return type;
+}
+exports.ParseTypesSchema = ParseTypesSchema;
 },{"./lazy-types":"helpers/lazy-types.ts"}],"helpers/dynamic-schema/mutators/build-types.ts":[function(require,module,exports) {
-"use strict";Object.defineProperty(exports,"__esModule",{value:!0});const e=require("../../../app/app.tokens"),t=require("../../parse-types.schema"),n=require("@rxdi/core"),r=require("graphql");function o(e,t,n){let r="(",o=")";t.includes("{")&&(r="{",o="}");const i=t.split(r);let c;if(t.includes("@"))c=i[1].replace(o,"").split("@");else{const e=i[1].replace(o,"").split(n);for(var l=e.length;l-- >1;)e.splice(l,0,n);c=e}const p=(c=c.filter(e=>!!e))[0],a=c[1].replace(/ +?/g,""),{token:u,interceptor:f}=s(p,a,e);return{token:u,interceptor:f}}function s(e,t,r){const o=c(e,t,r);return{token:new n.InjectionToken(n.createUniqueHash(`${o}`)),interceptor:o}}function i(e=[],t){return e.map(e=>{const[r]=t.filter(t=>t.includes(e.map));if(r){const t=r.replace(/[^\w\s]/gi,"").replace(/ +?/g,""),o=e.module[t];if(!o)throw new Error(`Missing method ${t} inside ${e.file}`);return{symbol:e.map,token:new n.InjectionToken(n.createUniqueHash(`${o}`)),module:e.module,method:o,injector:t}}}).filter(e=>!!e)}function c(e,t,n){const r=n.find(t=>t.map===e);if(!r.module[t])throw new Error(`Missing method ${t} inside ${r.file}`);return r.module[t]}function l(s,c,l){Object.keys(s.$types).forEach(p=>{if(c[p])return;const a=s.$types[p];Object.keys(a).forEach(r=>{c[p]=c[p]||{};let l=a[r];const u=[];if(s.$externals){const[t]=s.$externals.map(e=>e.map).filter(e=>l.includes(e));if(t){const r=[...new Set(l.split("=>").map(e=>e.replace(/ +?/g,"").trim()))];if(r.length>2){const e=r.slice(1,r.length);for(const t of i(s.$externals,e))n.Container.set(t.token,t.method),u.push(t.token)}else{const{token:e,interceptor:r}=o(s.$externals,l,t);n.Container.set(e,r),u.push(e)}l=Object.keys(e.Roots).map(t=>{const n=Object.keys(e.Roots[t]).filter(e=>l.includes(e));if(n.length)return n[0]}).filter(e=>!!e)[0]}}c[p][r]=t.ParseTypesSchema(l,r,p,u,c)}),l[p]=new r.GraphQLObjectType({name:p,fields:()=>c[p]})})}exports.buildTypes=l;
+"use strict";
+Object.defineProperty(exports, "__esModule", {
+value: true
+});
+const app_tokens_1 = require("../../../app/app.tokens");
+const parse_types_schema_1 = require("../../parse-types.schema");
+const core_1 = require("@rxdi/core");
+const graphql_1 = require("graphql");
+function setPart(externals, resolver, symbolMap) {
+const isCurlyPresent = resolver.includes('{');
+let leftBracket = '(';
+let rightBracket = ')';
+if (isCurlyPresent) {
+leftBracket = '{';
+rightBracket = '}';
+}
+const directive = resolver.split(leftBracket);
+let decorator;
+if (resolver.includes('@')) {
+decorator = directive[1].replace(rightBracket, '').split('@');
+} else {
+const parts = directive[1].replace(rightBracket, '').split(symbolMap);
+for (var i = parts.length; i-- > 1;) {
+parts.splice(i, 0, symbolMap);
+}
+decorator = parts;
+}
+decorator = decorator.filter(i => !!i);
+const symbol = decorator[0];
+const methodToExecute = decorator[1].replace(/ +?/g, '');
+const {
+token,
+interceptor
+} = getSymbolInjectionToken(symbol, methodToExecute, externals);
+return {
+token,
+interceptor
+};
+}
+function getSymbolInjectionToken(symbol, method, externals) {
+const interceptor = findInterceptor(symbol, method, externals);
+return {
+token: new core_1.InjectionToken(core_1.createUniqueHash(`${interceptor}`)),
+interceptor
+};
+}
+function getInjectorSymbols(symbols = [], directives) {
+return symbols.map(symbol => {
+const [isPresent] = directives.filter(d => d.includes(symbol.map));
+if (isPresent) {
+const injector = isPresent.replace(/[^\w\s]/gi, '').replace(/ +?/g, '');
+const method = symbol.module[injector];
+if (!method) {
+throw new Error(`Missing method ${injector} inside ${symbol.file}`);
+}
+return {
+symbol: symbol.map,
+token: new core_1.InjectionToken(core_1.createUniqueHash(`${method}`)),
+module: symbol.module,
+method,
+injector
+};
+}
+}).filter(i => !!i);
+}
+function findInterceptor(symbol, method, externals) {
+const usedExternalModule = externals.find(s => s.map === symbol);
+if (!usedExternalModule.module[method]) {
+throw new Error(`Missing method ${method} inside ${usedExternalModule.file}`);
+}
+return usedExternalModule.module[method];
+}
+function buildTypes(config, types, buildedSchema) {
+Object.keys(config.$types).forEach(type => {
+if (types[type]) {
+return;
+}
+const currentType = config.$types[type];
+Object.keys(currentType).forEach(key => {
+types[type] = types[type] || {};
+let resolver = currentType[key];
+const interceptors = [];
+if (config.$externals) {
+const [symbol] = config.$externals.map(e => e.map).filter(s => resolver.includes(s));
+if (symbol) {
+const hasMultipleSymbols = [...new Set(resolver.split('=>').map(r => r.replace(/ +?/g, '').trim()))];
+if (hasMultipleSymbols.length > 2) {
+const directives = hasMultipleSymbols.slice(1, hasMultipleSymbols.length);
+for (const injectorSymbol of getInjectorSymbols(config.$externals, directives)) {
+core_1.Container.set(injectorSymbol.token, injectorSymbol.method);
+interceptors.push(injectorSymbol.token);
+}
+} else {
+const {
+token,
+interceptor
+} = setPart(config.$externals, resolver, symbol);
+core_1.Container.set(token, interceptor);
+interceptors.push(token);
+}
+resolver = Object.keys(app_tokens_1.Roots).map(node => {
+const types = Object.keys(app_tokens_1.Roots[node]).filter(key => resolver.includes(key));
+if (types.length) {
+return types[0];
+}
+}).filter(i => !!i)[0];
+}
+}
+types[type][key] = parse_types_schema_1.ParseTypesSchema(resolver, key, type, interceptors, types);
+});
+buildedSchema[type] = new graphql_1.GraphQLObjectType({
+name: type,
+fields: () => types[type]
+});
+});
+}
+exports.buildTypes = buildTypes;
 },{"../../../app/app.tokens":"app/app.tokens.ts","../../parse-types.schema":"helpers/parse-types.schema.ts"}],"helpers/isFunction.ts":[function(require,module,exports) {
-"use strict";function e(e){return"function"==typeof e}Object.defineProperty(exports,"__esModule",{value:!0}),exports.isFunction=e;
+"use strict";
+Object.defineProperty(exports, "__esModule", {
+value: true
+});
+function isFunction(object) {
+return typeof object === 'function';
+}
+exports.isFunction = isFunction;
 },{}],"helpers/get-first-item.ts":[function(require,module,exports) {
-"use strict";Object.defineProperty(exports,"__esModule",{value:!0});const e=require("./isFunction");function r(r){if(!r)return null;let t;for(var i in r){t=i;break}if(!r[t])throw new Error(`Missing method ${t}`);return e.isFunction(r[t])&&(r=r[t]),r}exports.getFirstItem=r;
+"use strict";
+Object.defineProperty(exports, "__esModule", {
+value: true
+});
+const isFunction_1 = require("./isFunction");
+/**
+* Gets first item of the object without iterating all objects inside
+*/
+function getFirstItem(object) {
+if (!object) {
+return null;
+}
+let firstKey;
+for (var key in object) {
+firstKey = key;
+break;
+}
+if (!object[firstKey]) {
+throw new Error(`Missing method ${firstKey}`);
+}
+if (isFunction_1.isFunction(object[firstKey])) {
+object = object[firstKey];
+}
+return object;
+}
+exports.getFirstItem = getFirstItem;
 },{"./isFunction":"helpers/isFunction.ts"}],"helpers/parse-args-schema.ts":[function(require,module,exports) {
-"use strict";Object.defineProperty(exports,"__esModule",{value:!0});const e=require("graphql"),r=require("@rxdi/core"),t=require("./parse-ast"),s=require("../app/app.tokens"),a=new Map;exports.buildArgumentsSchema=((p,n)=>{let o=p.$resolvers[n].args||{},l={};const u=r.Container.get(s.TypesToken);return Object.keys(o).forEach(r=>{const s=o[r].replace("!","");if(u.has(s)){let t=new e.GraphQLInputObjectType({name:s,fields:()=>u.get(s)});return a.has(s)&&(t=a.get(s)),a.set(s,t),void(l=o[r].includes("!")?{payload:{type:new e.GraphQLNonNull(t)}}:{payload:{type:t}})}l[r]=t.ParseArgs(o[r])}),l});
+"use strict";
+Object.defineProperty(exports, "__esModule", {
+value: true
+});
+const graphql_1 = require("graphql");
+const core_1 = require("@rxdi/core");
+const parse_ast_1 = require("./parse-ast");
+const app_tokens_1 = require("../app/app.tokens");
+const InputObjectTypes = new Map();
+exports.buildArgumentsSchema = (config, resolver) => {
+let args = config.$resolvers[resolver].args || {};
+let fields = {};
+const Arguments = core_1.Container.get(app_tokens_1.TypesToken);
+Object.keys(args).forEach(a => {
+const name = args[a].replace('!', '');
+if (Arguments.has(name)) {
+let reusableType = new graphql_1.GraphQLInputObjectType({
+name,
+fields: () => Arguments.get(name)
+});
+if (InputObjectTypes.has(name)) {
+reusableType = InputObjectTypes.get(name);
+}
+InputObjectTypes.set(name, reusableType);
+if (args[a].includes('!')) {
+fields = {
+payload: {
+type: new graphql_1.GraphQLNonNull(reusableType)
+}
+};
+} else {
+fields = {
+payload: {
+type: reusableType
+}
+};
+}
+return;
+}
+fields[a] = parse_ast_1.ParseArgs(args[a]);
+});
+return fields;
+};
 },{"./parse-ast":"helpers/parse-ast.ts","../app/app.tokens":"app/app.tokens.ts"}],"helpers/dynamic-schema/mutators/build-resolvers.ts":[function(require,module,exports) {
-"use strict";Object.defineProperty(exports,"__esModule",{value:!0});const e=require("../../isFunction"),r=require("../../lazy-types"),t=require("../../get-first-item"),s=require("../../parse-args-schema"),o=require("@rxdi/core"),i=require("@gapi/core");function a(a,c,n){Object.keys(a.$resolvers).forEach(l=>{const p=a.$resolvers[l].type,y=(a.$resolvers[l].method||"query").toLocaleLowerCase();let u=a.$resolvers[l].deps||[];if(!n[p])throw new Error(`Missing type '${p}', Available types: '${Object.keys(c).toString()}'`);let d=a.$resolvers[l].resolve;!d||e.isFunction(d)||Array.isArray(d)||(d=t.getFirstItem(d));const g=d;d=e.isFunction(d)?d:()=>g,Array.from(r.lazyTypes.keys()).forEach(e=>{Object.keys(r.lazyTypes.get(e)).forEach(r=>{n[e].getFields()[r].type=n[e]})}),o.Container.get(i.BootstrapService).Fields[y][l]={type:n[p],method_name:l,args:s.buildArgumentsSchema(a,l),public:!0,method_type:y,target:(e=>e.map(({provide:e,map:r})=>({container:o.Container.get(e),provide:e,map:r})).reduce((e,r)=>Object.assign({},e,{[r.map]:r.container}),{}))(u),resolve:d}})}exports.buildResolvers=a;
+"use strict";
+Object.defineProperty(exports, "__esModule", {
+value: true
+});
+const isFunction_1 = require("../../isFunction");
+const lazy_types_1 = require("../../lazy-types");
+const get_first_item_1 = require("../../get-first-item");
+const parse_args_schema_1 = require("../../parse-args-schema");
+const core_1 = require("@rxdi/core");
+const core_2 = require("@gapi/core");
+function buildResolvers(config, types, buildedSchema) {
+Object.keys(config.$resolvers).forEach(resolver => {
+const type = config.$resolvers[resolver].type;
+const method = (config.$resolvers[resolver].method || 'query').toLocaleLowerCase();
+let deps = config.$resolvers[resolver].deps || [];
+const mapDependencies = dependencies => dependencies.map(({
+provide,
+map
+}) => ({
+container: core_1.Container.get(provide),
+provide,
+map
+})).reduce((acc, curr) => Object.assign({}, acc, {
+[curr.map]: curr.container
+}), {});
+if (!buildedSchema[type]) {
+throw new Error(`Missing type '${type}', Available types: '${Object.keys(types).toString()}'`);
+}
+let resolve = config.$resolvers[resolver].resolve;
+if (resolve && !isFunction_1.isFunction(resolve) && !Array.isArray(resolve)) {
+/* Take the first method inside file for resolver */
+resolve = get_first_item_1.getFirstItem(resolve);
+}
+const oldResolve = resolve;
+resolve = isFunction_1.isFunction(resolve) ? resolve : () => oldResolve;
+Array.from(lazy_types_1.lazyTypes.keys()).forEach(type => {
+Object.keys(lazy_types_1.lazyTypes.get(type)).forEach(k => {
+buildedSchema[type].getFields()[k].type = buildedSchema[type]; // types[type].getFields()[k].resolve = resolve;
+});
+});
+core_1.Container.get(core_2.BootstrapService).Fields[method][resolver] = {
+type: buildedSchema[type],
+method_name: resolver,
+args: parse_args_schema_1.buildArgumentsSchema(config, resolver),
+public: true,
+method_type: method,
+target: mapDependencies(deps),
+resolve
+};
+});
+}
+exports.buildResolvers = buildResolvers;
 },{"../../isFunction":"helpers/isFunction.ts","../../lazy-types":"helpers/lazy-types.ts","../../get-first-item":"helpers/get-first-item.ts","../../parse-args-schema":"helpers/parse-args-schema.ts"}],"helpers/advanced-schema.ts":[function(require,module,exports) {
-"use strict";var e=this&&this.__awaiter||function(e,t,r,n){return new(r||(r=Promise))(function(s,u){function i(e){try{c(n.next(e))}catch(t){u(t)}}function a(e){try{c(n.throw(e))}catch(t){u(t)}}function c(e){e.done?s(e.value):new r(function(t){t(e.value)}).then(i,a)}c((n=n.apply(e,t||[])).next())})};Object.defineProperty(exports,"__esModule",{value:!0});const t=require("../helpers/dynamic-schema/mutators/build-arguments"),r=require("../helpers/dynamic-schema/mutators/build-types"),n=require("../helpers/dynamic-schema/mutators/build-resolvers");function s(s){return e(this,void 0,void 0,function*(){const e={},u={};return s.$args=s.$args||{},t.buildArguments(s),r.buildTypes(s,e,u),n.buildResolvers(s,e,u),u})}exports.MakeAdvancedSchema=s;
+"use strict";
+var __awaiter = this && this.__awaiter || function (thisArg, _arguments, P, generator) {
+return new (P || (P = Promise))(function (resolve, reject) {
+function fulfilled(value) {
+try {
+step(generator.next(value));
+} catch (e) {
+reject(e);
+}
+}
+function rejected(value) {
+try {
+step(generator["throw"](value));
+} catch (e) {
+reject(e);
+}
+}
+function step(result) {
+result.done ? resolve(result.value) : new P(function (resolve) {
+resolve(result.value);
+}).then(fulfilled, rejected);
+}
+step((generator = generator.apply(thisArg, _arguments || [])).next());
+});
+};
+Object.defineProperty(exports, "__esModule", {
+value: true
+});
+const build_arguments_1 = require("../helpers/dynamic-schema/mutators/build-arguments");
+const build_types_1 = require("../helpers/dynamic-schema/mutators/build-types");
+const build_resolvers_1 = require("../helpers/dynamic-schema/mutators/build-resolvers");
+function MakeAdvancedSchema(config) {
+return __awaiter(this, void 0, void 0, function* () {
+const types = {};
+const buildedSchema = {};
+config.$args = config.$args || {};
+config.$types = config.$types || {};
+build_arguments_1.buildArguments(config);
+build_types_1.buildTypes(config, types, buildedSchema);
+build_resolvers_1.buildResolvers(config, types, buildedSchema);
+return buildedSchema;
+});
+}
+exports.MakeAdvancedSchema = MakeAdvancedSchema;
 },{"../helpers/dynamic-schema/mutators/build-arguments":"helpers/dynamic-schema/mutators/build-arguments.ts","../helpers/dynamic-schema/mutators/build-types":"helpers/dynamic-schema/mutators/build-types.ts","../helpers/dynamic-schema/mutators/build-resolvers":"helpers/dynamic-schema/mutators/build-resolvers.ts"}],"helpers/basic-schema.ts":[function(require,module,exports) {
-"use strict";Object.defineProperty(exports,"__esModule",{value:!0});const e=require("graphql");function t(t,r){Object.keys(t.$resolvers).forEach(p=>{const o=t.$resolvers[p],n={};Object.keys(o).forEach(t=>{const r=o[t];"string"==typeof r&&(n[t]={type:e.GraphQLString}),"number"==typeof r&&(n[t]={type:e.GraphQLInt}),"boolean"==typeof r&&(n[t]={type:e.GraphQLBoolean}),"string"!=typeof r&&r.length&&("string"==typeof r[0]&&(n[t]={type:new e.GraphQLList(e.GraphQLString)}),"number"==typeof r[0]&&(n[t]={type:new e.GraphQLList(e.GraphQLInt)}),"boolean"==typeof r[0]&&(n[t]={type:new e.GraphQLList(e.GraphQLBoolean)}))}),r.Fields.query[p]={type:new e.GraphQLObjectType({name:`${p}_type`,fields:()=>n}),args:{},method_name:p,public:!0,method_type:"query",target:()=>{},resolve:"function"==typeof o?o:()=>o}})}exports.MakeBasicSchema=t;
+"use strict";
+Object.defineProperty(exports, "__esModule", {
+value: true
+});
+const graphql_1 = require("graphql");
+const core_1 = require("@gapi/core");
+function MakeBasicSchema(config) {
+Object.keys(config.$resolvers).forEach(method_name => {
+const resolve = config.$resolvers[method_name];
+const fields = {};
+const args = {};
+Object.keys(resolve).forEach(key => {
+const resolver = resolve[key];
+if (typeof resolver === 'string') {
+fields[key] = {
+type: graphql_1.GraphQLString
+};
+}
+if (typeof resolver === 'number') {
+fields[key] = {
+type: graphql_1.GraphQLInt
+};
+}
+if (typeof resolver === 'boolean') {
+fields[key] = {
+type: graphql_1.GraphQLBoolean
+};
+}
+if (typeof resolver !== 'string' && resolver.length) {
+if (typeof resolver[0] === 'string') {
+fields[key] = {
+type: new graphql_1.GraphQLList(graphql_1.GraphQLString)
+};
+}
+if (typeof resolver[0] === 'number') {
+fields[key] = {
+type: new graphql_1.GraphQLList(graphql_1.GraphQLInt)
+};
+}
+if (typeof resolver[0] === 'boolean') {
+fields[key] = {
+type: new graphql_1.GraphQLList(graphql_1.GraphQLBoolean)
+};
+}
+}
+});
+core_1.Container.get(core_1.BootstrapService).Fields.query[method_name] = {
+type: new graphql_1.GraphQLObjectType({
+name: `${method_name}_type`,
+fields: () => fields
+}),
+args,
+method_name,
+public: true,
+method_type: 'query',
+target: () => {},
+resolve: typeof resolve === 'function' ? resolve : () => resolve
+};
+});
+}
+exports.MakeBasicSchema = MakeBasicSchema;
 },{}],"helpers/transpile-and-load.ts":[function(require,module,exports) {
-"use strict";var e=this&&this.__awaiter||function(e,r,t,n){return new(t||(t=Promise))(function(i,s){function c(e){try{u(n.next(e))}catch(r){s(r)}}function o(e){try{u(n.throw(e))}catch(r){s(r)}}function u(e){e.done?i(e.value):new t(function(r){r(e.value)}).then(c,o)}u((n=n.apply(e,r||[])).next())})};Object.defineProperty(exports,"__esModule",{value:!0});const r=require("./typescript.builder"),t=require("path"),n=require("clear-module");function i(t,i){return e(this,void 0,void 0,function*(){t=c(t),yield r.TranspileTypescript([t],i),Object.keys(require.cache).forEach(function(e){delete require.cache[e]});const e=s(t,i);return n(e),require(e)})}function s(e,r){return t.join(process.cwd(),r,t.parse(t.join(process.cwd(),r,e)).base.replace("ts","js"))}function c(e){return e="."===e[0]?e.substr(1):e,t.isAbsolute(e)?e=e.replace(process.cwd(),""):e}function o(n,i){return e(this,void 0,void 0,function*(){return yield r.TranspileTypescript(n.map(e=>e.file).map(e=>c(e)),i),n.map(e=>Object.assign({},e,{transpiledFile:t.join(process.cwd(),i,t.parse(e.file).base.replace("ts","js"))}))})}exports.TranspileAndLoad=i,exports.TranspileAndGetAll=o;
+"use strict";
+var __awaiter = this && this.__awaiter || function (thisArg, _arguments, P, generator) {
+return new (P || (P = Promise))(function (resolve, reject) {
+function fulfilled(value) {
+try {
+step(generator.next(value));
+} catch (e) {
+reject(e);
+}
+}
+function rejected(value) {
+try {
+step(generator["throw"](value));
+} catch (e) {
+reject(e);
+}
+}
+function step(result) {
+result.done ? resolve(result.value) : new P(function (resolve) {
+resolve(result.value);
+}).then(fulfilled, rejected);
+}
+step((generator = generator.apply(thisArg, _arguments || [])).next());
+});
+};
+Object.defineProperty(exports, "__esModule", {
+value: true
+});
+const typescript_builder_1 = require("./typescript.builder");
+const path_1 = require("path"); // import { transpilerCache } from './transpiler-cache';
+const clearModule = require('clear-module');
+function TranspileAndLoad(path, outDir) {
+return __awaiter(this, void 0, void 0, function* () {
+path = convertToRelative(path); // if (transpilerCache.has(path)) {
+//   return transpilerCache.get(path);
+// }
+// console.log('Before');
+yield typescript_builder_1.TranspileTypescript([path], outDir);
+Object.keys(require.cache).forEach(function (key) {
+delete require.cache[key];
+});
+const transpiledPath = getTranspiledFilePath(path, outDir);
+clearModule(transpiledPath);
+const file = require(transpiledPath); // transpilerCache.set(path, file);
+// console.log(file);
+return file;
+});
+}
+exports.TranspileAndLoad = TranspileAndLoad;
+function getTranspiledFilePath(path, outDir) {
+return path_1.join(process.cwd(), outDir, path_1.parse(path_1.join(process.cwd(), outDir, path)).base.replace('ts', 'js'));
+}
+function convertToRelative(path) {
+path = path[0] === '.' ? path.substr(1) : path;
+return path_1.isAbsolute(path) ? path = path.replace(process.cwd(), '') : path;
+}
+function TranspileAndGetAll(externals, outDir) {
+return __awaiter(this, void 0, void 0, function* () {
+// console.log('Before All');
+yield typescript_builder_1.TranspileTypescript(externals.map(external => external.file).map(path => convertToRelative(path)), outDir);
+return externals.map(path => Object.assign({}, path, {
+transpiledFile: path_1.join(process.cwd(), outDir, path_1.parse(path.file).base.replace('ts', 'js'))
+}));
+});
+}
+exports.TranspileAndGetAll = TranspileAndGetAll;
 },{"./typescript.builder":"helpers/typescript.builder.ts"}],"helpers/is-invalid-path.ts":[function(require,module,exports) {
-"use strict";Object.defineProperty(exports,"__esModule",{value:!0});const e=require("path");function t(t,r={}){if(""===t||"string"!=typeof t)return!0;const n=r.extended?32767:260;if("string"!=typeof t||t.length>n-12)return!0;const s=e.parse(t).root;return s&&(t=t.slice(s.length)),r.file?/[<>:"\/\\|?*]/.test(t):/[<>:"|?*]/.test(t)}exports.isInValidPath=t;
+"use strict";
+Object.defineProperty(exports, "__esModule", {
+value: true
+});
+const path_1 = require("path");
+function isInValidPath(path, options = {}) {
+if (path === '' || typeof path !== 'string') return true; // https://msdn.microsoft.com/en-us/library/windows/desktop/aa365247(v=vs.85).aspx#maxpath
+const MAX_PATH = options.extended ? 32767 : 260;
+if (typeof path !== 'string' || path.length > MAX_PATH - 12) {
+return true;
+}
+const rootPath = path_1.parse(path).root;
+if (rootPath) path = path.slice(rootPath.length); // https://msdn.microsoft.com/en-us/library/windows/desktop/aa365247(v=vs.85).aspx#Naming_Conventions
+if (options.file) {
+return /[<>:"/\\|?*]/.test(path);
+}
+return /[<>:"|?*]/.test(path);
+}
+exports.isInValidPath = isInValidPath;
 },{}],"helpers/traverse-map.ts":[function(require,module,exports) {
-"use strict";Object.defineProperty(exports,"__esModule",{value:!0}),exports.traverseMap=[];
+"use strict";
+Object.defineProperty(exports, "__esModule", {
+value: true
+});
+exports.traverseMap = [];
 },{}],"helpers/load-yml.ts":[function(require,module,exports) {
-"use strict";var e=this&&this.__awaiter||function(e,t,n,i){return new(n||(n=Promise))(function(r,o){function u(e){try{a(i.next(e))}catch(t){o(t)}}function c(e){try{a(i.throw(e))}catch(t){o(t)}}function a(e){e.done?r(e.value):new n(function(t){t(e.value)}).then(u,c)}a((i=i.apply(e,t||[])).next())})};Object.defineProperty(exports,"__esModule",{value:!0});const t=require("util"),n=require("js-yaml"),i=require("fs");function r(r){return e(this,void 0,void 0,function*(){return n.load(yield t.promisify(i.readFile)(r,{encoding:"utf-8"}))})}exports.loadYml=r;
+"use strict";
+var __awaiter = this && this.__awaiter || function (thisArg, _arguments, P, generator) {
+return new (P || (P = Promise))(function (resolve, reject) {
+function fulfilled(value) {
+try {
+step(generator.next(value));
+} catch (e) {
+reject(e);
+}
+}
+function rejected(value) {
+try {
+step(generator["throw"](value));
+} catch (e) {
+reject(e);
+}
+}
+function step(result) {
+result.done ? resolve(result.value) : new P(function (resolve) {
+resolve(result.value);
+}).then(fulfilled, rejected);
+}
+step((generator = generator.apply(thisArg, _arguments || [])).next());
+});
+};
+Object.defineProperty(exports, "__esModule", {
+value: true
+});
+const util_1 = require("util");
+const js_yaml_1 = require("js-yaml");
+const fs_1 = require("fs");
+function loadYml(path) {
+return __awaiter(this, void 0, void 0, function* () {
+return js_yaml_1.load((yield util_1.promisify(fs_1.readFile)(path, {
+encoding: 'utf-8'
+})));
+});
+}
+exports.loadYml = loadYml;
 },{}],"helpers/is-runner-installed.ts":[function(require,module,exports) {
-"use strict";var t=this&&this.__awaiter||function(t,e,n,i){return new(n||(n=Promise))(function(r,o){function u(t){try{s(i.next(t))}catch(e){o(e)}}function c(t){try{s(i.throw(t))}catch(e){o(e)}}function s(t){t.done?r(t.value):new n(function(e){e(t.value)}).then(u,c)}s((i=i.apply(t,e||[])).next())})};Object.defineProperty(exports,"__esModule",{value:!0});const e=require("child_process"),n=require("util");function i(i){return t(this,void 0,void 0,function*(){let t;try{t=!(yield n.promisify(e.exec)(i)).stderr}catch(r){t=!1}return t})}function r(){return t(this,void 0,void 0,function*(){return yield i("parcel help")})}function o(){return t(this,void 0,void 0,function*(){return yield i("gapi daemon status")})}exports.isParcelInstalled=r,exports.isGapiInstalled=o;
+"use strict";
+var __awaiter = this && this.__awaiter || function (thisArg, _arguments, P, generator) {
+return new (P || (P = Promise))(function (resolve, reject) {
+function fulfilled(value) {
+try {
+step(generator.next(value));
+} catch (e) {
+reject(e);
+}
+}
+function rejected(value) {
+try {
+step(generator["throw"](value));
+} catch (e) {
+reject(e);
+}
+}
+function step(result) {
+result.done ? resolve(result.value) : new P(function (resolve) {
+resolve(result.value);
+}).then(fulfilled, rejected);
+}
+step((generator = generator.apply(thisArg, _arguments || [])).next());
+});
+};
+Object.defineProperty(exports, "__esModule", {
+value: true
+});
+const child_process_1 = require("child_process");
+const util_1 = require("util");
+function run(cmd) {
+return __awaiter(this, void 0, void 0, function* () {
+let res;
+try {
+if ((yield util_1.promisify(child_process_1.exec)(cmd)).stderr) {
+res = false;
+} else {
+res = true;
+}
+} catch (e) {
+res = false;
+}
+return res;
+});
+}
+function isParcelInstalled() {
+return __awaiter(this, void 0, void 0, function* () {
+return yield run('parcel help');
+});
+}
+exports.isParcelInstalled = isParcelInstalled;
+function isGapiInstalled() {
+return __awaiter(this, void 0, void 0, function* () {
+return yield run('gapi daemon status');
+});
+}
+exports.isGapiInstalled = isGapiInstalled;
 },{}],"helpers/load-file.ts":[function(require,module,exports) {
-"use strict";var e=this&&this.__awaiter||function(e,r,i,t){return new(i||(i=Promise))(function(n,s){function a(e){try{u(t.next(e))}catch(r){s(r)}}function l(e){try{u(t.throw(e))}catch(r){s(r)}}function u(e){e.done?n(e.value):new i(function(r){r(e.value)}).then(a,l)}u((t=t.apply(e,r||[])).next())})};Object.defineProperty(exports,"__esModule",{value:!0});const r=require("util"),i=require("./transpile-and-load"),t=require("fs"),n=require("./is-invalid-path"),s=require("./traverse-map"),a=require("path"),l=require("./load-yml"),u=require("./is-runner-installed");function o(o){return e(this,void 0,void 0,function*(){let e;if(n.isInValidPath(o))return o;if(!(yield r.promisify(t.exists)(o))){const e=s.traverseMap[s.traverseMap.length-1];e&&(o=a.join(process.cwd(),e.parent,o.replace(process.cwd(),"")))}e=(yield u.isGapiInstalled())&&(o.includes(".ts")||o.includes(".js"))?yield i.TranspileAndLoad(o,"./.gj/out"):o.includes(".yml")?l.loadYml(o):o.includes(".json")?require(o):o.includes(".html")?yield r.promisify(t.readFile)(o,{encoding:"utf-8"}):require("esm")(module)(o);const d=o.substring(0,o.lastIndexOf("/")).replace(process.cwd(),"");return s.traverseMap.push({parent:d,path:o}),e})}exports.loadFile=o;
+"use strict";
+var __awaiter = this && this.__awaiter || function (thisArg, _arguments, P, generator) {
+return new (P || (P = Promise))(function (resolve, reject) {
+function fulfilled(value) {
+try {
+step(generator.next(value));
+} catch (e) {
+reject(e);
+}
+}
+function rejected(value) {
+try {
+step(generator["throw"](value));
+} catch (e) {
+reject(e);
+}
+}
+function step(result) {
+result.done ? resolve(result.value) : new P(function (resolve) {
+resolve(result.value);
+}).then(fulfilled, rejected);
+}
+step((generator = generator.apply(thisArg, _arguments || [])).next());
+});
+};
+Object.defineProperty(exports, "__esModule", {
+value: true
+});
+const util_1 = require("util");
+const transpile_and_load_1 = require("./transpile-and-load");
+const fs_1 = require("fs");
+const is_invalid_path_1 = require("./is-invalid-path");
+const traverse_map_1 = require("./traverse-map");
+const path_1 = require("path");
+const load_yml_1 = require("./load-yml");
+const is_runner_installed_1 = require("./is-runner-installed");
+function loadFile(path) {
+return __awaiter(this, void 0, void 0, function* () {
+let loadedModule;
+if (is_invalid_path_1.isInValidPath(path)) {
+return path;
+}
+if (!(yield util_1.promisify(fs_1.exists)(path))) {
+const lastElement = traverse_map_1.traverseMap[traverse_map_1.traverseMap.length - 1];
+if (lastElement) {
+path = path_1.join(process.cwd(), lastElement.parent, path.replace(process.cwd(), ''));
+}
+}
+if ((yield is_runner_installed_1.isGapiInstalled()) && path.includes('.ts')) {
+loadedModule = yield transpile_and_load_1.TranspileAndLoad(path, './.gj/out');
+} else if (path.includes('.yml')) {
+loadedModule = load_yml_1.loadYml(path);
+} else if (path.includes('.json')) {
+const clearModule = require('clear-module');
+path = path_1.normalize(path_1.join(process.cwd(), path));
+clearModule(path);
+loadedModule = require(path);
+} else if (path.includes('.html')) {
+loadedModule = yield util_1.promisify(fs_1.readFile)(path, {
+encoding: 'utf-8'
+});
+} else {
+loadedModule = require('esm')(module)(path);
+}
+const parent = path.substring(0, path.lastIndexOf('/')).replace(process.cwd(), '');
+traverse_map_1.traverseMap.push({
+parent,
+path
+});
+return loadedModule;
+});
+}
+exports.loadFile = loadFile;
 },{"./transpile-and-load":"helpers/transpile-and-load.ts","./is-invalid-path":"helpers/is-invalid-path.ts","./traverse-map":"helpers/traverse-map.ts","./load-yml":"helpers/load-yml.ts","./is-runner-installed":"helpers/is-runner-installed.ts"}],"helpers/traverse/test.ts":[function(require,module,exports) {
-"use strict";var e=this&&this.__awaiter||function(e,t,n,r){return new(n||(n=Promise))(function(i,o){function u(e){try{l(r.next(e))}catch(t){o(t)}}function c(e){try{l(r.throw(e))}catch(t){o(t)}}function l(e){e.done?i(e.value):new n(function(t){t(e.value)}).then(u,c)}l((r=r.apply(e,t||[])).next())})};Object.defineProperty(exports,"__esModule",{value:!0});const t=require("../load-file"),n=require("path");function r(e){return e.replace("💉","")}function i(t){return e(this,void 0,void 0,function*(){return"object"!=typeof t||null===t?t:Array.isArray(t)?u(t):o(t)})}function o(o){return e(this,void 0,void 0,function*(){const e={};let u,c={};for(let[l,s]of Object.entries(o))if("string"==typeof s&&s.includes("💉")){u=`${r(s)}`;const o=yield t.loadFile(n.join(process.cwd(),u));e[l]=yield i(o),c[l]=u,Object.defineProperty(e,"_meta",{value:c,enumerable:!1,writable:!0})}else e[l]=yield i(s);return e})}function u(t){return e(this,void 0,void 0,function*(){return yield Promise.all(t.map(t=>e(this,void 0,void 0,function*(){return i(t)})))})}exports.replaceInjectSymbol=r,exports.deep=i,exports.meta=new Map,exports.deepObject=o,exports.deepArray=u;
+"use strict";
+var __awaiter = this && this.__awaiter || function (thisArg, _arguments, P, generator) {
+return new (P || (P = Promise))(function (resolve, reject) {
+function fulfilled(value) {
+try {
+step(generator.next(value));
+} catch (e) {
+reject(e);
+}
+}
+function rejected(value) {
+try {
+step(generator["throw"](value));
+} catch (e) {
+reject(e);
+}
+}
+function step(result) {
+result.done ? resolve(result.value) : new P(function (resolve) {
+resolve(result.value);
+}).then(fulfilled, rejected);
+}
+step((generator = generator.apply(thisArg, _arguments || [])).next());
+});
+};
+Object.defineProperty(exports, "__esModule", {
+value: true
+});
+const load_file_1 = require("../load-file");
+const path_1 = require("path");
+function replaceInjectSymbol(path) {
+return path.replace('💉', '');
+}
+exports.replaceInjectSymbol = replaceInjectSymbol;
+function deep(value) {
+return __awaiter(this, void 0, void 0, function* () {
+if (typeof value !== 'object' || value === null) {
+return value;
+}
+if (Array.isArray(value)) {
+return deepArray(value);
+}
+return deepObject(value);
+});
+}
+exports.deep = deep;
+exports.meta = new Map();
+function deepObject(source) {
+return __awaiter(this, void 0, void 0, function* () {
+const result = {};
+let path;
+let meta = {};
+for (let [key, value] of Object.entries(source)) {
+if (typeof value === 'string' && value.includes('💉')) {
+path = `${replaceInjectSymbol(value)}`;
+const mod = yield load_file_1.loadFile(path_1.join(process.cwd(), path));
+result[key] = yield deep(mod);
+meta[key] = path;
+Object.defineProperty(result, `_meta`, {
+value: meta,
+enumerable: false,
+writable: true
+});
+} else {
+result[key] = yield deep(value);
+}
+}
+return result;
+});
+}
+exports.deepObject = deepObject;
+function deepArray(collection) {
+return __awaiter(this, void 0, void 0, function* () {
+return yield Promise.all(collection.map(value => __awaiter(this, void 0, void 0, function* () {
+return deep(value);
+})));
+});
+}
+exports.deepArray = deepArray;
 },{"../load-file":"helpers/load-file.ts"}],"helpers/is-array.ts":[function(require,module,exports) {
-"use strict";function e(e){return"[object Array]"===Object.prototype.toString.call(e)}Object.defineProperty(exports,"__esModule",{value:!0}),exports.isArray=e;
+"use strict";
+Object.defineProperty(exports, "__esModule", {
+value: true
+});
+function isArray(o) {
+return Object.prototype.toString.call(o) === '[object Array]';
+}
+exports.isArray = isArray;
 },{}],"helpers/traverse/traverse.ts":[function(require,module,exports) {
-"use strict";var t=this&&this.__awaiter||function(t,e,r,n){return new(r||(r=Promise))(function(i,o){function u(t){try{s(n.next(t))}catch(e){o(e)}}function c(t){try{s(n.throw(t))}catch(e){o(e)}}function s(t){t.done?i(t.value):new r(function(e){e(t.value)}).then(u,c)}s((n=n.apply(t,e||[])).next())})};Object.defineProperty(exports,"__esModule",{value:!0});const e=require("../is-array");function r(r,o){return t(this,void 0,void 0,function*(){e.isArray(r)?yield i(r,o):"object"==typeof r&&null!==r&&(yield n(r,o))})}function n(e,n){return t(this,void 0,void 0,function*(){for(let[t,i]of Object.entries(e))if(e.hasOwnProperty(t)){if(n(t,i))break;yield r(e[t],n)}})}function i(e,n){return t(this,void 0,void 0,function*(){for(const t of e)return yield r(t,n)})}exports.traverse=r,exports.traverseObject=n,exports.traverseArray=i;
+"use strict";
+var __awaiter = this && this.__awaiter || function (thisArg, _arguments, P, generator) {
+return new (P || (P = Promise))(function (resolve, reject) {
+function fulfilled(value) {
+try {
+step(generator.next(value));
+} catch (e) {
+reject(e);
+}
+}
+function rejected(value) {
+try {
+step(generator["throw"](value));
+} catch (e) {
+reject(e);
+}
+}
+function step(result) {
+result.done ? resolve(result.value) : new P(function (resolve) {
+resolve(result.value);
+}).then(fulfilled, rejected);
+}
+step((generator = generator.apply(thisArg, _arguments || [])).next());
+});
+};
+Object.defineProperty(exports, "__esModule", {
+value: true
+});
+const is_array_1 = require("../is-array");
+function traverse(x, find) {
+return __awaiter(this, void 0, void 0, function* () {
+if (is_array_1.isArray(x)) {
+yield traverseArray(x, find);
+} else if (typeof x === 'object' && x !== null) {
+yield traverseObject(x, find);
+}
+null;
+});
+}
+exports.traverse = traverse;
+function traverseObject(obj, find) {
+return __awaiter(this, void 0, void 0, function* () {
+for (let [k, v] of Object.entries(obj)) {
+if (obj.hasOwnProperty(k)) {
+if (yield find(k, v)) {
+break;
+} else {
+yield traverse(obj[k], find);
+}
+}
+}
+});
+}
+exports.traverseObject = traverseObject;
+function traverseArray(arr, find) {
+return __awaiter(this, void 0, void 0, function* () {
+for (const x of arr) {
+return yield traverse(x, find);
+}
+});
+}
+exports.traverseArray = traverseArray;
 },{"../is-array":"helpers/is-array.ts"}],"helpers/react-to-changes.ts":[function(require,module,exports) {
-"use strict";var e=this&&this.__awaiter||function(e,t,r,n){return new(r||(r=Promise))(function(i,o){function a(e){try{s(n.next(e))}catch(t){o(t)}}function c(e){try{s(n.throw(e))}catch(t){o(t)}}function s(e){e.done?i(e.value):new r(function(t){t(e.value)}).then(a,c)}s((n=n.apply(e,t||[])).next())})};Object.defineProperty(exports,"__esModule",{value:!0});const t=require("./traverse/traverse"),r=require("@gapi/core"),n=require("./get-first-item"),i=require("./load-file"),o=require("./advanced-schema"),a=require("./traverse/test"),c=require("./lazy-types");function s(e,t){return Object.keys(t).find(r=>t[r]===e)}function u(e){return`.${e.replace(process.cwd(),"")}`}let l;function d(d,f){return e(this,void 0,void 0,function*(){if(l)return void console.log(`✋  Bundle is updating previews change! Unable to update ${d}`);const e=Date.now();console.log(`💡  Bundle changed: ${d}`),l=!0;try{const y=yield i.loadFile(d);if(f._meta){const e=s(u(d),f._meta);e?f[e]=yield a.deep(y):yield t.traverse(f,(e,t)=>{if("object"==typeof t&&t._meta){const e=s(u(d),t._meta);if(e)return t[e]=n.getFirstItem(y),!0}return!1})}else f=yield a.deep(y);c.lazyTypes.clear(),r.Container.get(r.BootstrapService).Fields={mutation:{},query:{},subscription:{}},yield o.MakeAdvancedSchema(f),r.Container.get(r.ApolloService).init(),console.log(`📦  Bundle realoaded! ${Date.now()-e}ms`,d),l=!1}catch(p){l=!1,console.error(p)}})}exports.reactToChanges=d;
-},{"./traverse/traverse":"helpers/traverse/traverse.ts","./get-first-item":"helpers/get-first-item.ts","./load-file":"helpers/load-file.ts","./advanced-schema":"helpers/advanced-schema.ts","./traverse/test":"helpers/traverse/test.ts","./lazy-types":"helpers/lazy-types.ts"}],"helpers/watch-bundles.ts":[function(require,module,exports) {
-"use strict";var e=this&&this.__awaiter||function(e,n,t,o){return new(t||(t=Promise))(function(c,r){function i(e){try{s(o.next(e))}catch(n){r(n)}}function u(e){try{s(o.throw(e))}catch(n){r(n)}}function s(e){e.done?c(e.value):new t(function(n){n(e.value)}).then(i,u)}s((o=o.apply(e,n||[])).next())})};Object.defineProperty(exports,"__esModule",{value:!0});const n=require("chokidar"),t=require("./react-to-changes"),o=["./gj.yml","./gj.json","./gj.js","./gj.ts"];function c(c,r){n.watch([...new Set(c),...o],{ignored:e=>e.includes("node_modules")}).on("change",n=>e(this,void 0,void 0,function*(){return t.reactToChanges(n,r)}))}exports.watchBundles=c;
+"use strict";
+var __awaiter = this && this.__awaiter || function (thisArg, _arguments, P, generator) {
+return new (P || (P = Promise))(function (resolve, reject) {
+function fulfilled(value) {
+try {
+step(generator.next(value));
+} catch (e) {
+reject(e);
+}
+}
+function rejected(value) {
+try {
+step(generator["throw"](value));
+} catch (e) {
+reject(e);
+}
+}
+function step(result) {
+result.done ? resolve(result.value) : new P(function (resolve) {
+resolve(result.value);
+}).then(fulfilled, rejected);
+}
+step((generator = generator.apply(thisArg, _arguments || [])).next());
+});
+};
+Object.defineProperty(exports, "__esModule", {
+value: true
+});
+const traverse_1 = require("./traverse/traverse");
+const core_1 = require("@gapi/core");
+const get_first_item_1 = require("./get-first-item");
+const load_file_1 = require("./load-file");
+const advanced_schema_1 = require("./advanced-schema");
+const test_1 = require("./traverse/test");
+const lazy_types_1 = require("./lazy-types");
+const watch_bundles_1 = require("./watch-bundles");
+const basic_schema_1 = require("./basic-schema");
+function findMetaKey(path, meta) {
+return Object.keys(meta).find(k => meta[k] === path);
+}
+function getMetaPath(path) {
+return `.${path.replace(process.cwd(), '')}`;
+}
+let isRunning;
+function reactToChanges(path, config) {
+return __awaiter(this, void 0, void 0, function* () {
+if (isRunning) {
+console.log(`✋  Bundle is updating previews change! Unable to update ${path}`);
+return;
+}
+const timer = Date.now();
+console.log(`💡  Bundle changed: ${path}`);
+isRunning = true;
+try {
+const newFile = yield load_file_1.loadFile(path);
+if (watch_bundles_1.configWatchers.filter(p => path.includes(p)).length) {
+config = yield test_1.deep(newFile);
+} else if (config._meta) {
+// First level deepnest
+const metaKey = findMetaKey(getMetaPath(path), config._meta);
+if (metaKey) {
+config[metaKey] = yield test_1.deep(newFile);
+}
+} else {
+// Traverse recursive and find metadata for specific file and update it
+yield traverse_1.traverse(config, (k, v) => __awaiter(this, void 0, void 0, function* () {
+if (typeof v === 'object' && v._meta) {
+const foundMetaKey = findMetaKey(getMetaPath(path), v._meta);
+if (foundMetaKey) {
+v[foundMetaKey] = yield test_1.deep(get_first_item_1.getFirstItem(newFile));
+return true;
+}
+}
+return false;
+}));
+}
+lazy_types_1.lazyTypes.clear();
+core_1.Container.get(core_1.BootstrapService).Fields = {
+mutation: {},
+query: {},
+subscription: {}
+};
+if (config.$mode === 'basic') {
+yield basic_schema_1.MakeBasicSchema(config);
+}
+if (config.$mode === 'advanced') {
+yield advanced_schema_1.MakeAdvancedSchema(config);
+}
+core_1.Container.get(core_1.ApolloService).init();
+console.log(`📦  Bundle realoaded! ${Date.now() - timer}ms`, path);
+isRunning = false; // await SchemaIntrospection()
+} catch (e) {
+isRunning = false;
+console.error(e);
+}
+});
+}
+exports.reactToChanges = reactToChanges;
+},{"./traverse/traverse":"helpers/traverse/traverse.ts","./get-first-item":"helpers/get-first-item.ts","./load-file":"helpers/load-file.ts","./advanced-schema":"helpers/advanced-schema.ts","./traverse/test":"helpers/traverse/test.ts","./lazy-types":"helpers/lazy-types.ts","./watch-bundles":"helpers/watch-bundles.ts","./basic-schema":"helpers/basic-schema.ts"}],"helpers/watch-bundles.ts":[function(require,module,exports) {
+"use strict";
+var __awaiter = this && this.__awaiter || function (thisArg, _arguments, P, generator) {
+return new (P || (P = Promise))(function (resolve, reject) {
+function fulfilled(value) {
+try {
+step(generator.next(value));
+} catch (e) {
+reject(e);
+}
+}
+function rejected(value) {
+try {
+step(generator["throw"](value));
+} catch (e) {
+reject(e);
+}
+}
+function step(result) {
+result.done ? resolve(result.value) : new P(function (resolve) {
+resolve(result.value);
+}).then(fulfilled, rejected);
+}
+step((generator = generator.apply(thisArg, _arguments || [])).next());
+});
+};
+Object.defineProperty(exports, "__esModule", {
+value: true
+});
+const chokidar_1 = require("chokidar");
+const react_to_changes_1 = require("./react-to-changes");
+exports.configWatchers = ['gj.yml', 'gj.json', 'gj.js', 'gj.ts'];
+function watchBundles(paths, config) {
+const ignored = p => p.includes('node_modules');
+chokidar_1.watch([...new Set(paths), ...exports.configWatchers.map(p => `./${p}`)], {
+ignored
+}).on('change', path => __awaiter(this, void 0, void 0, function* () {
+return react_to_changes_1.reactToChanges(path, config);
+}));
+}
+exports.watchBundles = watchBundles; // @Injectable()
+// export class BundleWatcher {
+//   private configWatchers = ['./gj.yml', './gj.json', './gj.js', './gj.ts'];
+//   private ignored = (p: string) => p.includes('node_modules');
+//   private watcher: FSWatcher;
+//   constructor() {
+//     this.watcher = watch([...this.configWatchers], {
+//       ignored: this.ignored
+//     })
+//   }
+//   unwatch(path: string[] | string) {
+//     this.watcher.unwatch(path);
+//   }
+//   addBundles(paths: string[]) {
+//     this.watcher.add(paths);
+//   }
+//   onChange(config: Config) {
+//     this.watcher.on('change', async path => reactToChanges(path, config));
+//   }
+//   stop() {
+//     this.watcher.close();
+//   }
+//   getWatcher() {
+//     return this.watcher;
+//   }
+// }
 },{"./react-to-changes":"helpers/react-to-changes.ts"}],"app/app.module.ts":[function(require,module,exports) {
-"use strict";var e=this&&this.__decorate||function(e,r,t,i){var s,n=arguments.length,o=n<3?r:null===i?i=Object.getOwnPropertyDescriptor(r,t):i;if("object"==typeof Reflect&&"function"==typeof Reflect.decorate)o=Reflect.decorate(e,r,t,i);else for(var a=e.length-1;a>=0;a--)(s=e[a])&&(o=(n<3?s(o):n>3?s(r,t,o):s(r,t))||o);return n>3&&o&&Object.defineProperty(r,t,o),o},r=this&&this.__awaiter||function(e,r,t,i){return new(t||(t=Promise))(function(s,n){function o(e){try{c(i.next(e))}catch(r){n(r)}}function a(e){try{c(i.throw(e))}catch(r){n(r)}}function c(e){e.done?s(e.value):new t(function(r){r(e.value)}).then(o,a)}c((i=i.apply(e,r||[])).next())})};Object.defineProperty(exports,"__esModule",{value:!0});const t=require("@gapi/core"),i=require("fs"),s=require("util"),n=require("../helpers/args-extractors"),o=require("@gapi/voyager"),a=require("../helpers/set-config"),c=require("../helpers/basic.template"),l=require("../helpers/advanced-schema"),u=require("../helpers/basic-schema"),d=require("path"),p=require("./app.tokens"),h=require("../helpers/transpile-and-load"),f=require("../helpers/traverse/test"),m=require("../helpers/traverse-map"),g=require("../helpers/watch-bundles");let y=class{};y=e([t.Module({imports:[o.VoyagerModule.forRoot()],providers:[{provide:p.TypesToken,useValue:new Map},{provide:p.ResolversToken,useValue:new Map},{provide:p.ArgumentsToken,useValue:new Map},{provide:p.GuardsToken,useValue:new Map},{provide:t.SCHEMA_OVERRIDE,useFactory:()=>e=>{let r;try{const e=JSON.parse(i.readFileSync(d.join(process.cwd(),"gj.json"),{encoding:"utf-8"}));e.$schema=e.$schema||n.nextOrDefault("--schema",!1),e.$schema&&(r=i.readFileSync(e.$schema,{encoding:"utf-8"}),r=t.buildSchema(r))}catch(c){}const o=[r,e].filter(e=>!!e);let a;return a=1===o.length?e:t.mergeSchemas({schemas:o}),n.includes("--verbose")&&console.log(`\nSchema:\n${t.printSchema(a)}\n                  `),process.argv.toString().includes("--generate")&&s.promisify(i.writeFile)("./schema.graphql",t.printSchema(a),{encoding:"utf-8"}).then(()=>{console.log("Schema created!"),process.exit(0)}),a}},{provide:p.Config,useFactory:()=>r(this,void 0,void 0,function*(){let e=yield a.getConfig(n.nextOrDefault("--config","graphqj-config"));return e||(e=yield a.getConfig("gj")),e||(e=c.basicTemplate),e.default||e})},{provide:"Run",deps:[p.Config,t.BootstrapService,p.TypesToken,p.ResolversToken,p.ArgumentsToken,p.GuardsToken,t.GRAPHQL_PLUGIN_CONFIG],lazy:!0,useFactory:(e,n,o,a,c,p,y)=>r(this,void 0,void 0,function*(){if(e=yield e,(e=yield f.deep(e)).$externals){const r=yield h.TranspileAndGetAll(e.$externals,"./.gj/out");e.$externals=r.map(e=>{if(e.file.includes(".ts"))e.module=require(e.transpiledFile);else{const r=require("esm")(module)(d.join(process.cwd(),e.file));e.module=r.default||r}return t.Container.set(e.map,e.module),e})}let r,o=d.join(process.cwd(),e.$directives||"");return(yield s.promisify(i.exists)(o))&&o!==process.cwd()&&(r=o.includes(".ts")?yield h.TranspileAndLoad(e.$directives.replace(".",""),"./.gj/out"):require("esm")(module)(o),y.directives=(yield Promise.all(Object.keys(r).map(e=>"function"==typeof r[e]?r[e]():null))).filter(e=>!!e)),"basic"===e.$mode&&(yield u.MakeBasicSchema(e,n)),"advanced"===e.$mode&&(yield l.MakeAdvancedSchema(e)),g.watchBundles(m.traverseMap.map(e=>e.path),e),console.log("You can extract this schema by running --generate command"),!0})}]})],y),exports.AppModule=y;
+"use strict";
+var __decorate = this && this.__decorate || function (decorators, target, key, desc) {
+var c = arguments.length,
+r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc,
+d;
+if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __awaiter = this && this.__awaiter || function (thisArg, _arguments, P, generator) {
+return new (P || (P = Promise))(function (resolve, reject) {
+function fulfilled(value) {
+try {
+step(generator.next(value));
+} catch (e) {
+reject(e);
+}
+}
+function rejected(value) {
+try {
+step(generator["throw"](value));
+} catch (e) {
+reject(e);
+}
+}
+function step(result) {
+result.done ? resolve(result.value) : new P(function (resolve) {
+resolve(result.value);
+}).then(fulfilled, rejected);
+}
+step((generator = generator.apply(thisArg, _arguments || [])).next());
+});
+};
+Object.defineProperty(exports, "__esModule", {
+value: true
+});
+const core_1 = require("@gapi/core");
+const fs_1 = require("fs");
+const util_1 = require("util");
+const args_extractors_1 = require("../helpers/args-extractors");
+const voyager_1 = require("@gapi/voyager");
+const set_config_1 = require("../helpers/set-config");
+const basic_template_1 = require("../helpers/basic.template");
+const advanced_schema_1 = require("../helpers/advanced-schema");
+const basic_schema_1 = require("../helpers/basic-schema");
+const path_1 = require("path");
+const app_tokens_1 = require("./app.tokens");
+const transpile_and_load_1 = require("../helpers/transpile-and-load");
+const test_1 = require("../helpers/traverse/test");
+const traverse_map_1 = require("../helpers/traverse-map");
+const watch_bundles_1 = require("../helpers/watch-bundles");
+let AppModule = class AppModule {};
+AppModule = __decorate([core_1.Module({
+imports: [voyager_1.VoyagerModule.forRoot()],
+providers: [{
+provide: app_tokens_1.TypesToken,
+useValue: new Map()
+}, {
+provide: app_tokens_1.ResolversToken,
+useValue: new Map()
+}, {
+provide: app_tokens_1.ArgumentsToken,
+useValue: new Map()
+}, {
+provide: app_tokens_1.GuardsToken,
+useValue: new Map()
+}, {
+provide: core_1.SCHEMA_OVERRIDE,
+useFactory: () => schema => {
+let externalSchema;
+try {
+const config = JSON.parse(fs_1.readFileSync(path_1.join(process.cwd(), 'gj.json'), {
+encoding: 'utf-8'
+}));
+config.$schema = config.$schema || args_extractors_1.nextOrDefault('--schema', false);
+if (config.$schema) {
+externalSchema = fs_1.readFileSync(config.$schema, {
+encoding: 'utf-8'
+});
+externalSchema = core_1.buildSchema(externalSchema);
+}
+} catch (e) {}
+const schemas = [externalSchema, schema].filter(i => !!i);
+let mergedSchemas;
+if (schemas.length === 1) {
+mergedSchemas = schema;
+} else {
+mergedSchemas = core_1.mergeSchemas({
+schemas
+});
+}
+if (args_extractors_1.includes('--verbose')) {
+console.log(`
+Schema:
+${core_1.printSchema(mergedSchemas)}
+`);
+}
+if (process.argv.toString().includes('--generate')) {
+util_1.promisify(fs_1.writeFile)('./schema.graphql', core_1.printSchema(mergedSchemas), {
+encoding: 'utf-8'
+}).then(() => {
+console.log('Schema created!');
+process.exit(0);
+});
+}
+return mergedSchemas;
+}
+}, {
+provide: app_tokens_1.Config,
+useFactory: () => __awaiter(this, void 0, void 0, function* () {
+let config = yield set_config_1.getConfig(args_extractors_1.nextOrDefault('--config', 'graphqj-config'));
+if (!config) {
+config = yield set_config_1.getConfig('gj');
+}
+if (!config) {
+config = basic_template_1.basicTemplate;
+}
+return config['default'] || config;
+})
+}, {
+provide: 'Run',
+deps: [app_tokens_1.Config, core_1.BootstrapService, app_tokens_1.TypesToken, app_tokens_1.ResolversToken, app_tokens_1.ArgumentsToken, app_tokens_1.GuardsToken, core_1.GRAPHQL_PLUGIN_CONFIG],
+lazy: true,
+useFactory: (config, bootstrap, types, resolvers, args, guards, graphqlConfig) => __awaiter(this, void 0, void 0, function* () {
+config = yield config;
+config = yield test_1.deep(config);
+if (config.$externals) {
+const compiledPaths = yield transpile_and_load_1.TranspileAndGetAll(config.$externals, './.gj/out');
+config.$externals = compiledPaths.map(external => {
+if (external.file.includes('.ts')) {
+external.module = require(external.transpiledFile);
+} else {
+const m = require('esm')(module)(path_1.join(process.cwd(), external.file));
+external.module = m['default'] || m;
+}
+core_1.Container.set(external.map, external.module);
+return external;
+});
+}
+let filePath = path_1.join(process.cwd(), config.$directives || '');
+let directives;
+if ((yield util_1.promisify(fs_1.exists)(filePath)) && filePath !== process.cwd()) {
+if (filePath.includes('.ts')) {
+directives = yield transpile_and_load_1.TranspileAndLoad(config.$directives.replace('.', ''), './.gj/out');
+} else {
+directives = require('esm')(module)(filePath);
+}
+graphqlConfig.directives = (yield Promise.all(Object.keys(directives).map(d => typeof directives[d] === 'function' ? directives[d]() : null))).filter(i => !!i);
+}
+if (config.$mode === 'basic') {
+yield basic_schema_1.MakeBasicSchema(config, bootstrap);
+}
+if (config.$mode === 'advanced') {
+yield advanced_schema_1.MakeAdvancedSchema(config);
+}
+watch_bundles_1.watchBundles(traverse_map_1.traverseMap.map(f => f.path), config);
+console.log('You can extract this schema by running --generate command');
+return true;
+})
+}]
+})], AppModule);
+exports.AppModule = AppModule;
 },{"../helpers/args-extractors":"helpers/args-extractors.ts","../helpers/set-config":"helpers/set-config.ts","../helpers/basic.template":"helpers/basic.template.ts","../helpers/advanced-schema":"helpers/advanced-schema.ts","../helpers/basic-schema":"helpers/basic-schema.ts","./app.tokens":"app/app.tokens.ts","../helpers/transpile-and-load":"helpers/transpile-and-load.ts","../helpers/traverse/test":"helpers/traverse/test.ts","../helpers/traverse-map":"helpers/traverse-map.ts","../helpers/watch-bundles":"helpers/watch-bundles.ts"}],"helpers/self-child.ts":[function(require,module,exports) {
-"use strict";Object.defineProperty(exports,"__esModule",{value:!0});const e=require("child_process"),s=require("rxjs");exports.SelfChild=(r=>new s.Observable(s=>{const o=[];o.push("--config"),o.push(r);const t=e.spawn("gj",o);return t.stdout.pipe(process.stdout),t.stderr.pipe(process.stderr),process.on("exit",()=>t.kill()),s.next(t),()=>{s.complete(),t.kill(),console.log(`Child process: ${t.pid} killed`)}}));
+"use strict";
+Object.defineProperty(exports, "__esModule", {
+value: true
+});
+const child_process_1 = require("child_process");
+const rxjs_1 = require("rxjs");
+exports.SelfChild = configFile => {
+return new rxjs_1.Observable(observer => {
+const args = [];
+args.push('--config');
+args.push(configFile);
+const child = child_process_1.spawn('gj', args);
+child.stdout.pipe(process.stdout);
+child.stderr.pipe(process.stderr);
+process.on('exit', () => child.kill());
+observer.next(child);
+return () => {
+observer.complete();
+child.kill();
+console.log(`Child process: ${child.pid} killed`);
+};
+});
+};
 },{}],"main.ts":[function(require,module,exports) {
-"use strict";var n=this&&this.__awaiter||function(n,e,r,i){return new(r||(r=Promise))(function(s,t){function a(n){try{u(i.next(n))}catch(e){t(e)}}function o(n){try{u(i.throw(n))}catch(e){t(e)}}function u(n){n.done?s(n.value):new r(function(e){e(n.value)}).then(a,o)}u((i=i.apply(n,e||[])).next())})};Object.defineProperty(exports,"__esModule",{value:!0});const e=require("@rxdi/core"),r=require("./app/app.module"),i=require("@gapi/core"),s=require("./helpers/args-extractors"),t=require("fs"),a=require("util"),o=require("chokidar"),u=require("./helpers/self-child");if(s.includes("--watch")){let e;const r=s.nextOrDefault("--config");if(!t.existsSync(r))throw new Error(`File missing ${r}`);const i=n=>n.includes("node_modules");o.watch(r,{ignored:i}).on("change",(i,s)=>n(this,void 0,void 0,function*(){e&&e.unsubscribe(),e=u.SelfChild(r).subscribe(n=>{console.log("Child process started: ",n.pid)})})),o.watch(r,{ignored:i}).on("ready",(i,s)=>n(this,void 0,void 0,function*(){e&&e.unsubscribe(),e=u.SelfChild(r).subscribe(n=>{console.log("Child process started: ",n.pid)})}))}else s.includes("init")?s.includes("advanced")?a.promisify(t.writeFile)("./gj.json",'\n{\n  "$mode": "advanced",\n  "$types": {\n    "user": {\n      "name": "String",\n      "email": "String",\n      "phone": "Number",\n      "arrayOfNumbers": "Number[]",\n      "arrayOfStrings": "String[]"\n    }\n  },\n  "$resolvers": {\n    "findUser": {\n      "type": "user",\n      "resolve": {\n        "name": "Kristiyan Tachev",\n        "email": "test@gmail.com",\n        "phone": 414141,\n        "arrayOfNumbers": [515151, 412414],\n        "arrayOfStrings": ["515151", "412414"]\n      }\n    }\n  }\n}',{encoding:"utf-8"}):s.includes("es6")?a.promisify(t.writeFile)("./gj.js","\nexport default {\n  $mode: 'advanced',\n  $types: {\n    user: {\n      name: 'String',\n      email: 'String',\n      phone: 'Number',\n      arrayOfNumbers: 'Number[]',\n      arrayOfStrings: 'String[]'\n    }\n  },\n  $resolvers: {\n    findUser: {\n      type: 'user',\n      args: {\n        userId: \"String!\",\n        userId2: \"String\",\n      },\n      resolve: async (root, payload, context) => ({\n        name: 'Kristiyan Tachev',\n        email: 'test@gmail.com',\n        phone: 4141423,\n        arrayOfNumbers: [515151, 412414],\n        arrayOfStrings: ['515151', '412414']\n      })\n    }\n  }\n};\n",{encoding:"utf-8"}):s.includes("typescript")?a.promisify(t.writeFile)("./gj.ts","\nexport default {\n  $mode: 'advanced',\n  $types: {\n    user: {\n      name: 'String',\n      email: 'String',\n      phone: 'Number',\n      arrayOfNumbers: 'Number[]',\n      arrayOfStrings: 'String[]'\n    }\n  },\n  $resolvers: {\n    findUser: {\n      type: 'user',\n      args: {\n        userId: \"String!\",\n        userId2: \"String\",\n      },\n      resolve: async (root, payload: { userId: string; userId2?: string }) => ({\n        name: 'Kristiyan Tachev',\n        email: 'test@gmail.com',\n        phone: 4141423,\n        arrayOfNumbers: [515151, 412414],\n        arrayOfStrings: ['515151', '412414']\n      })\n    }\n  }\n};\n",{encoding:"utf-8"}):s.includes("yml")?a.promisify(t.writeFile)("./gj.yml","\n$mode: advanced\n$types:\n  user:\n    name: String\n    email: String\n    phone: Number\n    arrayOfNumbers: Number[]\n    arrayOfStrings: String[]\n\n$resolvers:\n  findUser:\n    type: user\n    args:\n      userId: String\n    resolve:\n      name: Kristiyan Tachev\n      email: test@gmail.com\n      phone: 414141\n      arrayOfNumbers: \n        - 515151\n        - 412414\n      arrayOfStrings:\n        - '515151'\n        - '412414'\n\n  findUser2:\n    type: user\n    args:\n      userId: String!\n    resolve:\n      name: Kristiyan Tachev\n      email: test@gmail.com\n      phone: 414141\n      arrayOfNumbers: \n        - 515151\n        - 412414\n      arrayOfStrings:\n        - '515151'\n        - '412414'\n",{encoding:"utf-8"}):a.promisify(t.writeFile)("./gj.json",'\n{\n  "$mode": "basic",\n  "$resolvers": {\n    "findUser": {\n      "name": "Kristiyan Tachev",\n      "email": "test@gmail.com",\n      "phone": 414141,\n      "arrayOfNumbers": [515151, 412414],\n      "arrayOfStrings": ["515151", "412414"]\n    }\n  }\n}\n',{encoding:"utf-8"}):e.BootstrapFramework(r.AppModule,[i.CoreModule.forRoot({graphql:{openBrowser:s.nextOrDefault("--random",!0,n=>"true"!==n),buildAstDefinitions:!1},server:{randomPort:s.nextOrDefault("--random",!1),hapi:{port:s.nextOrDefault("--port",9e3,n=>Number(n))}}})]).subscribe(()=>console.log("Started"),console.log.bind(console));
+"use strict";
+var __awaiter = this && this.__awaiter || function (thisArg, _arguments, P, generator) {
+return new (P || (P = Promise))(function (resolve, reject) {
+function fulfilled(value) {
+try {
+step(generator.next(value));
+} catch (e) {
+reject(e);
+}
+}
+function rejected(value) {
+try {
+step(generator["throw"](value));
+} catch (e) {
+reject(e);
+}
+}
+function step(result) {
+result.done ? resolve(result.value) : new P(function (resolve) {
+resolve(result.value);
+}).then(fulfilled, rejected);
+}
+step((generator = generator.apply(thisArg, _arguments || [])).next());
+});
+};
+Object.defineProperty(exports, "__esModule", {
+value: true
+});
+const core_1 = require("@rxdi/core");
+const app_module_1 = require("./app/app.module");
+const core_2 = require("@gapi/core");
+const args_extractors_1 = require("./helpers/args-extractors");
+const fs_1 = require("fs");
+const util_1 = require("util");
+const chokidar_1 = require("chokidar");
+const self_child_1 = require("./helpers/self-child");
+if (args_extractors_1.includes('--watch')) {
+let subscription;
+const configPath = args_extractors_1.nextOrDefault('--config');
+if (!fs_1.existsSync(configPath)) {
+throw new Error(`File missing ${configPath}`);
+}
+const ignored = p => p.includes('node_modules');
+chokidar_1.watch(configPath, {
+ignored
+}).on('change', (event, path) => __awaiter(this, void 0, void 0, function* () {
+if (subscription) {
+subscription.unsubscribe();
+}
+subscription = self_child_1.SelfChild(configPath).subscribe(process => {
+console.log('Child process started: ', process.pid);
+});
+}));
+chokidar_1.watch(configPath, {
+ignored
+}).on('ready', (event, path) => __awaiter(this, void 0, void 0, function* () {
+if (subscription) {
+subscription.unsubscribe();
+}
+subscription = self_child_1.SelfChild(configPath).subscribe(process => {
+console.log('Child process started: ', process.pid);
+});
+}));
+} else if (args_extractors_1.includes('init')) {
+if (args_extractors_1.includes('advanced')) {
+util_1.promisify(fs_1.writeFile)('./gj.json', `
+{
+"$mode": "advanced",
+"$types": {
+"user": {
+"name": "String",
+"email": "String",
+"phone": "Number",
+"arrayOfNumbers": "Number[]",
+"arrayOfStrings": "String[]"
+}
+},
+"$resolvers": {
+"findUser": {
+"type": "user",
+"resolve": {
+"name": "Kristiyan Tachev",
+"email": "test@gmail.com",
+"phone": 414141,
+"arrayOfNumbers": [515151, 412414],
+"arrayOfStrings": ["515151", "412414"]
+}
+}
+}
+}`, {
+encoding: 'utf-8'
+});
+} else if (args_extractors_1.includes('es6')) {
+util_1.promisify(fs_1.writeFile)('./gj.js', `
+export default {
+$mode: 'advanced',
+$types: {
+user: {
+name: 'String',
+email: 'String',
+phone: 'Number',
+arrayOfNumbers: 'Number[]',
+arrayOfStrings: 'String[]'
+}
+},
+$resolvers: {
+findUser: {
+type: 'user',
+args: {
+userId: "String!",
+userId2: "String",
+},
+resolve: async (root, payload, context) => ({
+name: 'Kristiyan Tachev',
+email: 'test@gmail.com',
+phone: 4141423,
+arrayOfNumbers: [515151, 412414],
+arrayOfStrings: ['515151', '412414']
+})
+}
+}
+};
+`, {
+encoding: 'utf-8'
+});
+} else if (args_extractors_1.includes('typescript')) {
+util_1.promisify(fs_1.writeFile)('./gj.ts', `
+export default {
+$mode: 'advanced',
+$types: {
+user: {
+name: 'String',
+email: 'String',
+phone: 'Number',
+arrayOfNumbers: 'Number[]',
+arrayOfStrings: 'String[]'
+}
+},
+$resolvers: {
+findUser: {
+type: 'user',
+args: {
+userId: "String!",
+userId2: "String",
+},
+resolve: async (root, payload: { userId: string; userId2?: string }) => ({
+name: 'Kristiyan Tachev',
+email: 'test@gmail.com',
+phone: 4141423,
+arrayOfNumbers: [515151, 412414],
+arrayOfStrings: ['515151', '412414']
+})
+}
+}
+};
+`, {
+encoding: 'utf-8'
+});
+} else if (args_extractors_1.includes('yml')) {
+util_1.promisify(fs_1.writeFile)('./gj.yml', `
+$mode: advanced
+$types:
+user:
+name: String
+email: String
+phone: Number
+arrayOfNumbers: Number[]
+arrayOfStrings: String[]
+$resolvers:
+findUser:
+type: user
+args:
+userId: String
+resolve:
+name: Kristiyan Tachev
+email: test@gmail.com
+phone: 414141
+arrayOfNumbers:
+- 515151
+- 412414
+arrayOfStrings:
+- '515151'
+- '412414'
+findUser2:
+type: user
+args:
+userId: String!
+resolve:
+name: Kristiyan Tachev
+email: test@gmail.com
+phone: 414141
+arrayOfNumbers:
+- 515151
+- 412414
+arrayOfStrings:
+- '515151'
+- '412414'
+`, {
+encoding: 'utf-8'
+});
+} else {
+util_1.promisify(fs_1.writeFile)('./gj.json', `
+{
+"$mode": "basic",
+"$resolvers": {
+"findUser": {
+"name": "Kristiyan Tachev",
+"email": "test@gmail.com",
+"phone": 414141,
+"arrayOfNumbers": [515151, 412414],
+"arrayOfStrings": ["515151", "412414"]
+}
+}
+}
+`, {
+encoding: 'utf-8'
+});
+}
+} else {
+core_1.BootstrapFramework(app_module_1.AppModule, [core_2.CoreModule.forRoot({
+graphql: {
+openBrowser: args_extractors_1.nextOrDefault('--random', true, v => v === 'true' ? false : true),
+buildAstDefinitions: false // Removed ast definition since directives are lost
+},
+server: {
+randomPort: args_extractors_1.nextOrDefault('--random', false),
+hapi: {
+port: args_extractors_1.nextOrDefault('--port', 9000, p => Number(p))
+}
+}
+})]).subscribe(() => console.log('Started'), console.log.bind(console));
+}
 },{"./app/app.module":"app/app.module.ts","./helpers/args-extractors":"helpers/args-extractors.ts","./helpers/self-child":"helpers/self-child.ts"}]},{},["main.ts"], null)
 //# sourceMappingURL=/main.js.map
