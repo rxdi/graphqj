@@ -5,6 +5,7 @@ import { isInValidPath } from './is-invalid-path';
 import { traverseMap } from './traverse-map';
 import { join } from 'path';
 import { loadYml } from './load-yml';
+import { isGapiInstalled } from './is-runner-installed';
 
 export async function loadFile(path: string) {
   let loadedModule: any;
@@ -22,7 +23,7 @@ export async function loadFile(path: string) {
     }
   }
 
-  if (path.includes('.ts') || path.includes('.js')) {
+  if (await isGapiInstalled() && (path.includes('.ts') || path.includes('.js'))) {
     loadedModule = await TranspileAndLoad(path, './.gj/out');
   } else if (path.includes('.yml')) {
     loadedModule = loadYml(path);
@@ -31,8 +32,7 @@ export async function loadFile(path: string) {
   } else if (path.includes('.html')) {
     loadedModule = await promisify(readFile)(path, { encoding: 'utf-8' });
   } else {
-    // loadedModule = require('esm')(module)(path);
-    throw new Error(`Unrecognized file type ${path}`);
+    loadedModule = require('esm')(module)(path);
   }
 
   const parent = path

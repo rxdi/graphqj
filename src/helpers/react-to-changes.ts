@@ -23,6 +23,7 @@ export async function reactToChanges(path: string, config: Config) {
     console.log(`✋  Bundle is updating previews change! Unable to update ${path}`);
     return;
   }
+  const timer = Date.now();
   console.log(`💡  Bundle changed: ${path}`)
   isRunning = true;
   try {
@@ -55,7 +56,7 @@ export async function reactToChanges(path: string, config: Config) {
     };
     await MakeAdvancedSchema(config);
     Container.get(ApolloService).init();
-    console.log('📦  Bundle realoaded!', path);
+    console.log(`📦  Bundle realoaded! ${Date.now() - timer}ms`, path);
     isRunning = false;
     // await SchemaIntrospection()
   } catch (e) {
