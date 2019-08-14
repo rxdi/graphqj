@@ -96,10 +96,6 @@ ${printSchema(mergedSchemas)}
             console.log('Schema created!');
             process.exit(0);
           });
-        } else {
-          console.log(
-            'You can extract this schema by running --generate command'
-          );
         }
         return mergedSchemas;
       }
@@ -189,6 +185,9 @@ ${printSchema(mergedSchemas)}
           await MakeAdvancedSchema(config);
         }
         watchBundles(traverseMap.map(f => f.path), config)
+        console.log(
+          'You can extract this schema by running --generate command'
+        );
         return true;
       }
     }

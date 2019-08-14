@@ -1,7 +1,12 @@
 import { isFunction } from './isFunction';
 
+/**
+ * Gets first item of the object without iterating all objects inside
+ */
 export function getFirstItem<T>(object: T) {
-  /* Take the first method inside item */
+  if (!object) {
+    return null;
+  }
   let firstKey: string;
   for (var key in object) {
     firstKey = key;

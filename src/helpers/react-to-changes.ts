@@ -15,35 +15,51 @@ function getMetaPath(path: string) {
   return `.${path.replace(process.cwd(), '')}`;
 }
 
-export async function reactToChanges(path: string, config: Config) {
-  const newFile = await loadFile(path);
-  if (config._meta) {
-    const metaKey = findMetaKey(getMetaPath(path), config._meta);
-    if (metaKey) {
-      config[metaKey] = await deep(newFile);
-    } else {
-      await traverse(config, (k, v) => {
-        if (typeof v === 'object' && v._meta) {
-          const foundMetaKey = findMetaKey(getMetaPath(path), v._meta);
-          if (foundMetaKey) {
-            v[foundMetaKey] = getFirstItem(newFile);
-            return true;
-          }
-        }
-        return false;
-      });
-    }
-  } else {
-    config = await deep(newFile);;
-  }
+let isRunning: boolean;
 
-  lazyTypes.clear();
-  Container.get(BootstrapService).Fields = {
-    mutation: {},
-    query: {},
-    subscription: {}
-  };
-  await MakeAdvancedSchema(config);
-  Container.get(ApolloService).init();
-  // await SchemaIntrospection()
+export async function reactToChanges(path: string, config: Config) {
+
+  if (isRunning) {
+    console.log(`✋  Bundle is updating previews change! Unable to update ${path}`);
+    return;
+  }
+  console.log(`💡  Bundle changed: ${path}`)
+  isRunning = true;
+  try {
+    const newFile = await loadFile(path);
+    if (config._meta) {
+      const metaKey = findMetaKey(getMetaPath(path), config._meta);
+      if (metaKey) {
+        config[metaKey] = await deep(newFile);
+      } else {
+        await traverse(config, (k, v) => {
+          if (typeof v === 'object' && v._meta) {
+            const foundMetaKey = findMetaKey(getMetaPath(path), v._meta);
+            if (foundMetaKey) {
+              v[foundMetaKey] = getFirstItem(newFile);
+              return true;
+            }
+          }
+          return false;
+        });
+      }
+    } else {
+      config = await deep(newFile);
+    }
+
+    lazyTypes.clear();
+    Container.get(BootstrapService).Fields = {
+      mutation: {},
+      query: {},
+      subscription: {}
+    };
+    await MakeAdvancedSchema(config);
+    Container.get(ApolloService).init();
+    console.log('📦  Bundle realoaded!', path);
+    isRunning = false;
+    // await SchemaIntrospection()
+  } catch (e) {
+    isRunning = false;
+    console.error(e)
+  }
 }

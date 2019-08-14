@@ -39,7 +39,7 @@ export function buildResolvers(
       );
     }
     let resolve = config.$resolvers[resolver].resolve;
-    if (!isFunction(resolve) && !Array.isArray(resolve)) {
+    if (resolve && !isFunction(resolve) && !Array.isArray(resolve)) {
       /* Take the first method inside file for resolver */
       resolve = getFirstItem(resolve);
     }
