@@ -24,10 +24,7 @@ export async function loadFile(path: string) {
       );
     }
   }
-
-  if (Container.get(IsBundlerInstalled).gapi && path.includes('.ts') || path.includes('.js')) {
-    loadedModule = await TranspileAndLoad(path, './.gj/out');
-  } else if (path.includes('.yml')) {
+  if (path.includes('.yml')) {
     loadedModule = loadYml(path);
   } else if (path.includes('.json')) {
     path = normalize(join(process.cwd(), path));
@@ -35,7 +32,9 @@ export async function loadFile(path: string) {
     loadedModule = require(path);
   } else if (path.includes('.html')) {
     loadedModule = await promisify(readFile)(path, { encoding: 'utf-8' });
-  } else {
+  } else if (Container.get(IsBundlerInstalled).gapi && path.includes('.ts') || path.includes('.js')) {
+    loadedModule = await TranspileAndLoad(path, './.gj/out');
+  }  else {
     loadedModule = require('esm')(module, {cache: false})(path);
   }
 

@@ -32,6 +32,7 @@ export async function reactToChanges(path: string, config: Config) {
   isRunning = true;
   try {
     transpilerCache.delete(path.replace(process.cwd(), ''))
+    transpilerCache.delete(path.replace(process.cwd(), '').replace('.', ''))
     const newFile = await loadFile(path);
     if (configWatchers.filter(p => path.includes(p)).length) {
       config = await deep(newFile);

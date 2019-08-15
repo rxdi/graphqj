@@ -175,6 +175,10 @@ Default port is `9000`
 ```
 gj --port 5000
 ```
+#### Hot reload of Bundles (Beta)
+```
+gj --hot-reload
+```
 
 #### Generating `schema.graphql` from JSON
 

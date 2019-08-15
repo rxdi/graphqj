@@ -1,7 +1,6 @@
 import {
   Module,
   SCHEMA_OVERRIDE,
-  BootstrapService,
   GraphQLSchema,
   printSchema,
   buildSchema,
@@ -10,7 +9,7 @@ import {
   GRAPHQL_PLUGIN_CONFIG,
   GraphQLDirective
 } from '@gapi/core';
-import { writeFile, readFileSync, exists, readFile } from 'fs';
+import { writeFile, readFileSync, exists } from 'fs';
 import { promisify } from 'util';
 import { includes, nextOrDefault } from '../helpers/args-extractors';
 import { VoyagerModule } from '@gapi/voyager';
@@ -21,10 +20,7 @@ import { MakeBasicSchema } from '../helpers/basic-schema';
 import { join } from 'path';
 import {
   TypesToken,
-  ResolversToken,
-  ArgumentsToken,
   Config,
-  GuardsToken,
   IsBundlerInstalled
 } from './app.tokens';
 import {
@@ -169,7 +165,10 @@ ${printSchema(mergedSchemas)}
         if (config.$mode === 'advanced') {
           await MakeAdvancedSchema(config);
         }
-        watchBundles(traverseMap.map(f => f.path), config)
+        if (includes('--hot-reload')) {
+          config.$externals.forEach(e => traverseMap.push({parent: null, path: e.file}))
+          watchBundles(traverseMap.map(f => f.path), config)
+        }
         console.log(
           'You can extract this schema by running --generate command'
         );
