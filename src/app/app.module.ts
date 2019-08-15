@@ -24,7 +24,8 @@ import {
   ResolversToken,
   ArgumentsToken,
   Config,
-  GuardsToken
+  GuardsToken,
+  IsBundlerInstalled
 } from './app.tokens';
 import {
   TranspileAndLoad,
@@ -34,6 +35,7 @@ import { deep } from '../helpers/traverse/test';
 
 import { traverseMap } from '../helpers/traverse-map';
 import { watchBundles } from '../helpers/watch-bundles';
+import { isGapiInstalled } from '../helpers/is-runner-installed';
 
 @Module({
   imports: [VoyagerModule.forRoot()],
@@ -43,16 +45,8 @@ import { watchBundles } from '../helpers/watch-bundles';
       useValue: new Map()
     },
     {
-      provide: ResolversToken,
-      useValue: new Map()
-    },
-    {
-      provide: ArgumentsToken,
-      useValue: new Map()
-    },
-    {
-      provide: GuardsToken,
-      useValue: new Map()
+      provide: IsBundlerInstalled,
+      useValue: { parcel: false, gapi: false }
     },
     {
       provide: SCHEMA_OVERRIDE,
@@ -119,27 +113,18 @@ ${printSchema(mergedSchemas)}
       provide: 'Run',
       deps: [
         Config,
-        BootstrapService,
-        TypesToken,
-        ResolversToken,
-        ArgumentsToken,
-        GuardsToken,
-        GRAPHQL_PLUGIN_CONFIG
+        GRAPHQL_PLUGIN_CONFIG,
+        IsBundlerInstalled
       ],
       lazy: true,
       useFactory: async (
         config: Config,
-        bootstrap: BootstrapService,
-        types: TypesToken,
-        resolvers: ResolversToken,
-        args: ArgumentsToken,
-        guards: GuardsToken,
-        graphqlConfig: GRAPHQL_PLUGIN_CONFIG
+        graphqlConfig: GRAPHQL_PLUGIN_CONFIG,
+        isBundlerInstalled: IsBundlerInstalled
       ) => {
         config = await config;
-
         config = await deep(config)
-        
+        isBundlerInstalled.gapi = await isGapiInstalled();
         if (config.$externals) {
           const compiledPaths = await TranspileAndGetAll(
             config.$externals,
@@ -179,7 +164,7 @@ ${printSchema(mergedSchemas)}
         }
 
         if (config.$mode === 'basic') {
-          await MakeBasicSchema(config, bootstrap);
+          await MakeBasicSchema(config);
         }
         if (config.$mode === 'advanced') {
           await MakeAdvancedSchema(config);

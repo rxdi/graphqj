@@ -270,6 +270,7 @@ exports.TypesToken = new core_1.InjectionToken('(@rxdi/graphqj): types-token');
 exports.ArgumentsToken = new core_1.InjectionToken('(@rxdi/graphqj): arguments-token');
 exports.ResolversToken = new core_1.InjectionToken('(@rxdi/graphqj): resolvers-token');
 exports.GuardsToken = new core_1.InjectionToken('(@rxdi/graphqj): resolvers-token');
+exports.IsBundlerInstalled = new core_1.InjectionToken('(@rxdi/graphqj): is-bundler-installed');
 exports.Config = new core_1.InjectionToken();
 },{}],"helpers/parse-ast.ts":[function(require,module,exports) {
 "use strict";
@@ -820,6 +821,12 @@ resolve: typeof resolve === 'function' ? resolve : () => resolve
 });
 }
 exports.MakeBasicSchema = MakeBasicSchema;
+},{}],"helpers/transpiler-cache.ts":[function(require,module,exports) {
+"use strict";
+Object.defineProperty(exports, "__esModule", {
+value: true
+});
+exports.transpilerCache = new Map();
 },{}],"helpers/transpile-and-load.ts":[function(require,module,exports) {
 "use strict";
 var __awaiter = this && this.__awaiter || function (thisArg, _arguments, P, generator) {
@@ -850,22 +857,20 @@ Object.defineProperty(exports, "__esModule", {
 value: true
 });
 const typescript_builder_1 = require("./typescript.builder");
-const path_1 = require("path"); // import { transpilerCache } from './transpiler-cache';
+const path_1 = require("path");
+const transpiler_cache_1 = require("./transpiler-cache");
 const clearModule = require('clear-module');
 function TranspileAndLoad(path, outDir) {
 return __awaiter(this, void 0, void 0, function* () {
-path = convertToRelative(path); // if (transpilerCache.has(path)) {
-//   return transpilerCache.get(path);
-// }
-// console.log('Before');
+path = convertToRelative(path);
+if (transpiler_cache_1.transpilerCache.has(path)) {
+return transpiler_cache_1.transpilerCache.get(path);
+}
 yield typescript_builder_1.TranspileTypescript([path], outDir);
-Object.keys(require.cache).forEach(function (key) {
-delete require.cache[key];
-});
 const transpiledPath = getTranspiledFilePath(path, outDir);
 clearModule(transpiledPath);
-const file = require(transpiledPath); // transpilerCache.set(path, file);
-// console.log(file);
+const file = require(transpiledPath);
+transpiler_cache_1.transpilerCache.set(path, file);
 return file;
 });
 }
@@ -887,7 +892,7 @@ transpiledFile: path_1.join(process.cwd(), outDir, path_1.parse(path.file).base.
 });
 }
 exports.TranspileAndGetAll = TranspileAndGetAll;
-},{"./typescript.builder":"helpers/typescript.builder.ts"}],"helpers/is-invalid-path.ts":[function(require,module,exports) {
+},{"./typescript.builder":"helpers/typescript.builder.ts","./transpiler-cache":"helpers/transpiler-cache.ts"}],"helpers/is-invalid-path.ts":[function(require,module,exports) {
 "use strict";
 Object.defineProperty(exports, "__esModule", {
 value: true
@@ -953,64 +958,6 @@ encoding: 'utf-8'
 });
 }
 exports.loadYml = loadYml;
-},{}],"helpers/is-runner-installed.ts":[function(require,module,exports) {
-"use strict";
-var __awaiter = this && this.__awaiter || function (thisArg, _arguments, P, generator) {
-return new (P || (P = Promise))(function (resolve, reject) {
-function fulfilled(value) {
-try {
-step(generator.next(value));
-} catch (e) {
-reject(e);
-}
-}
-function rejected(value) {
-try {
-step(generator["throw"](value));
-} catch (e) {
-reject(e);
-}
-}
-function step(result) {
-result.done ? resolve(result.value) : new P(function (resolve) {
-resolve(result.value);
-}).then(fulfilled, rejected);
-}
-step((generator = generator.apply(thisArg, _arguments || [])).next());
-});
-};
-Object.defineProperty(exports, "__esModule", {
-value: true
-});
-const child_process_1 = require("child_process");
-const util_1 = require("util");
-function run(cmd) {
-return __awaiter(this, void 0, void 0, function* () {
-let res;
-try {
-if ((yield util_1.promisify(child_process_1.exec)(cmd)).stderr) {
-res = false;
-} else {
-res = true;
-}
-} catch (e) {
-res = false;
-}
-return res;
-});
-}
-function isParcelInstalled() {
-return __awaiter(this, void 0, void 0, function* () {
-return yield run('parcel help');
-});
-}
-exports.isParcelInstalled = isParcelInstalled;
-function isGapiInstalled() {
-return __awaiter(this, void 0, void 0, function* () {
-return yield run('gapi daemon status');
-});
-}
-exports.isGapiInstalled = isGapiInstalled;
 },{}],"helpers/load-file.ts":[function(require,module,exports) {
 "use strict";
 var __awaiter = this && this.__awaiter || function (thisArg, _arguments, P, generator) {
@@ -1047,7 +994,9 @@ const is_invalid_path_1 = require("./is-invalid-path");
 const traverse_map_1 = require("./traverse-map");
 const path_1 = require("path");
 const load_yml_1 = require("./load-yml");
-const is_runner_installed_1 = require("./is-runner-installed");
+const app_tokens_1 = require("../app/app.tokens");
+const clearModule = require("clear-module");
+const core_1 = require("@rxdi/core");
 function loadFile(path) {
 return __awaiter(this, void 0, void 0, function* () {
 let loadedModule;
@@ -1060,12 +1009,11 @@ if (lastElement) {
 path = path_1.join(process.cwd(), lastElement.parent, path.replace(process.cwd(), ''));
 }
 }
-if ((yield is_runner_installed_1.isGapiInstalled()) && path.includes('.ts')) {
+if (core_1.Container.get(app_tokens_1.IsBundlerInstalled).gapi && path.includes('.ts') || path.includes('.js')) {
 loadedModule = yield transpile_and_load_1.TranspileAndLoad(path, './.gj/out');
 } else if (path.includes('.yml')) {
 loadedModule = load_yml_1.loadYml(path);
 } else if (path.includes('.json')) {
-const clearModule = require('clear-module');
 path = path_1.normalize(path_1.join(process.cwd(), path));
 clearModule(path);
 loadedModule = require(path);
@@ -1074,7 +1022,9 @@ loadedModule = yield util_1.promisify(fs_1.readFile)(path, {
 encoding: 'utf-8'
 });
 } else {
-loadedModule = require('esm')(module)(path);
+loadedModule = require('esm')(module, {
+cache: false
+})(path);
 }
 const parent = path.substring(0, path.lastIndexOf('/')).replace(process.cwd(), '');
 traverse_map_1.traverseMap.push({
@@ -1085,7 +1035,7 @@ return loadedModule;
 });
 }
 exports.loadFile = loadFile;
-},{"./transpile-and-load":"helpers/transpile-and-load.ts","./is-invalid-path":"helpers/is-invalid-path.ts","./traverse-map":"helpers/traverse-map.ts","./load-yml":"helpers/load-yml.ts","./is-runner-installed":"helpers/is-runner-installed.ts"}],"helpers/traverse/test.ts":[function(require,module,exports) {
+},{"./transpile-and-load":"helpers/transpile-and-load.ts","./is-invalid-path":"helpers/is-invalid-path.ts","./traverse-map":"helpers/traverse-map.ts","./load-yml":"helpers/load-yml.ts","../app/app.tokens":"app/app.tokens.ts"}],"helpers/traverse/test.ts":[function(require,module,exports) {
 "use strict";
 var __awaiter = this && this.__awaiter || function (thisArg, _arguments, P, generator) {
 return new (P || (P = Promise))(function (resolve, reject) {
@@ -1275,6 +1225,7 @@ const test_1 = require("./traverse/test");
 const lazy_types_1 = require("./lazy-types");
 const watch_bundles_1 = require("./watch-bundles");
 const basic_schema_1 = require("./basic-schema");
+const transpiler_cache_1 = require("./transpiler-cache");
 function findMetaKey(path, meta) {
 return Object.keys(meta).find(k => meta[k] === path);
 }
@@ -1292,6 +1243,7 @@ const timer = Date.now();
 console.log(`💡  Bundle changed: ${path}`);
 isRunning = true;
 try {
+transpiler_cache_1.transpilerCache.delete(path.replace(process.cwd(), ''));
 const newFile = yield load_file_1.loadFile(path);
 if (watch_bundles_1.configWatchers.filter(p => path.includes(p)).length) {
 config = yield test_1.deep(newFile);
@@ -1336,7 +1288,7 @@ console.error(e);
 });
 }
 exports.reactToChanges = reactToChanges;
-},{"./traverse/traverse":"helpers/traverse/traverse.ts","./get-first-item":"helpers/get-first-item.ts","./load-file":"helpers/load-file.ts","./advanced-schema":"helpers/advanced-schema.ts","./traverse/test":"helpers/traverse/test.ts","./lazy-types":"helpers/lazy-types.ts","./watch-bundles":"helpers/watch-bundles.ts","./basic-schema":"helpers/basic-schema.ts"}],"helpers/watch-bundles.ts":[function(require,module,exports) {
+},{"./traverse/traverse":"helpers/traverse/traverse.ts","./get-first-item":"helpers/get-first-item.ts","./load-file":"helpers/load-file.ts","./advanced-schema":"helpers/advanced-schema.ts","./traverse/test":"helpers/traverse/test.ts","./lazy-types":"helpers/lazy-types.ts","./watch-bundles":"helpers/watch-bundles.ts","./basic-schema":"helpers/basic-schema.ts","./transpiler-cache":"helpers/transpiler-cache.ts"}],"helpers/watch-bundles.ts":[function(require,module,exports) {
 "use strict";
 var __awaiter = this && this.__awaiter || function (thisArg, _arguments, P, generator) {
 return new (P || (P = Promise))(function (resolve, reject) {
@@ -1402,7 +1354,65 @@ exports.watchBundles = watchBundles; // @Injectable()
 //     return this.watcher;
 //   }
 // }
-},{"./react-to-changes":"helpers/react-to-changes.ts"}],"app/app.module.ts":[function(require,module,exports) {
+},{"./react-to-changes":"helpers/react-to-changes.ts"}],"helpers/is-runner-installed.ts":[function(require,module,exports) {
+"use strict";
+var __awaiter = this && this.__awaiter || function (thisArg, _arguments, P, generator) {
+return new (P || (P = Promise))(function (resolve, reject) {
+function fulfilled(value) {
+try {
+step(generator.next(value));
+} catch (e) {
+reject(e);
+}
+}
+function rejected(value) {
+try {
+step(generator["throw"](value));
+} catch (e) {
+reject(e);
+}
+}
+function step(result) {
+result.done ? resolve(result.value) : new P(function (resolve) {
+resolve(result.value);
+}).then(fulfilled, rejected);
+}
+step((generator = generator.apply(thisArg, _arguments || [])).next());
+});
+};
+Object.defineProperty(exports, "__esModule", {
+value: true
+});
+const child_process_1 = require("child_process");
+const util_1 = require("util");
+function run(cmd) {
+return __awaiter(this, void 0, void 0, function* () {
+let res;
+try {
+if ((yield util_1.promisify(child_process_1.exec)(cmd)).stderr) {
+res = false;
+} else {
+res = true;
+}
+} catch (e) {
+res = false;
+}
+return res;
+});
+}
+function isParcelInstalled() {
+return __awaiter(this, void 0, void 0, function* () {
+return yield run('parcel help');
+});
+}
+exports.isParcelInstalled = isParcelInstalled;
+function isGapiInstalled() {
+return __awaiter(this, void 0, void 0, function* () {
+return yield run('gapi daemon status');
+});
+}
+exports.isGapiInstalled = isGapiInstalled;
+},{}],"app/app.module.ts":[function(require,module,exports) {
 "use strict";
 var __decorate = this && this.__decorate || function (decorators, target, key, desc) {
 var c = arguments.length,
@@ -1453,6 +1463,7 @@ const transpile_and_load_1 = require("../helpers/transpile-and-load");
 const test_1 = require("../helpers/traverse/test");
 const traverse_map_1 = require("../helpers/traverse-map");
 const watch_bundles_1 = require("../helpers/watch-bundles");
+const is_runner_installed_1 = require("../helpers/is-runner-installed");
 let AppModule = class AppModule {};
 AppModule = __decorate([core_1.Module({
 imports: [voyager_1.VoyagerModule.forRoot()],
@@ -1460,14 +1471,11 @@ providers: [{
 provide: app_tokens_1.TypesToken,
 useValue: new Map()
 }, {
-provide: app_tokens_1.ResolversToken,
-useValue: new Map()
-}, {
-provide: app_tokens_1.ArgumentsToken,
-useValue: new Map()
-}, {
-provide: app_tokens_1.GuardsToken,
-useValue: new Map()
+provide: app_tokens_1.IsBundlerInstalled,
+useValue: {
+parcel: false,
+gapi: false
+}
 }, {
 provide: core_1.SCHEMA_OVERRIDE,
 useFactory: () => schema => {
@@ -1523,11 +1531,12 @@ return config['default'] || config;
 })
 }, {
 provide: 'Run',
-deps: [app_tokens_1.Config, core_1.BootstrapService, app_tokens_1.TypesToken, app_tokens_1.ResolversToken, app_tokens_1.ArgumentsToken, app_tokens_1.GuardsToken, core_1.GRAPHQL_PLUGIN_CONFIG],
+deps: [app_tokens_1.Config, core_1.GRAPHQL_PLUGIN_CONFIG, app_tokens_1.IsBundlerInstalled],
 lazy: true,
-useFactory: (config, bootstrap, types, resolvers, args, guards, graphqlConfig) => __awaiter(this, void 0, void 0, function* () {
+useFactory: (config, graphqlConfig, isBundlerInstalled) => __awaiter(this, void 0, void 0, function* () {
 config = yield config;
 config = yield test_1.deep(config);
+isBundlerInstalled.gapi = yield is_runner_installed_1.isGapiInstalled();
 if (config.$externals) {
 const compiledPaths = yield transpile_and_load_1.TranspileAndGetAll(config.$externals, './.gj/out');
 config.$externals = compiledPaths.map(external => {
@@ -1552,7 +1561,7 @@ directives = require('esm')(module)(filePath);
 graphqlConfig.directives = (yield Promise.all(Object.keys(directives).map(d => typeof directives[d] === 'function' ? directives[d]() : null))).filter(i => !!i);
 }
 if (config.$mode === 'basic') {
-yield basic_schema_1.MakeBasicSchema(config, bootstrap);
+yield basic_schema_1.MakeBasicSchema(config);
 }
 if (config.$mode === 'advanced') {
 yield advanced_schema_1.MakeAdvancedSchema(config);
@@ -1564,7 +1573,7 @@ return true;
 }]
 })], AppModule);
 exports.AppModule = AppModule;
-},{"../helpers/args-extractors":"helpers/args-extractors.ts","../helpers/set-config":"helpers/set-config.ts","../helpers/basic.template":"helpers/basic.template.ts","../helpers/advanced-schema":"helpers/advanced-schema.ts","../helpers/basic-schema":"helpers/basic-schema.ts","./app.tokens":"app/app.tokens.ts","../helpers/transpile-and-load":"helpers/transpile-and-load.ts","../helpers/traverse/test":"helpers/traverse/test.ts","../helpers/traverse-map":"helpers/traverse-map.ts","../helpers/watch-bundles":"helpers/watch-bundles.ts"}],"helpers/self-child.ts":[function(require,module,exports) {
+},{"../helpers/args-extractors":"helpers/args-extractors.ts","../helpers/set-config":"helpers/set-config.ts","../helpers/basic.template":"helpers/basic.template.ts","../helpers/advanced-schema":"helpers/advanced-schema.ts","../helpers/basic-schema":"helpers/basic-schema.ts","./app.tokens":"app/app.tokens.ts","../helpers/transpile-and-load":"helpers/transpile-and-load.ts","../helpers/traverse/test":"helpers/traverse/test.ts","../helpers/traverse-map":"helpers/traverse-map.ts","../helpers/watch-bundles":"helpers/watch-bundles.ts","../helpers/is-runner-installed":"helpers/is-runner-installed.ts"}],"helpers/self-child.ts":[function(require,module,exports) {
 "use strict";
 Object.defineProperty(exports, "__esModule", {
 value: true

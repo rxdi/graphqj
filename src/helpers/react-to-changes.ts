@@ -8,6 +8,7 @@ import { deep } from './traverse/test';
 import { lazyTypes } from './lazy-types';
 import { configWatchers } from './watch-bundles';
 import { MakeBasicSchema } from './basic-schema';
+import { transpilerCache } from './transpiler-cache';
 
 function findMetaKey(path: string, meta: { [key: string]: string }) {
   return Object.keys(meta).find(k => meta[k] === path);
@@ -20,15 +21,17 @@ function getMetaPath(path: string) {
 let isRunning: boolean;
 
 export async function reactToChanges(path: string, config: Config) {
-
   if (isRunning) {
-    console.log(`✋  Bundle is updating previews change! Unable to update ${path}`);
+    console.log(
+      `✋  Bundle is updating previews change! Unable to update ${path}`
+    );
     return;
   }
   const timer = Date.now();
-  console.log(`💡  Bundle changed: ${path}`)
+  console.log(`💡  Bundle changed: ${path}`);
   isRunning = true;
   try {
+    transpilerCache.delete(path.replace(process.cwd(), ''))
     const newFile = await loadFile(path);
     if (configWatchers.filter(p => path.includes(p)).length) {
       config = await deep(newFile);
@@ -70,6 +73,6 @@ export async function reactToChanges(path: string, config: Config) {
     // await SchemaIntrospection()
   } catch (e) {
     isRunning = false;
-    console.error(e)
+    console.error(e);
   }
 }

@@ -112,9 +112,13 @@ export const ResolversToken = new InjectionToken<Map<string, Args>>(
 export const GuardsToken = new InjectionToken<Map<string, Args>>(
   '(@rxdi/graphqj): resolvers-token'
 );
+export const IsBundlerInstalled = new InjectionToken<{parcel: boolean; gapi: boolean;}>(
+  '(@rxdi/graphqj): is-bundler-installed'
+);
 export const Config = new InjectionToken<Map<string, Args>>();
 
 export type TypesToken = Map<string, Args>;
 export type ArgumentsToken = Map<string, Args>;
 export type ResolversToken = Map<string, Args>;
 export type GuardsToken = Map<string, Args>;
+export type IsBundlerInstalled = {parcel: boolean; gapi: boolean;};

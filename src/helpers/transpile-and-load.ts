@@ -1,22 +1,19 @@
 import { TranspileTypescript } from './typescript.builder';
 import { join, parse, isAbsolute } from 'path';
 import { Externals } from '../app/app.tokens';
-// import { transpilerCache } from './transpiler-cache';
+import { transpilerCache } from './transpiler-cache';
 const clearModule = require('clear-module');
 
 export async function TranspileAndLoad(path: string, outDir: string) {
   path = convertToRelative(path);
-  // if (transpilerCache.has(path)) {
-  //   return transpilerCache.get(path);
-  // }
-  // console.log('Before');
+  if (transpilerCache.has(path)) {
+    return transpilerCache.get(path);
+  }
   await TranspileTypescript([path], outDir);
-  Object.keys(require.cache).forEach(function(key) { delete require.cache[key] })
   const transpiledPath = getTranspiledFilePath(path, outDir);
   clearModule(transpiledPath)
   const file = require(transpiledPath);
-  // transpilerCache.set(path, file);
-  // console.log(file);
+  transpilerCache.set(path, file);
   return file;
 }
 

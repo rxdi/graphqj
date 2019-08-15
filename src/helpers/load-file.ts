@@ -5,7 +5,9 @@ import { isInValidPath } from './is-invalid-path';
 import { traverseMap } from './traverse-map';
 import { join, normalize } from 'path';
 import { loadYml } from './load-yml';
-import { isGapiInstalled } from './is-runner-installed';
+import { IsBundlerInstalled } from '../app/app.tokens';
+import clearModule = require('clear-module');
+import { Container } from '@rxdi/core';
 
 export async function loadFile(path: string) {
   let loadedModule: any;
@@ -23,19 +25,18 @@ export async function loadFile(path: string) {
     }
   }
 
-  if (await isGapiInstalled() && path.includes('.ts')) {
+  if (Container.get(IsBundlerInstalled).gapi && path.includes('.ts') || path.includes('.js')) {
     loadedModule = await TranspileAndLoad(path, './.gj/out');
   } else if (path.includes('.yml')) {
     loadedModule = loadYml(path);
   } else if (path.includes('.json')) {
-    const clearModule = require('clear-module');
     path = normalize(join(process.cwd(), path));
     clearModule(path)
     loadedModule = require(path);
   } else if (path.includes('.html')) {
     loadedModule = await promisify(readFile)(path, { encoding: 'utf-8' });
   } else {
-    loadedModule = require('esm')(module)(path);
+    loadedModule = require('esm')(module, {cache: false})(path);
   }
 
   const parent = path
