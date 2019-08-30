@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes, maximum-scale=5.0">
+    <title>@rxdi client side example</title>
+    <link rel="icon" href="/favicon.d42470cd.ico">
+    <style>body {
+        margin: 0px;
+      }</style>
+    <meta name="theme-color" content="#33383a">
+    <link rel="manifest" href="/manifest.webmanifest">
+    <base href="/">
+    <!-- iOS -->
+    <link rel="apple-touch-icon" href="/icon-144x144.0df7b964.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-status-bar-style" content="black">
+    <meta name="mobile-web-app-title" content="Expenses">
+
+    <script async="">// Load and register pre-caching Service Worker
+const main = async () => {
+  if ('serviceWorker' in navigator) {
+    if (window.origin.includes('localhost')) {
+      const workers = await navigator.serviceWorker.getRegistrations();
+
+      for (let worker of workers) {
+        await worker.unregister();
+      }
+    } else {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register("/service-worker.js", {
+          scope: '/'
+        }).then(function (registration) {
+          console.log('Registration successful, scope is:', registration.scope);
+        }).catch(function (error) {
+          console.log('Service worker registration failed, error:', error);
+        });
+      });
+    }
+  }
+};
+
+main();</script>
+    <script type="text/javascript" src="/loading-screen.component.397a9ccf.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@8"></script>
+    <script async="">window.onerror = (text, url, lineNumber) => {
+  Swal.fire({
+    type: 'error',
+    title: 'Oops...',
+    text,
+    footer: `<p><strong>File:</strong> ${url}</p>&nbsp<p><strong>Line:</strong> ${lineNumber}</p>`
+  });
+  return true;
+};</script>
+  </head>
+  <loading-screen-component></loading-screen-component>
+  <script type="text/javascript" src="/polyfills.94ad76bc.js"></script>
+  <script type="text/javascript" src="/client.f5abc9c9.js"></script>
+</html>

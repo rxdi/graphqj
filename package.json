@@ -3,15 +3,22 @@
   "main": "./lib/main.js",
   "version": "0.7.30",
   "scripts": {
-    "start": "gapi start --local --minify=false --inspect ",
+    "start": "gapi start --local --minify=false --inspect",
+    "start-client": "parcel ./src/app/client/application/index.html",
     "build": "gapi build",
     "patch": "npm version patch && npm publish --update-readme --access public"
   },
   "dependencies": {
     "@gapi/core": "^1.8.5",
+    "@babel/polyfill": "7.4.4",
+    "@webcomponents/webcomponentsjs": "1.3.3",
     "@gapi/voyager": "^1.8.5",
+    "@rxdi/graphql-client": "^0.7.16",
+    "@rxdi/lit-html": "^0.7.16",
+    "@rxdi/router": "^0.7.16",
     "chokidar": "^3.0.2",
     "clear-module": "^4.0.0",
+    "core-js": "^2.6.5",
     "esm": "^3.2.25",
     "fast-glob": "^3.0.4",
     "js-yaml": "^3.13.1"
@@ -21,6 +28,9 @@
       "cache": false
     }
   },
+  "browserslist": [
+    "last 1 chrome versions"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/rxdi/graphqj"
@@ -31,7 +41,6 @@
     "graphqj": "./dist/main.js"
   },
   "devDependencies": {
-    "@rxdi/parcel-plugin-shebang": "0.7.5",
     "@types/graphql": "^14.2.3",
     "@types/js-yaml": "^3.12.1",
     "typescript": "^3.5.3"

@@ -1,4 +1,3 @@
-import {
 import { writeFile, readFileSync, exists } from 'fs';
 import { promisify } from 'util';
 import { includes, nextOrDefault } from '../helpers/args-extractors';
@@ -8,13 +7,12 @@ import { basicTemplate } from '../helpers/basic.template';
 import { MakeAdvancedSchema } from '../helpers/advanced-schema';
 import { MakeBasicSchema } from '../helpers/basic-schema';
 import { join } from 'path';
-import {
-import {
 import { deep } from '../helpers/traverse/test';
 import { traverseMap } from '../helpers/traverse-map';
 import { watchBundles } from '../helpers/watch-bundles';
 import { isGapiInstalled } from '../helpers/is-runner-installed';
 import { ClientModule } from './client/client.module';
+import {
   Module,
   SCHEMA_OVERRIDE,
   GraphQLSchema,
@@ -25,14 +23,13 @@ import { ClientModule } from './client/client.module';
   GRAPHQL_PLUGIN_CONFIG,
   GraphQLDirective
 } from '@gapi/core';
-  TypesToken,
-  Config,
-  IsBundlerInstalled
-} from './app.tokens';
+
+import { TypesToken, Config, IsBundlerInstalled } from './app.tokens';
+
+import {
   TranspileAndLoad,
   TranspileAndGetAll
 } from '../helpers/transpile-and-load';
-
 
 @Module({
   imports: [VoyagerModule.forRoot(), ClientModule],
@@ -108,11 +105,7 @@ ${printSchema(mergedSchemas)}
     },
     {
       provide: 'Run',
-      deps: [
-        Config,
-        GRAPHQL_PLUGIN_CONFIG,
-        IsBundlerInstalled
-      ],
+      deps: [Config, GRAPHQL_PLUGIN_CONFIG, IsBundlerInstalled],
       lazy: true,
       useFactory: async (
         config: Config,
@@ -120,7 +113,7 @@ ${printSchema(mergedSchemas)}
         isBundlerInstalled: IsBundlerInstalled
       ) => {
         config = await config;
-        config = await deep(config)
+        config = await deep(config);
         isBundlerInstalled.gapi = await isGapiInstalled();
         if (config.$externals) {
           const compiledPaths = await TranspileAndGetAll(
@@ -167,8 +160,10 @@ ${printSchema(mergedSchemas)}
           await MakeAdvancedSchema(config);
         }
         if (includes('--hot-reload')) {
-          config.$externals.forEach(e => traverseMap.push({parent: null, path: e.file}))
-          watchBundles(traverseMap.map(f => f.path), config)
+          config.$externals.forEach(e =>
+            traverseMap.push({ parent: null, path: e.file })
+          );
+          watchBundles(traverseMap.map(f => f.path), config);
         }
         console.log(
           'You can extract this schema by running --generate command'
