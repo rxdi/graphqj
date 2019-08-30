@@ -1,14 +1,4 @@
 import {
-  Module,
-  SCHEMA_OVERRIDE,
-  GraphQLSchema,
-  printSchema,
-  buildSchema,
-  mergeSchemas,
-  Container,
-  GRAPHQL_PLUGIN_CONFIG,
-  GraphQLDirective
-} from '@gapi/core';
 import { writeFile, readFileSync, exists } from 'fs';
 import { promisify } from 'util';
 import { includes, nextOrDefault } from '../helpers/args-extractors';
@@ -19,22 +9,33 @@ import { MakeAdvancedSchema } from '../helpers/advanced-schema';
 import { MakeBasicSchema } from '../helpers/basic-schema';
 import { join } from 'path';
 import {
+import {
+import { deep } from '../helpers/traverse/test';
+import { traverseMap } from '../helpers/traverse-map';
+import { watchBundles } from '../helpers/watch-bundles';
+import { isGapiInstalled } from '../helpers/is-runner-installed';
+import { ClientModule } from './client/client.module';
+  Module,
+  SCHEMA_OVERRIDE,
+  GraphQLSchema,
+  printSchema,
+  buildSchema,
+  mergeSchemas,
+  Container,
+  GRAPHQL_PLUGIN_CONFIG,
+  GraphQLDirective
+} from '@gapi/core';
   TypesToken,
   Config,
   IsBundlerInstalled
 } from './app.tokens';
-import {
   TranspileAndLoad,
   TranspileAndGetAll
 } from '../helpers/transpile-and-load';
-import { deep } from '../helpers/traverse/test';
 
-import { traverseMap } from '../helpers/traverse-map';
-import { watchBundles } from '../helpers/watch-bundles';
-import { isGapiInstalled } from '../helpers/is-runner-installed';
 
 @Module({
-  imports: [VoyagerModule.forRoot()],
+  imports: [VoyagerModule.forRoot(), ClientModule],
   providers: [
     {
       provide: TypesToken,
