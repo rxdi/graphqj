@@ -4,20 +4,27 @@ import {
   Type,
   Subscription,
   Subscribe,
-  PubSubService
+  PubSubService,
+  Inject
 } from '@gapi/core';
 import { ClientType } from './types/client.type';
+import { Config } from '../app.tokens';
 
 @Controller<GraphQLControllerOptions>({
   guards: [],
   type: []
 })
 export class ClientController {
-  constructor(private pubsub: PubSubService) {
-    let count = 0;
-    setInterval(() => {
-      this.pubsub.publish('listenForChanges', `${count++}`);
-    }, 1000);
+  constructor(
+    private pubsub: PubSubService,
+    @Inject(Config) private config: Config
+  ) {
+      setInterval(() => this.OnInit(), 1000)
+  }
+
+  async OnInit() {
+    const config = await this.config;
+    this.pubsub.publish('listenForChanges', config.$views.home.html);
   }
 
   @Type(ClientType)

@@ -19,7 +19,7 @@ import { GraphQLRequest } from 'apollo-link';
         async onRequest(this: GraphQLRequest) {
           return new Headers();
         },
-        pubsub: 'http://localhost:9000/subscriptions',
+        pubsub: 'ws://localhost:9000/subscriptions',
         uri: 'http://localhost:9000/graphql'
       },
       {}
