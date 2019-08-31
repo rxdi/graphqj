@@ -895,135 +895,7 @@ function buildResolvers(config, types, buildedSchema) {
 }
 
 exports.buildResolvers = buildResolvers;
-},{"../../isFunction":"helpers/isFunction.ts","../../lazy-types":"helpers/lazy-types.ts","../../get-first-item":"helpers/get-first-item.ts","../../parse-args-schema":"helpers/parse-args-schema.ts"}],"helpers/advanced-schema.ts":[function(require,module,exports) {
-"use strict";
-
-var __awaiter = this && this.__awaiter || function (thisArg, _arguments, P, generator) {
-  return new (P || (P = Promise))(function (resolve, reject) {
-    function fulfilled(value) {
-      try {
-        step(generator.next(value));
-      } catch (e) {
-        reject(e);
-      }
-    }
-
-    function rejected(value) {
-      try {
-        step(generator["throw"](value));
-      } catch (e) {
-        reject(e);
-      }
-    }
-
-    function step(result) {
-      result.done ? resolve(result.value) : new P(function (resolve) {
-        resolve(result.value);
-      }).then(fulfilled, rejected);
-    }
-
-    step((generator = generator.apply(thisArg, _arguments || [])).next());
-  });
-};
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
-const build_arguments_1 = require("../helpers/dynamic-schema/mutators/build-arguments");
-
-const build_types_1 = require("../helpers/dynamic-schema/mutators/build-types");
-
-const build_resolvers_1 = require("../helpers/dynamic-schema/mutators/build-resolvers");
-
-function MakeAdvancedSchema(config) {
-  return __awaiter(this, void 0, void 0, function* () {
-    const types = {};
-    const buildedSchema = {};
-    config.$args = config.$args || {};
-    config.$types = config.$types || {};
-    build_arguments_1.buildArguments(config);
-    build_types_1.buildTypes(config, types, buildedSchema);
-    build_resolvers_1.buildResolvers(config, types, buildedSchema);
-    return buildedSchema;
-  });
-}
-
-exports.MakeAdvancedSchema = MakeAdvancedSchema;
-},{"../helpers/dynamic-schema/mutators/build-arguments":"helpers/dynamic-schema/mutators/build-arguments.ts","../helpers/dynamic-schema/mutators/build-types":"helpers/dynamic-schema/mutators/build-types.ts","../helpers/dynamic-schema/mutators/build-resolvers":"helpers/dynamic-schema/mutators/build-resolvers.ts"}],"helpers/basic-schema.ts":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
-const graphql_1 = require("graphql");
-
-const core_1 = require("@gapi/core");
-
-function MakeBasicSchema(config) {
-  Object.keys(config.$resolvers).forEach(method_name => {
-    const resolve = config.$resolvers[method_name];
-    const fields = {};
-    const args = {};
-    Object.keys(resolve).forEach(key => {
-      const resolver = resolve[key];
-
-      if (typeof resolver === 'string') {
-        fields[key] = {
-          type: graphql_1.GraphQLString
-        };
-      }
-
-      if (typeof resolver === 'number') {
-        fields[key] = {
-          type: graphql_1.GraphQLInt
-        };
-      }
-
-      if (typeof resolver === 'boolean') {
-        fields[key] = {
-          type: graphql_1.GraphQLBoolean
-        };
-      }
-
-      if (typeof resolver !== 'string' && resolver.length) {
-        if (typeof resolver[0] === 'string') {
-          fields[key] = {
-            type: new graphql_1.GraphQLList(graphql_1.GraphQLString)
-          };
-        }
-
-        if (typeof resolver[0] === 'number') {
-          fields[key] = {
-            type: new graphql_1.GraphQLList(graphql_1.GraphQLInt)
-          };
-        }
-
-        if (typeof resolver[0] === 'boolean') {
-          fields[key] = {
-            type: new graphql_1.GraphQLList(graphql_1.GraphQLBoolean)
-          };
-        }
-      }
-    });
-    core_1.Container.get(core_1.BootstrapService).Fields.query[method_name] = {
-      type: new graphql_1.GraphQLObjectType({
-        name: `${method_name}_type`,
-        fields: () => fields
-      }),
-      args,
-      method_name,
-      public: true,
-      method_type: 'query',
-      target: () => {},
-      resolve: typeof resolve === 'function' ? resolve : () => resolve
-    };
-  });
-}
-
-exports.MakeBasicSchema = MakeBasicSchema;
-},{}],"helpers/transpiler-cache.ts":[function(require,module,exports) {
+},{"../../isFunction":"helpers/isFunction.ts","../../lazy-types":"helpers/lazy-types.ts","../../get-first-item":"helpers/get-first-item.ts","../../parse-args-schema":"helpers/parse-args-schema.ts"}],"helpers/transpiler-cache.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -1114,7 +986,201 @@ function TranspileAndGetAll(externals, outDir) {
 }
 
 exports.TranspileAndGetAll = TranspileAndGetAll;
-},{"./typescript.builder":"helpers/typescript.builder.ts","./transpiler-cache":"helpers/transpiler-cache.ts"}],"helpers/is-invalid-path.ts":[function(require,module,exports) {
+},{"./typescript.builder":"helpers/typescript.builder.ts","./transpiler-cache":"helpers/transpiler-cache.ts"}],"helpers/dynamic-schema/mutators/build-externals.ts":[function(require,module,exports) {
+"use strict";
+
+var __awaiter = this && this.__awaiter || function (thisArg, _arguments, P, generator) {
+  return new (P || (P = Promise))(function (resolve, reject) {
+    function fulfilled(value) {
+      try {
+        step(generator.next(value));
+      } catch (e) {
+        reject(e);
+      }
+    }
+
+    function rejected(value) {
+      try {
+        step(generator["throw"](value));
+      } catch (e) {
+        reject(e);
+      }
+    }
+
+    function step(result) {
+      result.done ? resolve(result.value) : new P(function (resolve) {
+        resolve(result.value);
+      }).then(fulfilled, rejected);
+    }
+
+    step((generator = generator.apply(thisArg, _arguments || [])).next());
+  });
+};
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+const core_1 = require("@rxdi/core");
+
+const transpile_and_load_1 = require("../../transpile-and-load");
+
+const path_1 = require("path");
+
+function buildExternals(config) {
+  return __awaiter(this, void 0, void 0, function* () {
+    const compiledPaths = yield transpile_and_load_1.TranspileAndGetAll(config.$externals, './.gj/out');
+    config.$externals = compiledPaths.map(external => {
+      if (external.file.includes('.ts')) {
+        external.module = require(external.transpiledFile);
+      } else {
+        const m = require('esm')(module)(path_1.join(process.cwd(), external.file));
+
+        external.module = m['default'] || m;
+      }
+
+      core_1.Container.reset(external.map);
+      core_1.Container.remove(external.map);
+      core_1.Container.set(external.map, external.module);
+      return external;
+    });
+    return config.$externals;
+  });
+}
+
+exports.buildExternals = buildExternals;
+},{"../../transpile-and-load":"helpers/transpile-and-load.ts"}],"helpers/advanced-schema.ts":[function(require,module,exports) {
+"use strict";
+
+var __awaiter = this && this.__awaiter || function (thisArg, _arguments, P, generator) {
+  return new (P || (P = Promise))(function (resolve, reject) {
+    function fulfilled(value) {
+      try {
+        step(generator.next(value));
+      } catch (e) {
+        reject(e);
+      }
+    }
+
+    function rejected(value) {
+      try {
+        step(generator["throw"](value));
+      } catch (e) {
+        reject(e);
+      }
+    }
+
+    function step(result) {
+      result.done ? resolve(result.value) : new P(function (resolve) {
+        resolve(result.value);
+      }).then(fulfilled, rejected);
+    }
+
+    step((generator = generator.apply(thisArg, _arguments || [])).next());
+  });
+};
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+const build_arguments_1 = require("../helpers/dynamic-schema/mutators/build-arguments");
+
+const build_types_1 = require("../helpers/dynamic-schema/mutators/build-types");
+
+const build_resolvers_1 = require("../helpers/dynamic-schema/mutators/build-resolvers");
+
+const build_externals_1 = require("./dynamic-schema/mutators/build-externals");
+
+function MakeAdvancedSchema(config) {
+  return __awaiter(this, void 0, void 0, function* () {
+    const types = {};
+    const buildedSchema = {};
+    config.$args = config.$args || {};
+    config.$types = config.$types || {};
+    config.$externals = yield build_externals_1.buildExternals(config);
+    build_arguments_1.buildArguments(config);
+    build_types_1.buildTypes(config, types, buildedSchema);
+    build_resolvers_1.buildResolvers(config, types, buildedSchema);
+    return buildedSchema;
+  });
+}
+
+exports.MakeAdvancedSchema = MakeAdvancedSchema;
+},{"../helpers/dynamic-schema/mutators/build-arguments":"helpers/dynamic-schema/mutators/build-arguments.ts","../helpers/dynamic-schema/mutators/build-types":"helpers/dynamic-schema/mutators/build-types.ts","../helpers/dynamic-schema/mutators/build-resolvers":"helpers/dynamic-schema/mutators/build-resolvers.ts","./dynamic-schema/mutators/build-externals":"helpers/dynamic-schema/mutators/build-externals.ts"}],"helpers/basic-schema.ts":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+const graphql_1 = require("graphql");
+
+const core_1 = require("@gapi/core");
+
+function MakeBasicSchema(config) {
+  Object.keys(config.$resolvers).forEach(method_name => {
+    const resolve = config.$resolvers[method_name];
+    const fields = {};
+    const args = {};
+    Object.keys(resolve).forEach(key => {
+      const resolver = resolve[key];
+
+      if (typeof resolver === 'string') {
+        fields[key] = {
+          type: graphql_1.GraphQLString
+        };
+      }
+
+      if (typeof resolver === 'number') {
+        fields[key] = {
+          type: graphql_1.GraphQLInt
+        };
+      }
+
+      if (typeof resolver === 'boolean') {
+        fields[key] = {
+          type: graphql_1.GraphQLBoolean
+        };
+      }
+
+      if (typeof resolver !== 'string' && resolver.length) {
+        if (typeof resolver[0] === 'string') {
+          fields[key] = {
+            type: new graphql_1.GraphQLList(graphql_1.GraphQLString)
+          };
+        }
+
+        if (typeof resolver[0] === 'number') {
+          fields[key] = {
+            type: new graphql_1.GraphQLList(graphql_1.GraphQLInt)
+          };
+        }
+
+        if (typeof resolver[0] === 'boolean') {
+          fields[key] = {
+            type: new graphql_1.GraphQLList(graphql_1.GraphQLBoolean)
+          };
+        }
+      }
+    });
+    core_1.Container.get(core_1.BootstrapService).Fields.query[method_name] = {
+      type: new graphql_1.GraphQLObjectType({
+        name: `${method_name}_type`,
+        fields: () => fields
+      }),
+      args,
+      method_name,
+      public: true,
+      method_type: 'query',
+      target: () => {},
+      resolve: typeof resolve === 'function' ? resolve : () => resolve
+    };
+  });
+}
+
+exports.MakeBasicSchema = MakeBasicSchema;
+},{}],"helpers/is-invalid-path.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -1782,6 +1848,9 @@ exports.ClientViewType = new graphql_1.GraphQLObjectType({
     html: {
       type: graphql_1.GraphQLString
     },
+    name: {
+      type: graphql_1.GraphQLString
+    },
     query: {
       type: graphql_1.GraphQLString
     },
@@ -1812,15 +1881,7 @@ exports.ClientType = new graphql_1.GraphQLObjectType({
     }
   }
 });
-},{"./client-view.type":"app/client/types/client-view.type.ts"}],"helpers/obj-to-array.ts":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
-exports.objToArray = a => Object.keys(a).reduce((acc, curr) => [...acc, a[curr]], []);
-},{}],"app/client/client.controller.ts":[function(require,module,exports) {
+},{"./client-view.type":"app/client/types/client-view.type.ts"}],"app/client/client.controller.ts":[function(require,module,exports) {
 "use strict";
 
 var __decorate = this && this.__decorate || function (decorators, target, key, desc) {
@@ -1869,7 +1930,7 @@ var __awaiter = this && this.__awaiter || function (thisArg, _arguments, P, gene
   });
 };
 
-var _a, _b;
+var _a, _b, _c;
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -1881,7 +1942,9 @@ const client_type_1 = require("./types/client.type");
 
 const app_tokens_1 = require("../app.tokens");
 
-const obj_to_array_1 = require("../../helpers/obj-to-array");
+exports.viewsToArray = a => Object.keys(a).reduce((acc, curr) => [...acc, Object.assign({}, a[curr], {
+  name: curr
+})], []);
 
 let ClientController = class ClientController {
   constructor(pubsub, config) {
@@ -1898,23 +1961,24 @@ let ClientController = class ClientController {
   }
 
   listenForChanges(views) {
-    return {
-      views: obj_to_array_1.objToArray(views)
+    const res = {
+      views: exports.viewsToArray(views)
     };
+    return res;
   }
 
 };
 
 __decorate([core_1.Type(client_type_1.ClientType), core_1.Subscribe(function () {
   return this.pubsub.asyncIterator('listenForChanges');
-}), core_1.Subscription(), __metadata("design:type", Function), __metadata("design:paramtypes", [Object]), __metadata("design:returntype", void 0)], ClientController.prototype, "listenForChanges", null);
+}), core_1.Subscription(), __metadata("design:type", Function), __metadata("design:paramtypes", [typeof (_a = typeof app_tokens_1.ConfigViews !== "undefined" && app_tokens_1.ConfigViews) === "function" ? _a : Object]), __metadata("design:returntype", void 0)], ClientController.prototype, "listenForChanges", null);
 
 ClientController = __decorate([core_1.Controller({
   guards: [],
   type: []
-}), __param(1, core_1.Inject(app_tokens_1.Config)), __metadata("design:paramtypes", [typeof (_a = typeof core_1.PubSubService !== "undefined" && core_1.PubSubService) === "function" ? _a : Object, typeof (_b = typeof app_tokens_1.Config !== "undefined" && app_tokens_1.Config) === "function" ? _b : Object])], ClientController);
+}), __param(1, core_1.Inject(app_tokens_1.Config)), __metadata("design:paramtypes", [typeof (_b = typeof core_1.PubSubService !== "undefined" && core_1.PubSubService) === "function" ? _b : Object, typeof (_c = typeof app_tokens_1.Config !== "undefined" && app_tokens_1.Config) === "function" ? _c : Object])], ClientController);
 exports.ClientController = ClientController;
-},{"./types/client.type":"app/client/types/client.type.ts","../app.tokens":"app/app.tokens.ts","../../helpers/obj-to-array":"helpers/obj-to-array.ts"}],"app/client/client.module.ts":[function(require,module,exports) {
+},{"./types/client.type":"app/client/types/client.type.ts","../app.tokens":"app/app.tokens.ts"}],"app/client/client.module.ts":[function(require,module,exports) {
 "use strict";
 
 var __decorate = this && this.__decorate || function (decorators, target, key, desc) {
@@ -2015,6 +2079,8 @@ const app_tokens_1 = require("./app.tokens");
 
 const transpile_and_load_1 = require("../helpers/transpile-and-load");
 
+const build_externals_1 = require("../helpers/dynamic-schema/mutators/build-externals");
+
 let AppModule = class AppModule {};
 AppModule = __decorate([core_1.Module({
   imports: [voyager_1.VoyagerModule.forRoot(), client_module_1.ClientModule],
@@ -2098,21 +2164,10 @@ ${core_1.printSchema(mergedSchemas)}
       config = yield config;
       config = yield test_1.deep(config);
       isBundlerInstalled.gapi = yield is_runner_installed_1.isGapiInstalled();
+      config.$externals = config.$externals || [];
 
-      if (config.$externals) {
-        const compiledPaths = yield transpile_and_load_1.TranspileAndGetAll(config.$externals, './.gj/out');
-        config.$externals = compiledPaths.map(external => {
-          if (external.file.includes('.ts')) {
-            external.module = require(external.transpiledFile);
-          } else {
-            const m = require('esm')(module)(path_1.join(process.cwd(), external.file));
-
-            external.module = m['default'] || m;
-          }
-
-          core_1.Container.set(external.map, external.module);
-          return external;
-        });
+      if (config.$externals && config.$externals.length) {
+        config.$externals = yield build_externals_1.buildExternals(config);
       }
 
       let filePath = path_1.join(process.cwd(), config.$directives || '');
@@ -2136,7 +2191,7 @@ ${core_1.printSchema(mergedSchemas)}
         yield advanced_schema_1.MakeAdvancedSchema(config);
       }
 
-      if (args_extractors_1.includes('--hot-reload')) {
+      if (true || args_extractors_1.includes('--hot-reload')) {
         config.$externals.forEach(e => traverse_map_1.traverseMap.push({
           parent: null,
           path: e.file
@@ -2150,7 +2205,7 @@ ${core_1.printSchema(mergedSchemas)}
   }]
 })], AppModule);
 exports.AppModule = AppModule;
-},{"../helpers/args-extractors":"helpers/args-extractors.ts","../helpers/set-config":"helpers/set-config.ts","../helpers/basic.template":"helpers/basic.template.ts","../helpers/advanced-schema":"helpers/advanced-schema.ts","../helpers/basic-schema":"helpers/basic-schema.ts","../helpers/traverse/test":"helpers/traverse/test.ts","../helpers/traverse-map":"helpers/traverse-map.ts","../helpers/watch-bundles":"helpers/watch-bundles.ts","../helpers/is-runner-installed":"helpers/is-runner-installed.ts","./client/client.module":"app/client/client.module.ts","./app.tokens":"app/app.tokens.ts","../helpers/transpile-and-load":"helpers/transpile-and-load.ts"}],"helpers/self-child.ts":[function(require,module,exports) {
+},{"../helpers/args-extractors":"helpers/args-extractors.ts","../helpers/set-config":"helpers/set-config.ts","../helpers/basic.template":"helpers/basic.template.ts","../helpers/advanced-schema":"helpers/advanced-schema.ts","../helpers/basic-schema":"helpers/basic-schema.ts","../helpers/traverse/test":"helpers/traverse/test.ts","../helpers/traverse-map":"helpers/traverse-map.ts","../helpers/watch-bundles":"helpers/watch-bundles.ts","../helpers/is-runner-installed":"helpers/is-runner-installed.ts","./client/client.module":"app/client/client.module.ts","./app.tokens":"app/app.tokens.ts","../helpers/transpile-and-load":"helpers/transpile-and-load.ts","../helpers/dynamic-schema/mutators/build-externals":"helpers/dynamic-schema/mutators/build-externals.ts"}],"helpers/self-child.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {

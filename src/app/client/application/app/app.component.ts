@@ -9,7 +9,9 @@ import { ReactOnChangeService } from './core/react-on-change/react-on-change.ser
   selector: 'app-component',
   template(this: AppComponent) {
     return html`
-      ${async(this.reactToChanges.react())}
+      <router-outlet>
+        ${async(this.reactToChanges.subscribeToAppChanges())}
+      </router-outlet>
     `;
   },
   container: document.body

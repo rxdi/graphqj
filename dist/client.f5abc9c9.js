@@ -52584,12 +52584,13 @@ const lit_html_1 = require("@rxdi/lit-html");
 const router_1 = require("@rxdi/router");
 
 let ReactOnChangeService = class ReactOnChangeService {
-  react() {
+  subscribeToAppChanges() {
     return rxjs_1.from(this.apollo.subscribe({
       query: graphql_tag_1.default`
           subscription {
             listenForChanges {
               views {
+                name
                 html
                 query
                 props
@@ -52600,11 +52601,20 @@ let ReactOnChangeService = class ReactOnChangeService {
         `
     })).pipe(operators_1.map(({
       data
-    }) => data.listenForChanges.views), operators_1.map(views => this.parseViews(views)));
+    }) => data.listenForChanges.views), operators_1.tap(views => {}), operators_1.map(views => this.getApp(views)));
+  }
+
+  getApp(views) {
+    return this.parseHtml(views.find(v => v.name === 'app').html);
   }
 
   parseViews(views) {
-    return this.parseHtml(views[0].html);
+    return this.parseHtml(`
+    <router-outlet>
+      <navbar-component slot="header"></navbar-component>
+      <footer-component slot="footer"></footer-component>
+    </router-outlet>
+    `);
   }
 
   parseHtml(template) {
@@ -52661,7 +52671,9 @@ AppComponent = __decorate([lit_html_1.Component({
 
   template() {
     return lit_html_1.html`
-      ${lit_html_1.async(this.reactToChanges.react())}
+      <router-outlet>
+        ${lit_html_1.async(this.reactToChanges.subscribeToAppChanges())}
+      </router-outlet>
     `;
   },
 
@@ -53064,7 +53076,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "42953" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "39959" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

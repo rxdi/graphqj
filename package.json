@@ -43,7 +43,6 @@
     "graphqj": "./dist/main.js"
   },
   "devDependencies": {
-    "@rxdi/parcel-plugin-shebang": "^0.7.5",
     "@types/graphql": "^14.2.3",
     "@types/js-yaml": "^3.12.1",
     "typescript": "^3.5.3"

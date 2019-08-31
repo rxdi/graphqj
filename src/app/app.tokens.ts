@@ -89,6 +89,8 @@ export interface Resolver {
     deps?: ResolverDependencies[];
   };
 }
+
+export interface ConfigViews { [key: string]: { query: string; payload: any; html: string } }
 export interface Config {
   $mode: 'basic' | 'advanced';
   $types: { [key: string]: Args };
@@ -96,7 +98,7 @@ export interface Config {
   $directives: string;
   $externals: Externals[];
   $args: any;
-  $views?: { [key: string]: { query: string; payload: any; html: string } };
+  $views?: ConfigViews;
   _meta: {[key: string]: string}; // Folder mapping for every module
 }
 

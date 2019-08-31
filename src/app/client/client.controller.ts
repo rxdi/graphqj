@@ -8,9 +8,8 @@ import {
   Inject
 } from '@gapi/core';
 import { ClientType } from './types/client.type';
-import { Config } from '../app.tokens';
-import { objToArray } from '../../helpers/obj-to-array';
-
+import { Config, ConfigViews } from '../app.tokens';
+export const viewsToArray = <T>(a: { [key: string]: T }): Array<T> => Object.keys(a).reduce((acc, curr) => [...acc, {...a[curr], name: curr}], []);
 @Controller<GraphQLControllerOptions>({
   guards: [],
   type: []
@@ -20,7 +19,7 @@ export class ClientController {
     private pubsub: PubSubService,
     @Inject(Config) private config: Config
   ) {
-      setInterval(() => this.OnInit(), 1000)
+    setInterval(() => this.OnInit(), 1000);
   }
 
   async OnInit() {
@@ -33,9 +32,10 @@ export class ClientController {
     return this.pubsub.asyncIterator('listenForChanges');
   })
   @Subscription()
-  listenForChanges(views) {
-    return {
-      views: objToArray(views)
+  listenForChanges(views: ConfigViews) {
+    const res = {
+      views: viewsToArray(views)
     };
+    return res;
   }
 }

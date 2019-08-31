@@ -6,6 +6,9 @@ export const ClientViewType = new GraphQLObjectType({
     html: {
       type: GraphQLString
     },
+    name: {
+      type: GraphQLString
+    },
     query: {
       type: GraphQLString
     },

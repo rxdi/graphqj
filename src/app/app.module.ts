@@ -19,17 +19,14 @@ import {
   printSchema,
   buildSchema,
   mergeSchemas,
-  Container,
   GRAPHQL_PLUGIN_CONFIG,
   GraphQLDirective
 } from '@gapi/core';
 
 import { TypesToken, Config, IsBundlerInstalled } from './app.tokens';
 
-import {
-  TranspileAndLoad,
-  TranspileAndGetAll
-} from '../helpers/transpile-and-load';
+import { TranspileAndLoad } from '../helpers/transpile-and-load';
+import { buildExternals } from '../helpers/dynamic-schema/mutators/build-externals';
 
 @Module({
   imports: [VoyagerModule.forRoot(), ClientModule],
@@ -115,23 +112,10 @@ ${printSchema(mergedSchemas)}
         config = await config;
         config = await deep(config);
         isBundlerInstalled.gapi = await isGapiInstalled();
-        if (config.$externals) {
-          const compiledPaths = await TranspileAndGetAll(
-            config.$externals,
-            './.gj/out'
-          );
-          config.$externals = compiledPaths.map(external => {
-            if (external.file.includes('.ts')) {
-              external.module = require(external.transpiledFile);
-            } else {
-              const m = require('esm')(module)(
-                join(process.cwd(), external.file)
-              );
-              external.module = m['default'] || m;
-            }
-            Container.set(external.map, external.module);
-            return external;
-          });
+        config.$externals = config.$externals || [];
+
+        if (config.$externals && config.$externals.length) {
+          config.$externals = await buildExternals(config);
         }
 
         let filePath = join(process.cwd(), config.$directives || '');
@@ -159,7 +143,7 @@ ${printSchema(mergedSchemas)}
         if (config.$mode === 'advanced') {
           await MakeAdvancedSchema(config);
         }
-        if (includes('--hot-reload')) {
+        if (true || includes('--hot-reload')) {
           config.$externals.forEach(e =>
             traverseMap.push({ parent: null, path: e.file })
           );

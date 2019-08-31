@@ -3,12 +3,14 @@ import { Config } from '../app/app.tokens';
 import { buildArguments } from '../helpers/dynamic-schema/mutators/build-arguments';
 import { buildTypes } from '../helpers/dynamic-schema/mutators/build-types';
 import { buildResolvers } from '../helpers/dynamic-schema/mutators/build-resolvers';
+import { buildExternals } from './dynamic-schema/mutators/build-externals';
 
 export async function MakeAdvancedSchema(config: Config) {
   const types = {};
   const buildedSchema: GraphQLSchema = {} as any;
   config.$args = config.$args || {};
   config.$types = config.$types || {};
+  config.$externals = await buildExternals(config);
   buildArguments(config);
   buildTypes(config, types, buildedSchema);
   buildResolvers(config, types, buildedSchema);
