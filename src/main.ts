@@ -1,4 +1,4 @@
-import { BootstrapFramework } from '@rxdi/core';
+import { BootstrapFramework, Container } from '@rxdi/core';
 import { AppModule } from './app/app.module';
 import { CoreModule } from '@gapi/core';
 import { nextOrDefault, includes } from './helpers/args-extractors';
@@ -7,6 +7,7 @@ import { promisify } from 'util';
 import { watch } from 'chokidar';
 import { SelfChild } from './helpers/self-child';
 import { Subscription } from 'rxjs';
+import { Config } from './app/app.tokens';
 
 if (includes('--watch')) {
   let subscription: Subscription;
@@ -201,18 +202,53 @@ $resolvers:
     );
   }
 } else {
+  Container.set('pubsub-auth', {
+    onSubConnection(connectionParams) {
+      return connectionParams;
+    },
+    async onSubOperation(connectionParams, params, webSocket) {
+      connectionParams
+      return params;
+    }
+  });
   BootstrapFramework(AppModule, [
     CoreModule.forRoot({
       graphql: {
         openBrowser: nextOrDefault('--random', true, v =>
           v === 'true' ? false : true
         ),
-        buildAstDefinitions: false // Removed ast definition since directives are lost
+        buildAstDefinitions: false, // Removed ast definition since directives are lost,
+        graphiQlPath: '/graphiql',
+        graphiqlOptions: {
+          endpointURL: '/graphiql'
+        }
+      },
+      pubsub: {
+        authentication: 'pubsub-auth'
       },
       server: {
         randomPort: nextOrDefault('--random', false),
         hapi: {
-          port: nextOrDefault('--port', 9000, p => Number(p))
+          port: nextOrDefault('--port', 9000, p => Number(p)),
+          routes: {
+            cors: {
+              origin: ['*'],
+              additionalHeaders: [
+                'Host',
+                'User-Agent',
+                'Accept',
+                'Accept-Language',
+                'Accept-Encoding',
+                'Access-Control-Request-Method',
+                'Access-Control-Allow-Origin',
+                'Access-Control-Request-Headers',
+                'Origin',
+                'Connection',
+                'Pragma',
+                'Cache-Control'
+              ]
+            }
+          }
         }
       }
     })

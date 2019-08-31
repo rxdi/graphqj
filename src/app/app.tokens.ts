@@ -89,6 +89,8 @@ export interface Resolver {
     deps?: ResolverDependencies[];
   };
 }
+
+export interface ConfigViews { [key: string]: { query: string; payload: any; html: string } }
 export interface Config {
   $mode: 'basic' | 'advanced';
   $types: { [key: string]: Args };
@@ -96,7 +98,7 @@ export interface Config {
   $directives: string;
   $externals: Externals[];
   $args: any;
-  $views?: { [key: string]: { query: string; payload: any; html: string } };
+  $views?: ConfigViews;
   _meta: {[key: string]: string}; // Folder mapping for every module
 }
 
@@ -115,7 +117,7 @@ export const GuardsToken = new InjectionToken<Map<string, Args>>(
 export const IsBundlerInstalled = new InjectionToken<{parcel: boolean; gapi: boolean;}>(
   '(@rxdi/graphqj): is-bundler-installed'
 );
-export const Config = new InjectionToken<Map<string, Args>>();
+export const Config = new InjectionToken<Config>();
 
 export type TypesToken = Map<string, Args>;
 export type ArgumentsToken = Map<string, Args>;

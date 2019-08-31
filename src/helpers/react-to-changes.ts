@@ -1,5 +1,5 @@
 import { traverse } from './traverse/traverse';
-import { BootstrapService, Container, ApolloService } from '@gapi/core';
+import { BootstrapService, Container, ApolloService, PubSubService } from '@gapi/core';
 import { getFirstItem } from './get-first-item';
 import { loadFile } from './load-file';
 import { Config } from '../app/app.tokens';
@@ -76,4 +76,9 @@ export async function reactToChanges(path: string, config: Config) {
     isRunning = false;
     console.error(e);
   }
+  Container.reset(Config)
+  Container.remove(Config)
+  Container.set(Config, config);
+  Container.get(PubSubService).publish('listenForChanges', config.$views);
+  Container.set('main-config-compiled', config)
 }

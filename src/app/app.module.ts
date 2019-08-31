@@ -1,14 +1,3 @@
-import {
-  Module,
-  SCHEMA_OVERRIDE,
-  GraphQLSchema,
-  printSchema,
-  buildSchema,
-  mergeSchemas,
-  Container,
-  GRAPHQL_PLUGIN_CONFIG,
-  GraphQLDirective
-} from '@gapi/core';
 import { writeFile, readFileSync, exists } from 'fs';
 import { promisify } from 'util';
 import { includes, nextOrDefault } from '../helpers/args-extractors';
@@ -18,23 +7,31 @@ import { basicTemplate } from '../helpers/basic.template';
 import { MakeAdvancedSchema } from '../helpers/advanced-schema';
 import { MakeBasicSchema } from '../helpers/basic-schema';
 import { join } from 'path';
-import {
-  TypesToken,
-  Config,
-  IsBundlerInstalled
-} from './app.tokens';
-import {
-  TranspileAndLoad,
-  TranspileAndGetAll
-} from '../helpers/transpile-and-load';
 import { deep } from '../helpers/traverse/test';
-
 import { traverseMap } from '../helpers/traverse-map';
 import { watchBundles } from '../helpers/watch-bundles';
 import { isGapiInstalled } from '../helpers/is-runner-installed';
+import {
+  Module,
+  SCHEMA_OVERRIDE,
+  GraphQLSchema,
+  printSchema,
+  buildSchema,
+  mergeSchemas,
+  GRAPHQL_PLUGIN_CONFIG,
+  GraphQLDirective,
+  Container
+} from '@gapi/core';
+
+import { TypesToken, Config, IsBundlerInstalled } from './app.tokens';
+
+import { TranspileAndLoad } from '../helpers/transpile-and-load';
+import { buildExternals } from '../helpers/dynamic-schema/mutators/build-externals';
+import { CoreModule } from './core/core.module';
+import { ClientModule } from './client/client.module';
 
 @Module({
-  imports: [VoyagerModule.forRoot()],
+  imports: [CoreModule, VoyagerModule.forRoot(), ClientModule],
   providers: [
     {
       provide: TypesToken,
@@ -107,11 +104,7 @@ ${printSchema(mergedSchemas)}
     },
     {
       provide: 'Run',
-      deps: [
-        Config,
-        GRAPHQL_PLUGIN_CONFIG,
-        IsBundlerInstalled
-      ],
+      deps: [Config, GRAPHQL_PLUGIN_CONFIG, IsBundlerInstalled],
       lazy: true,
       useFactory: async (
         config: Config,
@@ -119,25 +112,12 @@ ${printSchema(mergedSchemas)}
         isBundlerInstalled: IsBundlerInstalled
       ) => {
         config = await config;
-        config = await deep(config)
+        config = await deep(config);
         isBundlerInstalled.gapi = await isGapiInstalled();
-        if (config.$externals) {
-          const compiledPaths = await TranspileAndGetAll(
-            config.$externals,
-            './.gj/out'
-          );
-          config.$externals = compiledPaths.map(external => {
-            if (external.file.includes('.ts')) {
-              external.module = require(external.transpiledFile);
-            } else {
-              const m = require('esm')(module)(
-                join(process.cwd(), external.file)
-              );
-              external.module = m['default'] || m;
-            }
-            Container.set(external.map, external.module);
-            return external;
-          });
+        config.$externals = config.$externals || [];
+
+        if (config.$externals && config.$externals.length) {
+          config.$externals = await buildExternals(config);
         }
 
         let filePath = join(process.cwd(), config.$directives || '');
@@ -166,9 +146,12 @@ ${printSchema(mergedSchemas)}
           await MakeAdvancedSchema(config);
         }
         if (includes('--hot-reload')) {
-          config.$externals.forEach(e => traverseMap.push({parent: null, path: e.file}))
-          watchBundles(traverseMap.map(f => f.path), config)
+          config.$externals.forEach(e =>
+            traverseMap.push({ parent: null, path: e.file })
+          );
+          watchBundles(traverseMap.map(f => f.path), config);
         }
+        Container.set('main-config-compiled', config)
         console.log(
           'You can extract this schema by running --generate command'
         );
