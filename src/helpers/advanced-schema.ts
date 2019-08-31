@@ -10,7 +10,9 @@ export async function MakeAdvancedSchema(config: Config) {
   const buildedSchema: GraphQLSchema = {} as any;
   config.$args = config.$args || {};
   config.$types = config.$types || {};
-  config.$externals = await buildExternals(config);
+  if (config.$externals && config.$externals.length) {
+    config.$externals = await buildExternals(config);
+  }
   buildArguments(config);
   buildTypes(config, types, buildedSchema);
   buildResolvers(config, types, buildedSchema);

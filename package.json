@@ -5,8 +5,9 @@
   "scripts": {
     "start": "gapi start --local --minify=false --inspect",
     "start-client": "parcel ./src/app/client/application/index.html",
-    "introspect":"gapi schema introspect --collect-documents --collect-types",
+    "introspect": "gapi schema introspect --collect-documents --collect-types",
     "build": "gapi build",
+    "build-client": "parcel build ./src/app/client/application/index.html",
     "patch": "npm version patch && npm publish --update-readme --access public"
   },
   "dependencies": {
@@ -43,8 +44,10 @@
     "graphqj": "./dist/main.js"
   },
   "devDependencies": {
+    "@rxdi/parcel-plugin-shebang": "0.7.5",
     "@types/graphql": "^14.2.3",
     "@types/js-yaml": "^3.12.1",
+    "cssnano": "^4.1.10",
     "typescript": "^3.5.3"
   },
   "types": "./lib/index.d.ts",

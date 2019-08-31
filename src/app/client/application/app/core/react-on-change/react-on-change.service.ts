@@ -1,9 +1,18 @@
 import { Injectable, Inject, Container } from '@rxdi/core';
-import { from, of } from 'rxjs';
+import { from, BehaviorSubject } from 'rxjs';
 import { ApolloClient } from '@rxdi/graphql-client';
 import gql from 'graphql-tag';
-import { map, tap, switchMap, combineLatest } from 'rxjs/operators';
-import { html, unsafeHTML } from '@rxdi/lit-html';
+import { map, tap } from 'rxjs/operators';
+import {
+  html,
+  unsafeHTML,
+  LitElement,
+  Component,
+  async,
+  TemplateObservable,
+  TemplateResult,
+  property
+} from '@rxdi/lit-html';
 import { ISubscription, IClientViewType } from '../../../../../@introspection';
 import { Router } from '@rxdi/router';
 import { ExternalImporter } from '@rxdi/core';
@@ -12,13 +21,14 @@ import { ExternalImporter } from '@rxdi/core';
 export class ReactOnChangeService {
   @Inject(ApolloClient)
   private apollo: ApolloClient;
-  loadedComponents: Map<string, any> = new Map();
+  loadedComponents: Map<string, BehaviorSubject<string>> = new Map();
   @Inject(ExternalImporter)
   private importer: ExternalImporter;
-
+  routes = []
   @Router()
   private router: Router;
   clientReady: boolean;
+
   subscribeToAppChanges() {
     const app = from(
       this.apollo.subscribe<ISubscription>({
@@ -35,7 +45,7 @@ export class ReactOnChangeService {
               }
             }
           }
-        `,
+        `
       })
     ).pipe(
       map(({ data }) => data.listenForChanges.views),
@@ -44,16 +54,58 @@ export class ReactOnChangeService {
           [].concat(...views.map(v => v.components)).filter(i => !!i)
         )
       ),
-      map(views => this.getApp(views)),
-      tap(async () => {
+      tap(views => {
+        views.forEach(v => {
+          const selector = `${v.name}-component`;
+          if (v.name === 'app') {
+            return;
+          }
+          let observable: BehaviorSubject<string>;
+          const exists = this.loadedComponents.get(selector);
+          if (exists) {
+            exists.next(v.html)
+            return;
+          } else {
+            observable = new BehaviorSubject(v.html)
+          }
 
-      })
+          @Component({
+            selector
+          })
+          class NewElement extends LitElement {
+            @TemplateObservable()
+            private templateObservable = observable.pipe(map(h => html`${unsafeHTML(h)}`));
+            render() {
+              return html`${this.templateObservable}`;
+            }
+          }
+          this.routes.push(            {
+            path: `/${v.name}`,
+            component: selector
+          })
+          this.loadedComponents.set(selector, observable);
+        });
+        this.router.setRoutes([
+          {
+            path: '/',
+            component: 'home-component'
+          },
+          ...this.routes,
+          {
+            path: '(.*)',
+            component: 'not-found-component'
+          }
+        ]);
+        const routes = this.router.getRoutes()
+        debugger
+      }),
+      map(views => this.getApp(views))
     );
     if (!this.clientReady) {
       setTimeout(async () => {
         await this.ready();
-        this.clientReady = true
-      }, 50)
+        this.clientReady = true;
+      }, 100);
     }
     return app;
   }
@@ -89,7 +141,7 @@ export class ReactOnChangeService {
       const scriptFileEl = document.createElement('script');
       scriptFileEl.setAttribute('async', '');
       scriptFileEl.setAttribute('src', link);
-      this.loadedComponents.set(link, scriptFileEl);
+      this.loadedComponents.set(link, scriptFileEl as any);
       document.body.appendChild(scriptFileEl);
     });
   }

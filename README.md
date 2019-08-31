@@ -180,6 +180,11 @@ gj --port 5000
 gj --hot-reload
 ```
 
+#### Build client side application inside Configuration file (Beta)
+```
+gj --client
+```
+
 #### Generating `schema.graphql` from JSON
 
 ```
@@ -193,18 +198,11 @@ gj --generate
 gj --random
 ```
 
-
-#### Watch for changes with specific config
-
-```
-gj --config ./gj.{json|js|ts|yml} --watch
-```
+#### Try experimental HOT Module reload when developing client side application
 
 ```
-gj --config ./gj.yml --watch
+gj --client --hot-reload
 ```
-
-
 
 ## Advanced configuration
 
@@ -762,4 +760,126 @@ findUser:
     }
 
 findUser2: 💉./resolvers/findUser.resolver.yml
+```
+
+
+# Possible view configuration
+
+```yml
+
+$mode: advanced
+
+$types:
+  User:
+    name: String
+    email: String
+    phone: Number
+    arrayOfNumbers: Number[]
+    arrayOfStrings: String[]
+    arrayOfStrings2: String[]
+
+$args:
+  UserPayload:
+    name: String!
+    pesho: String
+
+$resolvers:
+  findUser:
+    type: User
+    args:
+      userId: UserPayload
+    resolve: !!js/function >
+      function foobar(root, payload, context, info) {
+        return {
+          "name": "22233",
+          "email": "22",
+          "phone": 2223
+        }
+      }
+
+$views:
+  app:
+    components:
+     - http://0.0.0.0:9000/components/hamburger.component.js
+    html: |
+      <style>
+        .spacer {
+          flex: 1 3 auto;
+        }
+        .container {
+          display: flex;
+        }
+        ul {
+          list-style-type: none;
+          margin: 0;
+          padding: 0;
+          overflow: hidden;
+          background-color: #f3f3f3;
+          cursor: pointer;
+        }
+        li {
+          float: left;
+        }
+        li a {
+          display: block;
+          color: #666;
+          text-align: center;
+          padding: 14px 16px;
+          text-decoration: none;
+        }
+        li a:hover:not(.active) {
+          background-color: #ddd;
+        }
+        li a.active {
+          color: white;
+          background-color: #4caf50;
+        }
+        .footer {
+          position: fixed;
+          left: 0;
+          bottom: 0;
+          width: 100%;
+          background-color: #03a9f4;
+          color: white;
+          text-align: center;
+        }
+      </style>
+      <ul class="container" slot="header">
+        <li><a href="/">Home</a></li>
+        <li><a href="/gosho">Gosho</a></li>
+        <li><a href="/gosho444">Gosho444</a></li>
+            <li><a href="/dadada">Dadadada</a></li>
+        <span class="spacer"></span>
+      </ul>
+      <div class="footer" slot="footer">
+        <p>Footer</p>
+      </div>
+
+  home:
+    query: findUser
+    props: User
+    output: UserPayload
+    html: |
+      Welcome to Home
+      <div style="background-color: red">
+        <hamburger-component type="3dx" active=true></hamburger-component>
+      </div>
+
+  not-found:
+    html: |
+      module is really hot ddd
+      dadada31313131ddd22222222222225
+
+  gosho:
+    html: |
+      Welcome to Gosho
+
+
+  gosho444:
+    html: |
+      Welcome to Gosho 44445
+
+  dadada:
+    html: |
+      Welcome to Dadadada
 ```

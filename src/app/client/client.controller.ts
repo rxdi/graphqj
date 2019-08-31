@@ -9,7 +9,8 @@ import {
   withFilter,
   Query,
   GraphQLString,
-  GraphQLNonNull
+  GraphQLNonNull,
+  Container
 } from '@gapi/core';
 import { ClientType } from './types/client.type';
 import { Config, ConfigViews } from '../app.tokens';
@@ -45,7 +46,8 @@ export class ClientController {
   @Type(ClientReadyStatusType)
   @Query()
   async clientReady(root, payload, context) {
-    this.pubsub.publish('listenForChanges', (await this.config).$views);
+    const config = Container.get<any>('main-config-compiled')
+    this.pubsub.publish('listenForChanges', config.$views);
     return {
       status: 'READY'
     };

@@ -80,4 +80,5 @@ export async function reactToChanges(path: string, config: Config) {
   Container.remove(Config)
   Container.set(Config, config);
   Container.get(PubSubService).publish('listenForChanges', config.$views);
+  Container.set('main-config-compiled', config)
 }

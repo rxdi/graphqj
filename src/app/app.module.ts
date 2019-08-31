@@ -11,7 +11,6 @@ import { deep } from '../helpers/traverse/test';
 import { traverseMap } from '../helpers/traverse-map';
 import { watchBundles } from '../helpers/watch-bundles';
 import { isGapiInstalled } from '../helpers/is-runner-installed';
-import { ClientModule } from './client/client.module';
 import {
   Module,
   SCHEMA_OVERRIDE,
@@ -20,7 +19,8 @@ import {
   buildSchema,
   mergeSchemas,
   GRAPHQL_PLUGIN_CONFIG,
-  GraphQLDirective
+  GraphQLDirective,
+  Container
 } from '@gapi/core';
 
 import { TypesToken, Config, IsBundlerInstalled } from './app.tokens';
@@ -28,6 +28,7 @@ import { TypesToken, Config, IsBundlerInstalled } from './app.tokens';
 import { TranspileAndLoad } from '../helpers/transpile-and-load';
 import { buildExternals } from '../helpers/dynamic-schema/mutators/build-externals';
 import { CoreModule } from './core/core.module';
+import { ClientModule } from './client/client.module';
 
 @Module({
   imports: [CoreModule, VoyagerModule.forRoot(), ClientModule],
@@ -144,12 +145,13 @@ ${printSchema(mergedSchemas)}
         if (config.$mode === 'advanced') {
           await MakeAdvancedSchema(config);
         }
-        if (true || includes('--hot-reload')) {
+        if (includes('--hot-reload')) {
           config.$externals.forEach(e =>
             traverseMap.push({ parent: null, path: e.file })
           );
           watchBundles(traverseMap.map(f => f.path), config);
         }
+        Container.set('main-config-compiled', config)
         console.log(
           'You can extract this schema by running --generate command'
         );

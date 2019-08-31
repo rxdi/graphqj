@@ -217,7 +217,11 @@ $resolvers:
         openBrowser: nextOrDefault('--random', true, v =>
           v === 'true' ? false : true
         ),
-        buildAstDefinitions: false // Removed ast definition since directives are lost,
+        buildAstDefinitions: false, // Removed ast definition since directives are lost,
+        graphiQlPath: '/graphiql',
+        graphiqlOptions: {
+          endpointURL: '/graphiql'
+        }
       },
       pubsub: {
         authentication: 'pubsub-auth'
