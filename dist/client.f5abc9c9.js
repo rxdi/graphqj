@@ -52563,7 +52563,7 @@ var __importDefault = this && this.__importDefault || function (mod) {
   };
 };
 
-var _a, _b;
+var _a, _b, _c;
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -52583,7 +52583,13 @@ const lit_html_1 = require("@rxdi/lit-html");
 
 const router_1 = require("@rxdi/router");
 
+const core_2 = require("@rxdi/core");
+
 let ReactOnChangeService = class ReactOnChangeService {
+  constructor() {
+    this.loadedComponents = new Map();
+  }
+
   subscribeToAppChanges() {
     return rxjs_1.from(this.apollo.subscribe({
       query: graphql_tag_1.default`
@@ -52595,26 +52601,18 @@ let ReactOnChangeService = class ReactOnChangeService {
                 query
                 props
                 output
+                components
               }
             }
           }
         `
     })).pipe(operators_1.map(({
       data
-    }) => data.listenForChanges.views), operators_1.tap(views => {}), operators_1.map(views => this.getApp(views)));
+    }) => data.listenForChanges.views), operators_1.tap(views => this.loadDynamicBundles([].concat(...views.map(v => v.components)).filter(i => !!i))), operators_1.map(views => this.getApp(views)));
   }
 
   getApp(views) {
     return this.parseHtml(views.find(v => v.name === 'app').html);
-  }
-
-  parseViews(views) {
-    return this.parseHtml(`
-    <router-outlet>
-      <navbar-component slot="header"></navbar-component>
-      <footer-component slot="footer"></footer-component>
-    </router-outlet>
-    `);
   }
 
   parseHtml(template) {
@@ -52623,11 +52621,27 @@ let ReactOnChangeService = class ReactOnChangeService {
     `;
   }
 
+  loadDynamicBundles(bundles) {
+    bundles.forEach(link => {
+      if (this.loadedComponents.has(link)) {
+        return;
+      }
+
+      const scriptFileEl = document.createElement('script');
+      scriptFileEl.setAttribute('async', '');
+      scriptFileEl.setAttribute('src', link);
+      this.loadedComponents.set(link, scriptFileEl);
+      document.body.appendChild(scriptFileEl);
+    });
+  }
+
 };
 
 __decorate([core_1.Inject(graphql_client_1.ApolloClient), __metadata("design:type", typeof (_a = typeof graphql_client_1.ApolloClient !== "undefined" && graphql_client_1.ApolloClient) === "function" ? _a : Object)], ReactOnChangeService.prototype, "apollo", void 0);
 
-__decorate([router_1.Router(), __metadata("design:type", typeof (_b = typeof router_1.Router !== "undefined" && router_1.Router) === "function" ? _b : Object)], ReactOnChangeService.prototype, "router", void 0);
+__decorate([core_1.Inject(core_2.ExternalImporter), __metadata("design:type", typeof (_b = typeof core_2.ExternalImporter !== "undefined" && core_2.ExternalImporter) === "function" ? _b : Object)], ReactOnChangeService.prototype, "importer", void 0);
+
+__decorate([router_1.Router(), __metadata("design:type", typeof (_c = typeof router_1.Router !== "undefined" && router_1.Router) === "function" ? _c : Object)], ReactOnChangeService.prototype, "router", void 0);
 
 ReactOnChangeService = __decorate([core_1.Injectable()], ReactOnChangeService);
 exports.ReactOnChangeService = ReactOnChangeService;
@@ -53076,7 +53090,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "39959" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "42245" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

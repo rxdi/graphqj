@@ -68,6 +68,7 @@
   export interface IClientViewType {
     __typename?: "ClientViewType";
     html?: string | null;
+    components?: Array<string> | null;
     name?: string | null;
     query?: string | null;
     props?: string | null;

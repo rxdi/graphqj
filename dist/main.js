@@ -1595,6 +1595,8 @@ const get_first_item_1 = require("./get-first-item");
 
 const load_file_1 = require("./load-file");
 
+const app_tokens_1 = require("../app/app.tokens");
+
 const advanced_schema_1 = require("./advanced-schema");
 
 const test_1 = require("./traverse/test");
@@ -1680,11 +1682,16 @@ function reactToChanges(path, config) {
       isRunning = false;
       console.error(e);
     }
+
+    core_1.Container.reset(app_tokens_1.Config);
+    core_1.Container.remove(app_tokens_1.Config);
+    core_1.Container.set(app_tokens_1.Config, config);
+    core_1.Container.get(core_1.PubSubService).publish('listenForChanges', config.$views);
   });
 }
 
 exports.reactToChanges = reactToChanges;
-},{"./traverse/traverse":"helpers/traverse/traverse.ts","./get-first-item":"helpers/get-first-item.ts","./load-file":"helpers/load-file.ts","./advanced-schema":"helpers/advanced-schema.ts","./traverse/test":"helpers/traverse/test.ts","./lazy-types":"helpers/lazy-types.ts","./watch-bundles":"helpers/watch-bundles.ts","./basic-schema":"helpers/basic-schema.ts","./transpiler-cache":"helpers/transpiler-cache.ts"}],"helpers/watch-bundles.ts":[function(require,module,exports) {
+},{"./traverse/traverse":"helpers/traverse/traverse.ts","./get-first-item":"helpers/get-first-item.ts","./load-file":"helpers/load-file.ts","../app/app.tokens":"app/app.tokens.ts","./advanced-schema":"helpers/advanced-schema.ts","./traverse/test":"helpers/traverse/test.ts","./lazy-types":"helpers/lazy-types.ts","./watch-bundles":"helpers/watch-bundles.ts","./basic-schema":"helpers/basic-schema.ts","./transpiler-cache":"helpers/transpiler-cache.ts"}],"helpers/watch-bundles.ts":[function(require,module,exports) {
 "use strict";
 
 var __awaiter = this && this.__awaiter || function (thisArg, _arguments, P, generator) {
@@ -1848,6 +1855,9 @@ exports.ClientViewType = new graphql_1.GraphQLObjectType({
     html: {
       type: graphql_1.GraphQLString
     },
+    components: {
+      type: new graphql_1.GraphQLList(graphql_1.GraphQLString)
+    },
     name: {
       type: graphql_1.GraphQLString
     },
@@ -1902,34 +1912,6 @@ var __param = this && this.__param || function (paramIndex, decorator) {
   };
 };
 
-var __awaiter = this && this.__awaiter || function (thisArg, _arguments, P, generator) {
-  return new (P || (P = Promise))(function (resolve, reject) {
-    function fulfilled(value) {
-      try {
-        step(generator.next(value));
-      } catch (e) {
-        reject(e);
-      }
-    }
-
-    function rejected(value) {
-      try {
-        step(generator["throw"](value));
-      } catch (e) {
-        reject(e);
-      }
-    }
-
-    function step(result) {
-      result.done ? resolve(result.value) : new P(function (resolve) {
-        resolve(result.value);
-      }).then(fulfilled, rejected);
-    }
-
-    step((generator = generator.apply(thisArg, _arguments || [])).next());
-  });
-};
-
 var _a, _b, _c;
 
 Object.defineProperty(exports, "__esModule", {
@@ -1950,14 +1932,6 @@ let ClientController = class ClientController {
   constructor(pubsub, config) {
     this.pubsub = pubsub;
     this.config = config;
-    setInterval(() => this.OnInit(), 1000);
-  }
-
-  OnInit() {
-    return __awaiter(this, void 0, void 0, function* () {
-      const config = yield this.config;
-      this.pubsub.publish('listenForChanges', config.$views);
-    });
   }
 
   listenForChanges(views) {
@@ -2002,7 +1976,115 @@ ClientModule = __decorate([core_1.Module({
   controllers: [client_controller_1.ClientController]
 })], ClientModule);
 exports.ClientModule = ClientModule;
-},{"./client.controller":"app/client/client.controller.ts"}],"app/app.module.ts":[function(require,module,exports) {
+},{"./client.controller":"app/client/client.controller.ts"}],"app/core/services/serve-components.service.ts":[function(require,module,exports) {
+"use strict";
+
+var __decorate = this && this.__decorate || function (decorators, target, key, desc) {
+  var c = arguments.length,
+      r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc,
+      d;
+  if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+  return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+
+var __metadata = this && this.__metadata || function (k, v) {
+  if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+
+var __param = this && this.__param || function (paramIndex, decorator) {
+  return function (target, key) {
+    decorator(target, key, paramIndex);
+  };
+};
+
+var __awaiter = this && this.__awaiter || function (thisArg, _arguments, P, generator) {
+  return new (P || (P = Promise))(function (resolve, reject) {
+    function fulfilled(value) {
+      try {
+        step(generator.next(value));
+      } catch (e) {
+        reject(e);
+      }
+    }
+
+    function rejected(value) {
+      try {
+        step(generator["throw"](value));
+      } catch (e) {
+        reject(e);
+      }
+    }
+
+    function step(result) {
+      result.done ? resolve(result.value) : new P(function (resolve) {
+        resolve(result.value);
+      }).then(fulfilled, rejected);
+    }
+
+    step((generator = generator.apply(thisArg, _arguments || [])).next());
+  });
+};
+
+var _a;
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+const core_1 = require("@rxdi/core");
+
+const hapi_1 = require("@rxdi/hapi");
+
+const hapi_2 = require("hapi");
+
+let ServeComponents = class ServeComponents {
+  constructor(server) {
+    this.server = server;
+  }
+
+  register() {
+    return __awaiter(this, void 0, void 0, function* () {
+      this.server.route({
+        method: 'GET',
+        path: '/components/{param*}',
+        handler: {
+          directory: {
+            path: `${process.cwd()}/components`,
+            index: ['index.html', 'default.html']
+          }
+        }
+      });
+    });
+  }
+
+};
+ServeComponents = __decorate([core_1.Plugin(), __param(0, core_1.Inject(hapi_1.HAPI_SERVER)), __metadata("design:paramtypes", [typeof (_a = typeof hapi_2.Server !== "undefined" && hapi_2.Server) === "function" ? _a : Object])], ServeComponents);
+exports.ServeComponents = ServeComponents;
+},{}],"app/core/core.module.ts":[function(require,module,exports) {
+"use strict";
+
+var __decorate = this && this.__decorate || function (decorators, target, key, desc) {
+  var c = arguments.length,
+      r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc,
+      d;
+  if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+  return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+const core_1 = require("@rxdi/core");
+
+const serve_components_service_1 = require("./services/serve-components.service");
+
+let CoreModule = class CoreModule {};
+CoreModule = __decorate([core_1.Module({
+  plugins: [serve_components_service_1.ServeComponents]
+})], CoreModule);
+exports.CoreModule = CoreModule;
+},{"./services/serve-components.service":"app/core/services/serve-components.service.ts"}],"app/app.module.ts":[function(require,module,exports) {
 "use strict";
 
 var __decorate = this && this.__decorate || function (decorators, target, key, desc) {
@@ -2081,9 +2163,11 @@ const transpile_and_load_1 = require("../helpers/transpile-and-load");
 
 const build_externals_1 = require("../helpers/dynamic-schema/mutators/build-externals");
 
+const core_module_1 = require("./core/core.module");
+
 let AppModule = class AppModule {};
 AppModule = __decorate([core_1.Module({
-  imports: [voyager_1.VoyagerModule.forRoot(), client_module_1.ClientModule],
+  imports: [core_module_1.CoreModule, voyager_1.VoyagerModule.forRoot(), client_module_1.ClientModule],
   providers: [{
     provide: app_tokens_1.TypesToken,
     useValue: new Map()
@@ -2205,7 +2289,7 @@ ${core_1.printSchema(mergedSchemas)}
   }]
 })], AppModule);
 exports.AppModule = AppModule;
-},{"../helpers/args-extractors":"helpers/args-extractors.ts","../helpers/set-config":"helpers/set-config.ts","../helpers/basic.template":"helpers/basic.template.ts","../helpers/advanced-schema":"helpers/advanced-schema.ts","../helpers/basic-schema":"helpers/basic-schema.ts","../helpers/traverse/test":"helpers/traverse/test.ts","../helpers/traverse-map":"helpers/traverse-map.ts","../helpers/watch-bundles":"helpers/watch-bundles.ts","../helpers/is-runner-installed":"helpers/is-runner-installed.ts","./client/client.module":"app/client/client.module.ts","./app.tokens":"app/app.tokens.ts","../helpers/transpile-and-load":"helpers/transpile-and-load.ts","../helpers/dynamic-schema/mutators/build-externals":"helpers/dynamic-schema/mutators/build-externals.ts"}],"helpers/self-child.ts":[function(require,module,exports) {
+},{"../helpers/args-extractors":"helpers/args-extractors.ts","../helpers/set-config":"helpers/set-config.ts","../helpers/basic.template":"helpers/basic.template.ts","../helpers/advanced-schema":"helpers/advanced-schema.ts","../helpers/basic-schema":"helpers/basic-schema.ts","../helpers/traverse/test":"helpers/traverse/test.ts","../helpers/traverse-map":"helpers/traverse-map.ts","../helpers/watch-bundles":"helpers/watch-bundles.ts","../helpers/is-runner-installed":"helpers/is-runner-installed.ts","./client/client.module":"app/client/client.module.ts","./app.tokens":"app/app.tokens.ts","../helpers/transpile-and-load":"helpers/transpile-and-load.ts","../helpers/dynamic-schema/mutators/build-externals":"helpers/dynamic-schema/mutators/build-externals.ts","./core/core.module":"app/core/core.module.ts"}],"helpers/self-child.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {

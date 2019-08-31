@@ -27,9 +27,10 @@ import { TypesToken, Config, IsBundlerInstalled } from './app.tokens';
 
 import { TranspileAndLoad } from '../helpers/transpile-and-load';
 import { buildExternals } from '../helpers/dynamic-schema/mutators/build-externals';
+import { CoreModule } from './core/core.module';
 
 @Module({
-  imports: [VoyagerModule.forRoot(), ClientModule],
+  imports: [CoreModule, VoyagerModule.forRoot(), ClientModule],
   providers: [
     {
       provide: TypesToken,
