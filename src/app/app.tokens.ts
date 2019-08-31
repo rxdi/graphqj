@@ -117,7 +117,7 @@ export const GuardsToken = new InjectionToken<Map<string, Args>>(
 export const IsBundlerInstalled = new InjectionToken<{parcel: boolean; gapi: boolean;}>(
   '(@rxdi/graphqj): is-bundler-installed'
 );
-export const Config = new InjectionToken<Map<string, Args>>();
+export const Config = new InjectionToken<Config>();
 
 export type TypesToken = Map<string, Args>;
 export type ArgumentsToken = Map<string, Args>;

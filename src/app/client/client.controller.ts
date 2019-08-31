@@ -5,10 +5,16 @@ import {
   Subscription,
   Subscribe,
   PubSubService,
-  Inject
+  Inject,
+  withFilter,
+  Query,
+  GraphQLString,
+  GraphQLNonNull
 } from '@gapi/core';
 import { ClientType } from './types/client.type';
 import { Config, ConfigViews } from '../app.tokens';
+import { ClientReadyStatusType } from './types/status.type';
+
 export const viewsToArray = <T>(a: { [key: string]: T }): Array<T> =>
   Object.keys(a).reduce(
     (acc, curr) => [...acc, { ...a[curr], name: curr }],
@@ -34,5 +40,14 @@ export class ClientController {
       views: viewsToArray(views)
     };
     return res;
+  }
+
+  @Type(ClientReadyStatusType)
+  @Query()
+  async clientReady(root, payload, context) {
+    this.pubsub.publish('listenForChanges', (await this.config).$views);
+    return {
+      status: 'READY'
+    };
   }
 }

@@ -1891,7 +1891,24 @@ exports.ClientType = new graphql_1.GraphQLObjectType({
     }
   }
 });
-},{"./client-view.type":"app/client/types/client-view.type.ts"}],"app/client/client.controller.ts":[function(require,module,exports) {
+},{"./client-view.type":"app/client/types/client-view.type.ts"}],"app/client/types/status.type.ts":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+const graphql_1 = require("graphql");
+
+exports.ClientReadyStatusType = new graphql_1.GraphQLObjectType({
+  name: 'ClientReadyStatusType',
+  fields: () => ({
+    status: {
+      type: graphql_1.GraphQLString
+    }
+  })
+});
+},{}],"app/client/client.controller.ts":[function(require,module,exports) {
 "use strict";
 
 var __decorate = this && this.__decorate || function (decorators, target, key, desc) {
@@ -1912,6 +1929,34 @@ var __param = this && this.__param || function (paramIndex, decorator) {
   };
 };
 
+var __awaiter = this && this.__awaiter || function (thisArg, _arguments, P, generator) {
+  return new (P || (P = Promise))(function (resolve, reject) {
+    function fulfilled(value) {
+      try {
+        step(generator.next(value));
+      } catch (e) {
+        reject(e);
+      }
+    }
+
+    function rejected(value) {
+      try {
+        step(generator["throw"](value));
+      } catch (e) {
+        reject(e);
+      }
+    }
+
+    function step(result) {
+      result.done ? resolve(result.value) : new P(function (resolve) {
+        resolve(result.value);
+      }).then(fulfilled, rejected);
+    }
+
+    step((generator = generator.apply(thisArg, _arguments || [])).next());
+  });
+};
+
 var _a, _b, _c;
 
 Object.defineProperty(exports, "__esModule", {
@@ -1923,6 +1968,8 @@ const core_1 = require("@gapi/core");
 const client_type_1 = require("./types/client.type");
 
 const app_tokens_1 = require("../app.tokens");
+
+const status_type_1 = require("./types/status.type");
 
 exports.viewsToArray = a => Object.keys(a).reduce((acc, curr) => [...acc, Object.assign({}, a[curr], {
   name: curr
@@ -1941,18 +1988,29 @@ let ClientController = class ClientController {
     return res;
   }
 
+  clientReady(root, payload, context) {
+    return __awaiter(this, void 0, void 0, function* () {
+      this.pubsub.publish('listenForChanges', (yield this.config).$views);
+      return {
+        status: 'READY'
+      };
+    });
+  }
+
 };
 
 __decorate([core_1.Type(client_type_1.ClientType), core_1.Subscribe(function () {
   return this.pubsub.asyncIterator('listenForChanges');
 }), core_1.Subscription(), __metadata("design:type", Function), __metadata("design:paramtypes", [typeof (_a = typeof app_tokens_1.ConfigViews !== "undefined" && app_tokens_1.ConfigViews) === "function" ? _a : Object]), __metadata("design:returntype", void 0)], ClientController.prototype, "listenForChanges", null);
 
+__decorate([core_1.Type(status_type_1.ClientReadyStatusType), core_1.Query(), __metadata("design:type", Function), __metadata("design:paramtypes", [Object, Object, Object]), __metadata("design:returntype", Promise)], ClientController.prototype, "clientReady", null);
+
 ClientController = __decorate([core_1.Controller({
   guards: [],
   type: []
 }), __param(1, core_1.Inject(app_tokens_1.Config)), __metadata("design:paramtypes", [typeof (_b = typeof core_1.PubSubService !== "undefined" && core_1.PubSubService) === "function" ? _b : Object, typeof (_c = typeof app_tokens_1.Config !== "undefined" && app_tokens_1.Config) === "function" ? _c : Object])], ClientController);
 exports.ClientController = ClientController;
-},{"./types/client.type":"app/client/types/client.type.ts","../app.tokens":"app/app.tokens.ts"}],"app/client/client.module.ts":[function(require,module,exports) {
+},{"./types/client.type":"app/client/types/client.type.ts","../app.tokens":"app/app.tokens.ts","./types/status.type":"app/client/types/status.type.ts"}],"app/client/client.module.ts":[function(require,module,exports) {
 "use strict";
 
 var __decorate = this && this.__decorate || function (decorators, target, key, desc) {
@@ -2558,16 +2616,38 @@ $resolvers:
     });
   }
 } else {
+  core_1.Container.set('pubsub-auth', {
+    onSubConnection(connectionParams) {
+      return connectionParams;
+    },
+
+    onSubOperation(connectionParams, params, webSocket) {
+      return __awaiter(this, void 0, void 0, function* () {
+        connectionParams;
+        return params;
+      });
+    }
+
+  });
   core_1.BootstrapFramework(app_module_1.AppModule, [core_2.CoreModule.forRoot({
     graphql: {
       openBrowser: args_extractors_1.nextOrDefault('--random', true, v => v === 'true' ? false : true),
-      buildAstDefinitions: false // Removed ast definition since directives are lost
+      buildAstDefinitions: false // Removed ast definition since directives are lost,
 
+    },
+    pubsub: {
+      authentication: 'pubsub-auth'
     },
     server: {
       randomPort: args_extractors_1.nextOrDefault('--random', false),
       hapi: {
-        port: args_extractors_1.nextOrDefault('--port', 9000, p => Number(p))
+        port: args_extractors_1.nextOrDefault('--port', 9000, p => Number(p)),
+        routes: {
+          cors: {
+            origin: ['*'],
+            additionalHeaders: ['Host', 'User-Agent', 'Accept', 'Accept-Language', 'Accept-Encoding', 'Access-Control-Request-Method', 'Access-Control-Allow-Origin', 'Access-Control-Request-Headers', 'Origin', 'Connection', 'Pragma', 'Cache-Control']
+          }
+        }
       }
     }
   })]).subscribe(() => console.log('Started'), console.log.bind(console));

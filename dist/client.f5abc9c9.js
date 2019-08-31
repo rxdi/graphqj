@@ -52557,6 +52557,34 @@ var __metadata = this && this.__metadata || function (k, v) {
   if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 
+var __awaiter = this && this.__awaiter || function (thisArg, _arguments, P, generator) {
+  return new (P || (P = Promise))(function (resolve, reject) {
+    function fulfilled(value) {
+      try {
+        step(generator.next(value));
+      } catch (e) {
+        reject(e);
+      }
+    }
+
+    function rejected(value) {
+      try {
+        step(generator["throw"](value));
+      } catch (e) {
+        reject(e);
+      }
+    }
+
+    function step(result) {
+      result.done ? resolve(result.value) : new P(function (resolve) {
+        resolve(result.value);
+      }).then(fulfilled, rejected);
+    }
+
+    step((generator = generator.apply(thisArg, _arguments || [])).next());
+  });
+};
+
 var __importDefault = this && this.__importDefault || function (mod) {
   return mod && mod.__esModule ? mod : {
     "default": mod
@@ -52591,7 +52619,7 @@ let ReactOnChangeService = class ReactOnChangeService {
   }
 
   subscribeToAppChanges() {
-    return rxjs_1.from(this.apollo.subscribe({
+    const app = rxjs_1.from(this.apollo.subscribe({
       query: graphql_tag_1.default`
           subscription {
             listenForChanges {
@@ -52608,7 +52636,30 @@ let ReactOnChangeService = class ReactOnChangeService {
         `
     })).pipe(operators_1.map(({
       data
-    }) => data.listenForChanges.views), operators_1.tap(views => this.loadDynamicBundles([].concat(...views.map(v => v.components)).filter(i => !!i))), operators_1.map(views => this.getApp(views)));
+    }) => data.listenForChanges.views), operators_1.tap(views => this.loadDynamicBundles([].concat(...views.map(v => v.components)).filter(i => !!i))), operators_1.map(views => this.getApp(views)), operators_1.tap(() => __awaiter(this, void 0, void 0, function* () {})));
+
+    if (!this.clientReady) {
+      setTimeout(() => __awaiter(this, void 0, void 0, function* () {
+        yield this.ready();
+        this.clientReady = true;
+      }), 0);
+    }
+
+    return app;
+  }
+
+  ready() {
+    return __awaiter(this, void 0, void 0, function* () {
+      yield this.apollo.query({
+        query: graphql_tag_1.default`
+        query {
+          clientReady {
+            status
+          }
+        }
+      `
+      });
+    });
   }
 
   getApp(views) {
@@ -53017,13 +53068,25 @@ const footer_component_1 = require("./footer/footer.component");
 
 const core_module_1 = require("./core/core.module");
 
+function dec2hex(dec) {
+  return ('0' + dec.toString(16)).substr(-2);
+} // generateId :: Integer -> String
+
+
+function generateId(len) {
+  var arr = new Uint8Array((len || 40) / 2);
+  window.crypto.getRandomValues(arr);
+  return Array.from(arr, dec2hex).join('');
+}
+
 let AppModule = class AppModule {};
 AppModule = __decorate([core_1.Module({
   components: [navbar_component_1.NavbarComponent, home_component_1.HomeComponent, footer_component_1.FooterComponent],
   imports: [graphql_client_1.GraphqlModule.forRoot({
     onRequest() {
       return __awaiter(this, void 0, void 0, function* () {
-        return new Headers();
+        const headers = new Headers();
+        return headers;
       });
     },
 

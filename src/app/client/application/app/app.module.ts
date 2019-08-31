@@ -1,4 +1,4 @@
-import { Module } from '@rxdi/core';
+import { Module, Container } from '@rxdi/core';
 import { GraphqlModule } from '@rxdi/graphql-client';
 import { RouterModule } from '@rxdi/router';
 import { AppComponent } from './app.component';
@@ -7,6 +7,17 @@ import { NavbarComponent } from './navbar/navbar.component';
 import { FooterComponent } from './footer/footer.component';
 import { GraphQLRequest } from 'apollo-link';
 import { CoreModule } from './core/core.module';
+
+function dec2hex (dec) {
+  return ('0' + dec.toString(16)).substr(-2)
+}
+
+// generateId :: Integer -> String
+function generateId (len) {
+  var arr = new Uint8Array((len || 40) / 2)
+  window.crypto.getRandomValues(arr)
+  return Array.from(arr, dec2hex).join('')
+}
 
 @Module({
   components: [
@@ -18,7 +29,8 @@ import { CoreModule } from './core/core.module';
     GraphqlModule.forRoot(
       {
         async onRequest(this: GraphQLRequest) {
-          return new Headers();
+          const headers = new Headers();
+          return headers;
         },
         pubsub: 'ws://localhost:9000/subscriptions',
         uri: 'http://localhost:9000/graphql'

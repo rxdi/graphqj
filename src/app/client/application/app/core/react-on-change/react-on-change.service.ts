@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@rxdi/core';
+import { Injectable, Inject, Container } from '@rxdi/core';
 import { from, of } from 'rxjs';
 import { ApolloClient } from '@rxdi/graphql-client';
 import gql from 'graphql-tag';
@@ -18,9 +18,9 @@ export class ReactOnChangeService {
 
   @Router()
   private router: Router;
-
+  clientReady: boolean;
   subscribeToAppChanges() {
-    return from(
+    const app = from(
       this.apollo.subscribe<ISubscription>({
         query: gql`
           subscription {
@@ -35,7 +35,7 @@ export class ReactOnChangeService {
               }
             }
           }
-        `
+        `,
       })
     ).pipe(
       map(({ data }) => data.listenForChanges.views),
@@ -44,8 +44,30 @@ export class ReactOnChangeService {
           [].concat(...views.map(v => v.components)).filter(i => !!i)
         )
       ),
-      map(views => this.getApp(views))
+      map(views => this.getApp(views)),
+      tap(async () => {
+
+      })
     );
+    if (!this.clientReady) {
+      setTimeout(async () => {
+        await this.ready();
+        this.clientReady = true
+      }, 0)
+    }
+    return app;
+  }
+
+  async ready() {
+    await this.apollo.query({
+      query: gql`
+        query {
+          clientReady {
+            status
+          }
+        }
+      `
+    });
   }
 
   getApp(views: IClientViewType[]) {
