@@ -1,4 +1,4 @@
-import { GraphQLObjectType, GraphQLList } from 'graphql';
+import { GraphQLObjectType, GraphQLList, GraphQLString } from 'graphql';
 import { ClientViewType } from './client-view.type';
 
 export const ClientType = new GraphQLObjectType({
@@ -6,6 +6,9 @@ export const ClientType = new GraphQLObjectType({
   fields: {
     views: {
       type: new GraphQLList(ClientViewType)
+    },
+    schema: {
+      type: GraphQLString
     }
   }
 });

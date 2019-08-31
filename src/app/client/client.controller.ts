@@ -6,11 +6,10 @@ import {
   Subscribe,
   PubSubService,
   Inject,
-  withFilter,
-  Query,
-  GraphQLString,
-  GraphQLNonNull,
-  Container
+  Container,
+  Mutation,
+  BootstrapService,
+  printSchema
 } from '@gapi/core';
 import { ClientType } from './types/client.type';
 import { Config, ConfigViews } from '../app.tokens';
@@ -38,15 +37,16 @@ export class ClientController {
   @Subscription()
   listenForChanges(views: ConfigViews) {
     const res = {
-      views: viewsToArray(views)
+      views: viewsToArray(views),
+      schema: printSchema(Container.get(BootstrapService).schema)
     };
     return res;
   }
 
   @Type(ClientReadyStatusType)
-  @Query()
+  @Mutation()
   async clientReady(root, payload, context) {
-    const config = Container.get<any>('main-config-compiled')
+    const config = Container.get<any>('main-config-compiled');
     this.pubsub.publish('listenForChanges', config.$views);
     return {
       status: 'READY'

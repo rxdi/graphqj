@@ -23,6 +23,7 @@
     "core-js": "^2.6.5",
     "esm": "^3.2.25",
     "fast-glob": "^3.0.4",
+    "graphql-query-generator": "^0.5.5",
     "graphql-tag": "^2.10.1",
     "js-yaml": "^3.13.1"
   },

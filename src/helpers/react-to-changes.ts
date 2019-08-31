@@ -1,5 +1,5 @@
 import { traverse } from './traverse/traverse';
-import { BootstrapService, Container, ApolloService, PubSubService } from '@gapi/core';
+import { BootstrapService, Container, ApolloService, PubSubService, GraphQLSchema, printSchema } from '@gapi/core';
 import { getFirstItem } from './get-first-item';
 import { loadFile } from './load-file';
 import { Config } from '../app/app.tokens';

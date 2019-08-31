@@ -1,33 +1,29 @@
-import { Injectable, Inject, Container } from '@rxdi/core';
-import { from, BehaviorSubject } from 'rxjs';
+import { Injectable, Inject } from '@rxdi/core';
+import { from, BehaviorSubject, of, combineLatest } from 'rxjs';
 import { ApolloClient } from '@rxdi/graphql-client';
 import gql from 'graphql-tag';
-import { map, tap } from 'rxjs/operators';
+import { map, tap, switchMap, mergeMap } from 'rxjs/operators';
 import {
   html,
   unsafeHTML,
-  LitElement,
   Component,
-  async,
-  TemplateObservable,
-  TemplateResult,
-  property
+  TemplateObservable
 } from '@rxdi/lit-html';
 import { ISubscription, IClientViewType } from '../../../../../@introspection';
 import { Router } from '@rxdi/router';
-import { ExternalImporter } from '@rxdi/core';
+import { BaseComponent } from './base.component';
+import { objToArray } from '../../../../../../helpers/obj-to-array';
+const QueryGenerator = require('graphql-query-generator');
 
 @Injectable()
 export class ReactOnChangeService {
   @Inject(ApolloClient)
   private apollo: ApolloClient;
-  loadedComponents: Map<string, BehaviorSubject<string>> = new Map();
-  @Inject(ExternalImporter)
-  private importer: ExternalImporter;
-  routes = []
+  private loadedComponents: Map<string, BehaviorSubject<string>> = new Map();
+  private routes = [];
   @Router()
   private router: Router;
-  clientReady: boolean;
+  private clientReady: boolean;
 
   subscribeToAppChanges() {
     const app = from(
@@ -43,6 +39,7 @@ export class ReactOnChangeService {
                 output
                 components
               }
+              schema
             }
           }
         `
@@ -54,7 +51,20 @@ export class ReactOnChangeService {
           [].concat(...views.map(v => v.components)).filter(i => !!i)
         )
       ),
-      tap(views => {
+      tap(async views => {
+        QueryGenerator;
+        const queryGenerator = new QueryGenerator(
+          'http://localhost:9000/graphql'
+        );
+        let { queries }: { queries: string[] } = await queryGenerator.run();
+        queries = queries.map((q: string) => {
+          let newString: string = '';
+          const gg = q.split(' ').filter(query => !query.includes(':'));
+          gg.map((v: string) => (!v ? ' ' : v)).forEach(
+            (v: string) => (newString += v)
+          );
+          return newString;
+        });
         this.routes = [];
         views.forEach(v => {
           const selector = `${v.name}-component`;
@@ -64,30 +74,61 @@ export class ReactOnChangeService {
           let observable: BehaviorSubject<string>;
           const exists = this.loadedComponents.get(selector);
           if (exists) {
-            this.routes.push(            {
+            this.routes.push({
               path: `/${v.name}`,
               component: selector
-            })
-            exists.next(v.html)
+            });
+            exists.next(v.html);
             return;
           } else {
-            observable = new BehaviorSubject(v.html)
+            observable = new BehaviorSubject(v.html);
           }
 
-          @Component({
-            selector
-          })
-          class NewElement extends LitElement {
-            @TemplateObservable()
-            private templateObservable = observable.pipe(map(h => html`${unsafeHTML(h)}`));
+          @Component({ selector })
+          class NewElement extends BaseComponent {
+            values: any = {};
+            @TemplateObservable() private templateObservable = observable.pipe(
+              map(h => {
+                let stringValue = h
+                  .split('{')
+                  .join('')
+                  .split('}')
+                  .join('');
+                const mappedValues = Object.keys(this.values).reduce(
+                  (acc, curr) => [...acc, curr],
+                  []
+                );
+                mappedValues.forEach(v => {
+                  if (stringValue.includes(v)) {
+                    stringValue = stringValue.replace(v, this.values[v]);
+                  }
+                });
+                return unsafeHTML(`${stringValue}`);
+              })
+            );
+            // async OnInit() {
+            //     if (v.query) {
+            //       this.values = await this.query({
+            //         fetchPolicy: 'network-only',
+            //         query: gql`
+            //           ${queries.find(q => q.includes(v.query))}
+            //         `
+            //       })
+            //         .pipe(map(res => res.data[v.query]))
+            //         .toPromise();
+            //     }
+            //     debugger
+            // }
             render() {
-              return html`${this.templateObservable}`;
+              return html`
+                ${this.templateObservable}
+              `;
             }
           }
-          this.routes.push(            {
+          this.routes.push({
             path: `/${v.name}`,
             component: selector
-          })
+          });
           this.loadedComponents.set(selector, observable);
         });
         this.router.setRoutes([
@@ -108,16 +149,15 @@ export class ReactOnChangeService {
       setTimeout(async () => {
         await this.ready();
         this.clientReady = true;
-      }, 100);
+      }, 200);
     }
     return app;
   }
 
   async ready() {
-    await this.apollo.query({
-      fetchPolicy: 'network-only',
-      query: gql`
-        query {
+    await this.apollo.mutate({
+      mutation: gql`
+        mutation {
           clientReady {
             status
           }

@@ -145,6 +145,7 @@ ${printSchema(mergedSchemas)}
         if (config.$mode === 'advanced') {
           await MakeAdvancedSchema(config);
         }
+        process.argv.push('--hot-reload', '--client')
         if (includes('--hot-reload')) {
           config.$externals.forEach(e =>
             traverseMap.push({ parent: null, path: e.file })

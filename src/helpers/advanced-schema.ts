@@ -12,7 +12,7 @@ export async function MakeAdvancedSchema(config: Config) {
   config.$types = config.$types || {};
   if (config.$externals && config.$externals.length) {
     config.$externals = await buildExternals(config);
-  }
+  } 
   buildArguments(config);
   buildTypes(config, types, buildedSchema);
   buildResolvers(config, types, buildedSchema);
