@@ -9,6 +9,7 @@ import {
 } from '@gapi/core';
 import { ClientType } from './types/client.type';
 import { Config } from '../app.tokens';
+import { objToArray } from '../../helpers/obj-to-array';
 
 @Controller<GraphQLControllerOptions>({
   guards: [],
@@ -24,7 +25,7 @@ export class ClientController {
 
   async OnInit() {
     const config = await this.config;
-    this.pubsub.publish('listenForChanges', config.$views.app.html);
+    this.pubsub.publish('listenForChanges', config.$views);
   }
 
   @Type(ClientType)
@@ -32,9 +33,9 @@ export class ClientController {
     return this.pubsub.asyncIterator('listenForChanges');
   })
   @Subscription()
-  listenForChanges(html: string) {
+  listenForChanges(views) {
     return {
-      html
+      views: objToArray(views)
     };
   }
 }

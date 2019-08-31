@@ -52563,7 +52563,7 @@ var __importDefault = this && this.__importDefault || function (mod) {
   };
 };
 
-var _a;
+var _a, _b;
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -52581,19 +52581,30 @@ const operators_1 = require("rxjs/operators");
 
 const lit_html_1 = require("@rxdi/lit-html");
 
+const router_1 = require("@rxdi/router");
+
 let ReactOnChangeService = class ReactOnChangeService {
   react() {
     return rxjs_1.from(this.apollo.subscribe({
       query: graphql_tag_1.default`
           subscription {
             listenForChanges {
-              html
+              views {
+                html
+                query
+                props
+                output
+              }
             }
           }
         `
     })).pipe(operators_1.map(({
       data
-    }) => data.listenForChanges.html), operators_1.map(template => this.parseHtml(template)));
+    }) => data.listenForChanges.views), operators_1.map(views => this.parseViews(views)));
+  }
+
+  parseViews(views) {
+    return this.parseHtml(views[0].html);
   }
 
   parseHtml(template) {
@@ -52606,9 +52617,11 @@ let ReactOnChangeService = class ReactOnChangeService {
 
 __decorate([core_1.Inject(graphql_client_1.ApolloClient), __metadata("design:type", typeof (_a = typeof graphql_client_1.ApolloClient !== "undefined" && graphql_client_1.ApolloClient) === "function" ? _a : Object)], ReactOnChangeService.prototype, "apollo", void 0);
 
+__decorate([router_1.Router(), __metadata("design:type", typeof (_b = typeof router_1.Router !== "undefined" && router_1.Router) === "function" ? _b : Object)], ReactOnChangeService.prototype, "router", void 0);
+
 ReactOnChangeService = __decorate([core_1.Injectable()], ReactOnChangeService);
 exports.ReactOnChangeService = ReactOnChangeService;
-},{"@rxdi/core":"../../../../node_modules/@rxdi/core/dist/index.js","rxjs":"../../../../node_modules/rxjs/_esm5/index.js","@rxdi/graphql-client":"../../../../node_modules/@rxdi/graphql-client/dist/index.js","graphql-tag":"../../../../node_modules/graphql-tag/src/index.js","rxjs/operators":"../../../../node_modules/rxjs/_esm5/operators/index.js","@rxdi/lit-html":"../../../../node_modules/@rxdi/lit-html/dist/index.js"}],"app/app.component.ts":[function(require,module,exports) {
+},{"@rxdi/core":"../../../../node_modules/@rxdi/core/dist/index.js","rxjs":"../../../../node_modules/rxjs/_esm5/index.js","@rxdi/graphql-client":"../../../../node_modules/@rxdi/graphql-client/dist/index.js","graphql-tag":"../../../../node_modules/graphql-tag/src/index.js","rxjs/operators":"../../../../node_modules/rxjs/_esm5/operators/index.js","@rxdi/lit-html":"../../../../node_modules/@rxdi/lit-html/dist/index.js","@rxdi/router":"../../../../node_modules/@rxdi/router/dist/index.js"}],"app/app.component.ts":[function(require,module,exports) {
 "use strict";
 
 var __decorate = this && this.__decorate || function (decorators, target, key, desc) {

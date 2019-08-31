@@ -1,10 +1,11 @@
-import { GraphQLObjectType, GraphQLString } from 'graphql';
+import { GraphQLObjectType, GraphQLList } from 'graphql';
+import { ClientViewType } from './client-view.type';
 
 export const ClientType = new GraphQLObjectType({
   name: 'ClientType',
   fields: {
-    html: {
-      type: GraphQLString
+    views: {
+      type: new GraphQLList(ClientViewType)
     }
   }
 });
