@@ -1,7 +1,7 @@
 {
   "name": "@rxdi/graphqj",
   "main": "./lib/main.js",
-  "version": "0.7.31",
+  "version": "0.7.32",
   "scripts": {
     "start": "gapi start --local --minify=false --inspect",
     "start-client": "parcel ./src/app/client/application/index.html",
@@ -44,7 +44,6 @@
     "graphqj": "./dist/main.js"
   },
   "devDependencies": {
-    "@rxdi/parcel-plugin-shebang": "0.7.5",
     "@types/graphql": "^14.2.3",
     "@types/js-yaml": "^3.12.1",
     "cssnano": "^4.1.10",

@@ -115,6 +115,7 @@ export class ReactOnChangeService {
 
   async ready() {
     await this.apollo.query({
+      fetchPolicy: 'network-only',
       query: gql`
         query {
           clientReady {
