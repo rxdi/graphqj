@@ -1,4 +1,3 @@
-import { Router } from '@rxdi/router';
 import {
   html,
   property,
@@ -49,8 +48,8 @@ import {
   template(this: NavbarComponent) {
     return html`
       <ul class="container">
-        <li><a @click=${() => this.router.go('/')}>Home</a></li>
-        <li><a @click=${() => this.router.go('/about')}>About</a></li>
+        <li><a href="/" >Home</a></li>
+        <li><a href="/about">About</a></li>
         <span class="spacer"></span>
         <li><a @click=${this.onIncrement}>Increment</a></li>
         <li><a @click=${this.onDecrement}>Decrement</a></li>
@@ -61,8 +60,6 @@ import {
 })
 export class NavbarComponent extends LitElement {
   @property({ type: Number }) counter = 0;
-
-  @Router() router: Router;
 
   @eventOptions({ capture: true })
   onIncrement(e: Event) {

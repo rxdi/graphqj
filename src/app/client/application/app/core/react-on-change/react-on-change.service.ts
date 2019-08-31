@@ -53,7 +53,7 @@ export class ReactOnChangeService {
       setTimeout(async () => {
         await this.ready();
         this.clientReady = true
-      }, 0)
+      }, 50)
     }
     return app;
   }
@@ -83,6 +83,7 @@ export class ReactOnChangeService {
   loadDynamicBundles(bundles: string[]) {
     bundles.forEach(link => {
       if (this.loadedComponents.has(link)) {
+        // location.reload();
         return;
       }
       const scriptFileEl = document.createElement('script');

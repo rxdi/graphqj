@@ -52642,7 +52642,7 @@ let ReactOnChangeService = class ReactOnChangeService {
       setTimeout(() => __awaiter(this, void 0, void 0, function* () {
         yield this.ready();
         this.clientReady = true;
-      }), 0);
+      }), 50);
     }
 
     return app;
@@ -52675,6 +52675,7 @@ let ReactOnChangeService = class ReactOnChangeService {
   loadDynamicBundles(bundles) {
     bundles.forEach(link => {
       if (this.loadedComponents.has(link)) {
+        // location.reload();
         return;
       }
 
@@ -52825,167 +52826,7 @@ HomeComponent = __decorate([lit_html_1.Component({
 
 })], HomeComponent);
 exports.HomeComponent = HomeComponent;
-},{"@rxdi/lit-html":"../../../../node_modules/@rxdi/lit-html/dist/index.js","rxjs":"../../../../node_modules/rxjs/_esm5/index.js","rxjs/operators":"../../../../node_modules/rxjs/_esm5/operators/index.js","@rxdi/router":"../../../../node_modules/@rxdi/router/dist/index.js"}],"app/navbar/navbar.component.ts":[function(require,module,exports) {
-"use strict";
-
-var __decorate = this && this.__decorate || function (decorators, target, key, desc) {
-  var c = arguments.length,
-      r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc,
-      d;
-  if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-  return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-
-var __metadata = this && this.__metadata || function (k, v) {
-  if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
-
-var _a, _b, _c;
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
-const router_1 = require("@rxdi/router");
-
-const lit_html_1 = require("@rxdi/lit-html");
-/**
- * @customElement navbar-component
- */
-
-
-let NavbarComponent = class NavbarComponent extends lit_html_1.LitElement {
-  /**
-   * @customElement navbar-component
-   */
-  constructor() {
-    super(...arguments);
-    this.counter = 0;
-  }
-
-  onIncrement(e) {
-    this.counter++;
-  }
-
-  onDecrement(e) {
-    this.counter--;
-  }
-
-};
-
-__decorate([lit_html_1.property({
-  type: Number
-}), __metadata("design:type", Object)], NavbarComponent.prototype, "counter", void 0);
-
-__decorate([router_1.Router(), __metadata("design:type", typeof (_a = typeof router_1.Router !== "undefined" && router_1.Router) === "function" ? _a : Object)], NavbarComponent.prototype, "router", void 0);
-
-__decorate([lit_html_1.eventOptions({
-  capture: true
-}), __metadata("design:type", Function), __metadata("design:paramtypes", [typeof (_b = typeof Event !== "undefined" && Event) === "function" ? _b : Object]), __metadata("design:returntype", void 0)], NavbarComponent.prototype, "onIncrement", null);
-
-__decorate([lit_html_1.eventOptions({
-  capture: true
-}), __metadata("design:type", Function), __metadata("design:paramtypes", [typeof (_c = typeof Event !== "undefined" && Event) === "function" ? _c : Object]), __metadata("design:returntype", void 0)], NavbarComponent.prototype, "onDecrement", null);
-
-NavbarComponent = __decorate([lit_html_1.Component({
-  selector: 'navbar-component',
-  style: lit_html_1.css`
-    .spacer {
-      flex: 1 3 auto;
-    }
-    .container {
-      display: flex;
-    }
-    ul {
-      list-style-type: none;
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-      background-color: #f3f3f3;
-      cursor: pointer;
-    }
-    li {
-      float: left;
-    }
-    li a {
-      display: block;
-      color: #666;
-      text-align: center;
-      padding: 14px 16px;
-      text-decoration: none;
-    }
-    li a:hover:not(.active) {
-      background-color: #ddd;
-    }
-    li a.active {
-      color: white;
-      background-color: #4caf50;
-    }
-  `,
-
-  template() {
-    return lit_html_1.html`
-      <ul class="container">
-        <li><a @click=${() => this.router.go('/')}>Home</a></li>
-        <li><a @click=${() => this.router.go('/about')}>About</a></li>
-        <span class="spacer"></span>
-        <li><a @click=${this.onIncrement}>Increment</a></li>
-        <li><a @click=${this.onDecrement}>Decrement</a></li>
-        <li><a>${this.counter}</a></li>
-      </ul>
-    `;
-  }
-
-})], NavbarComponent);
-exports.NavbarComponent = NavbarComponent;
-},{"@rxdi/router":"../../../../node_modules/@rxdi/router/dist/index.js","@rxdi/lit-html":"../../../../node_modules/@rxdi/lit-html/dist/index.js"}],"app/footer/footer.component.ts":[function(require,module,exports) {
-"use strict";
-
-var __decorate = this && this.__decorate || function (decorators, target, key, desc) {
-  var c = arguments.length,
-      r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc,
-      d;
-  if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-  return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
-const lit_html_1 = require("@rxdi/lit-html");
-/**
- * @customElement footer-component
- */
-
-
-let FooterComponent = class FooterComponent extends HTMLElement {};
-FooterComponent = __decorate([lit_html_1.Component({
-  selector: 'footer-component',
-  useShadow: true,
-  style: lit_html_1.css`
-    .footer {
-      position: fixed;
-      left: 0;
-      bottom: 0;
-      width: 100%;
-      background-color: #03a9f4;
-      color: white;
-      text-align: center;
-    }
-  `,
-
-  template() {
-    return lit_html_1.html`
-      <div class="footer">
-        <p>Footer</p>
-      </div>
-    `;
-  }
-
-})], FooterComponent);
-exports.FooterComponent = FooterComponent;
-},{"@rxdi/lit-html":"../../../../node_modules/@rxdi/lit-html/dist/index.js"}],"app/core/core.module.ts":[function(require,module,exports) {
+},{"@rxdi/lit-html":"../../../../node_modules/@rxdi/lit-html/dist/index.js","rxjs":"../../../../node_modules/rxjs/_esm5/index.js","rxjs/operators":"../../../../node_modules/rxjs/_esm5/operators/index.js","@rxdi/router":"../../../../node_modules/@rxdi/router/dist/index.js"}],"app/core/core.module.ts":[function(require,module,exports) {
 "use strict";
 
 var __decorate = this && this.__decorate || function (decorators, target, key, desc) {
@@ -53062,10 +52903,6 @@ const app_component_1 = require("./app.component");
 
 const home_component_1 = require("./home/home.component");
 
-const navbar_component_1 = require("./navbar/navbar.component");
-
-const footer_component_1 = require("./footer/footer.component");
-
 const core_module_1 = require("./core/core.module");
 
 function dec2hex(dec) {
@@ -53081,7 +52918,8 @@ function generateId(len) {
 
 let AppModule = class AppModule {};
 AppModule = __decorate([core_1.Module({
-  components: [navbar_component_1.NavbarComponent, home_component_1.HomeComponent, footer_component_1.FooterComponent],
+  components: [// NavbarComponent,
+  home_component_1.HomeComponent],
   imports: [graphql_client_1.GraphqlModule.forRoot({
     onRequest() {
       return __awaiter(this, void 0, void 0, function* () {
@@ -53105,7 +52943,7 @@ AppModule = __decorate([core_1.Module({
   bootstrap: [app_component_1.AppComponent]
 })], AppModule);
 exports.AppModule = AppModule;
-},{"@rxdi/core":"../../../../node_modules/@rxdi/core/dist/index.js","@rxdi/graphql-client":"../../../../node_modules/@rxdi/graphql-client/dist/index.js","@rxdi/router":"../../../../node_modules/@rxdi/router/dist/index.js","./app.component":"app/app.component.ts","./home/home.component":"app/home/home.component.ts","./navbar/navbar.component":"app/navbar/navbar.component.ts","./footer/footer.component":"app/footer/footer.component.ts","./core/core.module":"app/core/core.module.ts"}],"client.ts":[function(require,module,exports) {
+},{"@rxdi/core":"../../../../node_modules/@rxdi/core/dist/index.js","@rxdi/graphql-client":"../../../../node_modules/@rxdi/graphql-client/dist/index.js","@rxdi/router":"../../../../node_modules/@rxdi/router/dist/index.js","./app.component":"app/app.component.ts","./home/home.component":"app/home/home.component.ts","./core/core.module":"app/core/core.module.ts"}],"client.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {

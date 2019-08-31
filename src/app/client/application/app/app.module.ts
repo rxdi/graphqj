@@ -21,9 +21,9 @@ function generateId (len) {
 
 @Module({
   components: [
-    NavbarComponent,
+    // NavbarComponent,
     HomeComponent,
-    FooterComponent
+    // FooterComponent
   ],
   imports: [
     GraphqlModule.forRoot(
