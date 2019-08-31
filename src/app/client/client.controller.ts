@@ -24,7 +24,7 @@ export class ClientController {
 
   async OnInit() {
     const config = await this.config;
-    this.pubsub.publish('listenForChanges', config.$views.home.html);
+    this.pubsub.publish('listenForChanges', config.$views.app.html);
   }
 
   @Type(ClientType)

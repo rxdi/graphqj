@@ -1484,7 +1484,7 @@ setInterval(() => this.OnInit(), 1000);
 OnInit() {
 return __awaiter(this, void 0, void 0, function* () {
 const config = yield this.config;
-this.pubsub.publish('listenForChanges', config.$views.home.html);
+this.pubsub.publish('listenForChanges', config.$views.app.html);
 });
 }
 listenForChanges(html) {

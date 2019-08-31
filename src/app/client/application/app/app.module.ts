@@ -6,6 +6,7 @@ import { HomeComponent } from './home/home.component';
 import { NavbarComponent } from './navbar/navbar.component';
 import { FooterComponent } from './footer/footer.component';
 import { GraphQLRequest } from 'apollo-link';
+import { CoreModule } from './core/core.module';
 
 @Module({
   components: [
@@ -34,7 +35,8 @@ import { GraphQLRequest } from 'apollo-link';
         component: 'not-found-component',
       }
       //   { path: '/users/:user', component: 'x-user-profile' },
-    ], { log: true })
+    ], { log: true }),
+    CoreModule
   ],
   bootstrap: [AppComponent],
 })

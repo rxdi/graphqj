@@ -52542,7 +52542,7 @@ gql.disableExperimentalFragmentVariables = disableExperimentalFragmentVariables;
 
 module.exports = gql;
 
-},{"graphql/language/parser":"../../../../node_modules/graphql/language/parser.js"}],"app/app.component.ts":[function(require,module,exports) {
+},{"graphql/language/parser":"../../../../node_modules/graphql/language/parser.js"}],"app/core/react-on-change/react-on-change.service.ts":[function(require,module,exports) {
 "use strict";
 
 var __decorate = this && this.__decorate || function (decorators, target, key, desc) {
@@ -52571,21 +52571,31 @@ Object.defineProperty(exports, "__esModule", {
 
 const core_1 = require("@rxdi/core");
 
-const lit_html_1 = require("@rxdi/lit-html");
+const rxjs_1 = require("rxjs");
 
 const graphql_client_1 = require("@rxdi/graphql-client");
 
 const graphql_tag_1 = __importDefault(require("graphql-tag"));
 
-const rxjs_1 = require("rxjs");
-
 const operators_1 = require("rxjs/operators");
-/**
- * @customElement app-component
- */
 
+const lit_html_1 = require("@rxdi/lit-html");
 
-let AppComponent = class AppComponent extends HTMLElement {
+let ReactOnChangeService = class ReactOnChangeService {
+  react() {
+    return rxjs_1.from(this.apollo.subscribe({
+      query: graphql_tag_1.default`
+          subscription {
+            listenForChanges {
+              html
+            }
+          }
+        `
+    })).pipe(operators_1.map(({
+      data
+    }) => data.listenForChanges.html), operators_1.map(template => this.parseHtml(template)));
+  }
+
   parseHtml(template) {
     return lit_html_1.html`
       ${lit_html_1.unsafeHTML(template)}
@@ -52594,31 +52604,58 @@ let AppComponent = class AppComponent extends HTMLElement {
 
 };
 
-__decorate([core_1.Injector(graphql_client_1.ApolloClient), __metadata("design:type", typeof (_a = typeof graphql_client_1.ApolloClient !== "undefined" && graphql_client_1.ApolloClient) === "function" ? _a : Object)], AppComponent.prototype, "apollo", void 0);
+__decorate([core_1.Inject(graphql_client_1.ApolloClient), __metadata("design:type", typeof (_a = typeof graphql_client_1.ApolloClient !== "undefined" && graphql_client_1.ApolloClient) === "function" ? _a : Object)], ReactOnChangeService.prototype, "apollo", void 0);
+
+ReactOnChangeService = __decorate([core_1.Injectable()], ReactOnChangeService);
+exports.ReactOnChangeService = ReactOnChangeService;
+},{"@rxdi/core":"../../../../node_modules/@rxdi/core/dist/index.js","rxjs":"../../../../node_modules/rxjs/_esm5/index.js","@rxdi/graphql-client":"../../../../node_modules/@rxdi/graphql-client/dist/index.js","graphql-tag":"../../../../node_modules/graphql-tag/src/index.js","rxjs/operators":"../../../../node_modules/rxjs/_esm5/operators/index.js","@rxdi/lit-html":"../../../../node_modules/@rxdi/lit-html/dist/index.js"}],"app/app.component.ts":[function(require,module,exports) {
+"use strict";
+
+var __decorate = this && this.__decorate || function (decorators, target, key, desc) {
+  var c = arguments.length,
+      r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc,
+      d;
+  if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+  return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+
+var __metadata = this && this.__metadata || function (k, v) {
+  if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+
+var _a;
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+const core_1 = require("@rxdi/core");
+
+const lit_html_1 = require("@rxdi/lit-html");
+
+const react_on_change_service_1 = require("./core/react-on-change/react-on-change.service");
+/**
+ * @customElement app-component
+ */
+
+
+let AppComponent = class AppComponent extends HTMLElement {};
+
+__decorate([core_1.Inject(react_on_change_service_1.ReactOnChangeService), __metadata("design:type", typeof (_a = typeof react_on_change_service_1.ReactOnChangeService !== "undefined" && react_on_change_service_1.ReactOnChangeService) === "function" ? _a : Object)], AppComponent.prototype, "reactToChanges", void 0);
 
 AppComponent = __decorate([lit_html_1.Component({
   selector: 'app-component',
 
   template() {
     return lit_html_1.html`
-      ${lit_html_1.async(rxjs_1.from(this.apollo.subscribe({
-      query: graphql_tag_1.default`
-              subscription {
-                listenForChanges {
-                  html
-                }
-              }
-            `
-    })).pipe(operators_1.map(({
-      data
-    }) => data.listenForChanges.html), operators_1.map(template => this.parseHtml(template))))}
+      ${lit_html_1.async(this.reactToChanges.react())}
     `;
   },
 
   container: document.body
 })], AppComponent);
 exports.AppComponent = AppComponent;
-},{"@rxdi/core":"../../../../node_modules/@rxdi/core/dist/index.js","@rxdi/lit-html":"../../../../node_modules/@rxdi/lit-html/dist/index.js","@rxdi/graphql-client":"../../../../node_modules/@rxdi/graphql-client/dist/index.js","graphql-tag":"../../../../node_modules/graphql-tag/src/index.js","rxjs":"../../../../node_modules/rxjs/_esm5/index.js","rxjs/operators":"../../../../node_modules/rxjs/_esm5/operators/index.js"}],"app/home/home.component.ts":[function(require,module,exports) {
+},{"@rxdi/core":"../../../../node_modules/@rxdi/core/dist/index.js","@rxdi/lit-html":"../../../../node_modules/@rxdi/lit-html/dist/index.js","./core/react-on-change/react-on-change.service":"app/core/react-on-change/react-on-change.service.ts"}],"app/home/home.component.ts":[function(require,module,exports) {
 "use strict";
 
 var __decorate = this && this.__decorate || function (decorators, target, key, desc) {
@@ -52858,7 +52895,31 @@ FooterComponent = __decorate([lit_html_1.Component({
 
 })], FooterComponent);
 exports.FooterComponent = FooterComponent;
-},{"@rxdi/lit-html":"../../../../node_modules/@rxdi/lit-html/dist/index.js"}],"app/app.module.ts":[function(require,module,exports) {
+},{"@rxdi/lit-html":"../../../../node_modules/@rxdi/lit-html/dist/index.js"}],"app/core/core.module.ts":[function(require,module,exports) {
+"use strict";
+
+var __decorate = this && this.__decorate || function (decorators, target, key, desc) {
+  var c = arguments.length,
+      r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc,
+      d;
+  if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+  return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+const core_1 = require("@rxdi/core");
+
+const react_on_change_service_1 = require("./react-on-change/react-on-change.service");
+
+let CoreModule = class CoreModule {};
+CoreModule = __decorate([core_1.Module({
+  providers: [react_on_change_service_1.ReactOnChangeService]
+})], CoreModule);
+exports.CoreModule = CoreModule;
+},{"@rxdi/core":"../../../../node_modules/@rxdi/core/dist/index.js","./react-on-change/react-on-change.service":"app/core/react-on-change/react-on-change.service.ts"}],"app/app.module.ts":[function(require,module,exports) {
 "use strict";
 
 var __decorate = this && this.__decorate || function (decorators, target, key, desc) {
@@ -52915,6 +52976,8 @@ const navbar_component_1 = require("./navbar/navbar.component");
 
 const footer_component_1 = require("./footer/footer.component");
 
+const core_module_1 = require("./core/core.module");
+
 let AppModule = class AppModule {};
 AppModule = __decorate([core_1.Module({
   components: [navbar_component_1.NavbarComponent, home_component_1.HomeComponent, footer_component_1.FooterComponent],
@@ -52936,11 +52999,11 @@ AppModule = __decorate([core_1.Module({
 
   }], {
     log: true
-  })],
+  }), core_module_1.CoreModule],
   bootstrap: [app_component_1.AppComponent]
 })], AppModule);
 exports.AppModule = AppModule;
-},{"@rxdi/core":"../../../../node_modules/@rxdi/core/dist/index.js","@rxdi/graphql-client":"../../../../node_modules/@rxdi/graphql-client/dist/index.js","@rxdi/router":"../../../../node_modules/@rxdi/router/dist/index.js","./app.component":"app/app.component.ts","./home/home.component":"app/home/home.component.ts","./navbar/navbar.component":"app/navbar/navbar.component.ts","./footer/footer.component":"app/footer/footer.component.ts"}],"client.ts":[function(require,module,exports) {
+},{"@rxdi/core":"../../../../node_modules/@rxdi/core/dist/index.js","@rxdi/graphql-client":"../../../../node_modules/@rxdi/graphql-client/dist/index.js","@rxdi/router":"../../../../node_modules/@rxdi/router/dist/index.js","./app.component":"app/app.component.ts","./home/home.component":"app/home/home.component.ts","./navbar/navbar.component":"app/navbar/navbar.component.ts","./footer/footer.component":"app/footer/footer.component.ts","./core/core.module":"app/core/core.module.ts"}],"client.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
