@@ -14,6 +14,12 @@ import { ISubscription, IClientViewType } from '../../../../../@introspection';
 import { Router } from '@rxdi/router';
 import { BaseComponent } from './base.component';
 import { buildSchema, GraphQLFieldMap } from 'graphql';
+import { FetchPolicy } from 'apollo-client';
+import {
+  QueryOptions,
+  SubscriptionOptions,
+  MutationOptions
+} from '@rxdi/graphql-client';
 
 @Injectable()
 export class ReactOnChangeService {
@@ -38,6 +44,7 @@ export class ReactOnChangeService {
                 props
                 output
                 components
+                policy
               }
               schema
             }
@@ -56,13 +63,24 @@ export class ReactOnChangeService {
         const createExecutableQuery = (
           type: GraphQLFieldMap<any, any>,
           method: 'query' | 'mutation' | 'subscription'
-        ) =>
-          Object.keys(type).map(
-            k =>
-              `${method} ${k} { ${k} { ${Object.keys(
-                type[k].type['getFields']()
-              ).join(' ')} } }`
-          );
+        ) => {
+          return Object.keys(type).map(k => {
+            const nestedFields = type[k].type['getFields']();
+            return `${method} ${k} { ${k} { ${Object.keys(nestedFields)
+              .map(field => {
+                const nestedField = nestedFields[field];
+                if (nestedField && nestedField.type.getFields) {
+                  const nestedTypes = nestedField.type.getFields();
+                  field = `${field} { ${Object.keys(nestedTypes)
+                    .filter(t => t !== field)
+                    .join(' ')} }`;
+                }
+                // Refactor this part it will created nested schema to level 2 but we need recursive manage of this particular scenario
+                return field;
+              })
+              .join(' ')} } }`;
+          });
+        };
         const Queries = createExecutableQuery(
           schema.getQueryType().getFields(),
           'query'
@@ -137,12 +155,36 @@ export class ReactOnChangeService {
             }
 
             makeQuery() {
-              return this.query({
-                fetchPolicy: 'cache-first',
-                query: gql`
-                  ${queries.find(q => q.includes(v.query))}
-                `
-              }).pipe(map(res => res.data[v.query]));
+              const isWrittenQuery = v.query.includes('query') || v.query.includes('mutation') || v.query.includes('subscription');
+              let query: string;
+              let querySelector: string;
+
+              let queryType: 'mutate' | 'query' | 'subscription';
+
+              if (isWrittenQuery) {
+                const splittedQuery = v.query.split(' ');
+                querySelector = splittedQuery[1];
+                queryType = splittedQuery[0] as any;
+                query = gql`${v.query}`;
+              } else {
+                querySelector = v.query;
+                query = gql`
+                ${queries.find(q => q.includes(v.query))}
+              `;
+              }
+              let options: QueryOptions | SubscriptionOptions | MutationOptions = {
+                fetchPolicy: v.policy as FetchPolicy || 'network-only',
+                query: null,
+                mutation: null
+              };
+              if (queryType === 'mutate') {
+                options['mutation'] = query;
+              }
+
+              if (queryType === 'query' || queryType === 'subscription') {
+                options['query'] = query;
+              }
+              return this[queryType](options).pipe(map(res => (res as any).data[querySelector]));
             }
 
             render() {

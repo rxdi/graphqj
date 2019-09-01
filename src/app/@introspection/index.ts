@@ -42,6 +42,7 @@
     arrayOfNumbers?: Array<number> | null;
     arrayOfStrings?: Array<string> | null;
     arrayOfStrings2?: Array<string> | null;
+    users?: IUser | null;
 }
 
   
@@ -85,10 +86,14 @@
     html?: string | null;
     components?: Array<string> | null;
     name?: string | null;
+    policy?: ICachePolicyTypeEnum | null;
     query?: string | null;
     props?: string | null;
     output?: string | null;
 }
+
+export
+  type ICachePolicyTypeEnum = 'cacheFirst' | 'cacheOnly' | 'networkOnly' | 'noCache' | 'standby';
 
 
 // tslint:enable

@@ -26,6 +26,10 @@ export class BaseComponent extends LitElement {
     ) as any) as Observable<{ data: T }>;
   }
 
+  mutation<T = {}>(options: ImportMutationMixin, raw?: boolean) {
+    return this.mutate(options, raw)  as Observable<{ data: T }>;
+  }
+
   subscribe<T = {}>(options: ImportSubscriptionMixin, raw?: boolean) {
     return from(this.graphql.subscribe.bind(this.graphql)(
       options

@@ -30,7 +30,7 @@ export async function loadFile(path: string) {
     path = normalize(join(process.cwd(), path));
     clearModule(path)
     loadedModule = require(path);
-  } else if (path.includes('.html')) {
+  } else if (path.includes('.html') || path.includes('.graphql') || path.includes('.gql')) {
     loadedModule = await promisify(readFile)(path, { encoding: 'utf-8' });
   } else if (Container.get(IsBundlerInstalled).gapi && path.includes('.ts') || path.includes('.js')) {
     loadedModule = await TranspileAndLoad(path, './.gj/out');

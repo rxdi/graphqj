@@ -9,6 +9,7 @@ import { lazyTypes } from './lazy-types';
 import { configWatchers } from './watch-bundles';
 import { MakeBasicSchema } from './basic-schema';
 import { transpilerCache } from './transpiler-cache';
+import { FSWatcher } from 'chokidar';
 
 function findMetaKey(path: string, meta: { [key: string]: string }) {
   return Object.keys(meta).find(k => meta[k] === path);

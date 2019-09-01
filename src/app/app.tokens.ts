@@ -1,5 +1,6 @@
 import { InjectionToken } from '@rxdi/core';
 import { GraphQLInputFieldConfigMap } from 'graphql';
+import { IClientViewType } from './@introspection';
 
 function strEnum<T extends string>(o: Array<T>): { [K in T]: K } {
   return o.reduce((res, key) => {
@@ -85,12 +86,20 @@ export interface Resolver {
     type: string;
     args: Args;
     resolve: any;
-    method: 'Query' | 'Mutation' | 'Subscription' | 'query' | 'mutation' | 'subscription'
+    method:
+      | 'Query'
+      | 'Mutation'
+      | 'Subscription'
+      | 'query'
+      | 'mutation'
+      | 'subscription';
     deps?: ResolverDependencies[];
   };
 }
 
-export interface ConfigViews { [key: string]: { query: string; payload: any; html: string } }
+export interface ConfigViews {
+  [key: string]: IClientViewType;
+}
 export interface Config {
   $mode: 'basic' | 'advanced';
   $types: { [key: string]: Args };
@@ -99,7 +108,7 @@ export interface Config {
   $externals: Externals[];
   $args: any;
   $views?: ConfigViews;
-  _meta: {[key: string]: string}; // Folder mapping for every module
+  _meta: { [key: string]: string }; // Folder mapping for every module
 }
 
 export const TypesToken = new InjectionToken<
@@ -114,13 +123,14 @@ export const ResolversToken = new InjectionToken<Map<string, Args>>(
 export const GuardsToken = new InjectionToken<Map<string, Args>>(
   '(@rxdi/graphqj): resolvers-token'
 );
-export const IsBundlerInstalled = new InjectionToken<{parcel: boolean; gapi: boolean;}>(
-  '(@rxdi/graphqj): is-bundler-installed'
-);
+export const IsBundlerInstalled = new InjectionToken<{
+  parcel: boolean;
+  gapi: boolean;
+}>('(@rxdi/graphqj): is-bundler-installed');
 export const Config = new InjectionToken<Config>();
 
 export type TypesToken = Map<string, Args>;
 export type ArgumentsToken = Map<string, Args>;
 export type ResolversToken = Map<string, Args>;
 export type GuardsToken = Map<string, Args>;
-export type IsBundlerInstalled = {parcel: boolean; gapi: boolean;};
+export type IsBundlerInstalled = { parcel: boolean; gapi: boolean };

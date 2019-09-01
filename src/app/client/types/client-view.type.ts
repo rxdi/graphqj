@@ -1,4 +1,4 @@
-import { GraphQLObjectType, GraphQLString, GraphQLList } from 'graphql';
+import { GraphQLObjectType, GraphQLString, GraphQLList, GraphQLEnumType } from 'graphql';
 
 export const ClientViewType = new GraphQLObjectType({
   name: 'ClientViewType',
@@ -12,11 +12,14 @@ export const ClientViewType = new GraphQLObjectType({
     name: {
       type: GraphQLString
     },
+    policy: {
+      type: GraphQLString
+    },
     query: {
       type: GraphQLString
     },
     props: {
-      type: GraphQLString
+      type: new GraphQLList(GraphQLString)
     },
     output: {
       type: GraphQLString
