@@ -155,7 +155,10 @@ export class ReactOnChangeService {
             }
 
             makeQuery() {
-              const isWrittenQuery = v.query.includes('query') || v.query.includes('mutation') || v.query.includes('subscription');
+              const isWrittenQuery =
+                v.query.includes('query') ||
+                v.query.includes('mutation') ||
+                v.query.includes('subscription');
               let query: string;
               let querySelector: string;
 
@@ -165,15 +168,20 @@ export class ReactOnChangeService {
                 const splittedQuery = v.query.split(' ');
                 querySelector = splittedQuery[1];
                 queryType = splittedQuery[0] as any;
-                query = gql`${v.query}`;
+                query = gql`
+                  ${v.query}
+                `;
               } else {
                 querySelector = v.query;
                 query = gql`
-                ${queries.find(q => q.includes(v.query))}
-              `;
+                  ${queries.find(q => q.includes(v.query))}
+                `;
               }
-              let options: QueryOptions | SubscriptionOptions | MutationOptions = {
-                fetchPolicy: v.policy as FetchPolicy || 'network-only',
+              let options:
+                | QueryOptions
+                | SubscriptionOptions
+                | MutationOptions = {
+                fetchPolicy: (v.policy as FetchPolicy) || 'network-only',
                 query: null,
                 mutation: null
               };
@@ -184,7 +192,9 @@ export class ReactOnChangeService {
               if (queryType === 'query' || queryType === 'subscription') {
                 options['query'] = query;
               }
-              return this[queryType](options).pipe(map(res => (res as any).data[querySelector]));
+              return this[queryType](options).pipe(
+                map(res => (res as any).data[querySelector])
+              );
             }
 
             render() {
