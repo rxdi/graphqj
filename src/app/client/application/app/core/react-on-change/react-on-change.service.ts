@@ -1,19 +1,20 @@
 import { Injectable, Inject } from '@rxdi/core';
-import { from, BehaviorSubject, of, combineLatest } from 'rxjs';
+import { from, BehaviorSubject, merge, combineLatest, of } from 'rxjs';
 import { ApolloClient } from '@rxdi/graphql-client';
 import gql from 'graphql-tag';
-import { map, tap, switchMap, mergeMap } from 'rxjs/operators';
+import { map, tap, filter, race } from 'rxjs/operators';
 import {
   html,
   unsafeHTML,
   Component,
-  TemplateObservable
+  TemplateObservable,
+  property
 } from '@rxdi/lit-html';
 import { ISubscription, IClientViewType } from '../../../../../@introspection';
 import { Router } from '@rxdi/router';
+import { async } from '@rxdi/lit-html';
 import { BaseComponent } from './base.component';
-import { objToArray } from '../../../../../../helpers/obj-to-array';
-const QueryGenerator = require('graphql-query-generator');
+const QueryGenerator = require('graphql-query-generator'); // Remove this it is 400 KB :O 
 
 @Injectable()
 export class ReactOnChangeService {
@@ -86,43 +87,63 @@ export class ReactOnChangeService {
 
           @Component({ selector })
           class NewElement extends BaseComponent {
-            values: any = {};
-            @TemplateObservable() private templateObservable = observable.pipe(
-              map(h => {
-                let stringValue = h
-                  .split('{')
-                  .join('')
-                  .split('}')
-                  .join('');
-                const mappedValues = Object.keys(this.values).reduce(
-                  (acc, curr) => [...acc, curr],
-                  []
-                );
-                mappedValues.forEach(v => {
-                  if (stringValue.includes(v)) {
-                    stringValue = stringValue.replace(v, this.values[v]);
-                  }
-                });
-                return unsafeHTML(`${stringValue}`);
-              })
+            @property()
+            values: Object;
+
+            @TemplateObservable()
+            private BasicTemplate = observable.pipe(map(h => unsafeHTML(h)));
+
+            @TemplateObservable()
+            private QueryTemplate = combineLatest(
+              observable,
+              v.query ? this.makeQuery() : of({})
+            ).pipe(
+              map(([html, query]) => this.parseTemplateQuery(html, query))
             );
-            // async OnInit() {
-            //     if (v.query) {
-            //       this.values = await this.query({
-            //         fetchPolicy: 'network-only',
-            //         query: gql`
-            //           ${queries.find(q => q.includes(v.query))}
-            //         `
-            //       })
-            //         .pipe(map(res => res.data[v.query]))
-            //         .toPromise();
-            //     }
-            //     debugger
-            // }
+
+            parseTemplateQuery(h: string, query: any) {
+              let stringValue = h
+                .split('{')
+                .join('')
+                .split('}')
+                .join('');
+
+              Object.keys(query)
+                .reduce((acc, curr) => [...acc, curr], [])
+                .forEach(v =>
+                  stringValue.includes(v)
+                    ? (stringValue = stringValue.replace(v, query[v]))
+                    : null
+                );
+              return unsafeHTML(stringValue);
+            }
+
+            async OnDestroy() {
+              console.log(`Leave component ${selector}`);
+            }
+
+            async OnInit() {
+              console.log(`Enter component ${selector}`);
+            }
+
+            makeQuery() {
+              return this.query({
+                fetchPolicy: 'cache-first',
+                query: gql`
+                  ${queries.find(q => q.includes(v.query))}
+                `
+              })
+                .pipe(map(res => res.data[v.query]))
+            }
+
             render() {
-              return html`
-                ${this.templateObservable}
-              `;
+              return v.query
+                ? html`
+                    ${this.QueryTemplate}
+                  `
+                : html`
+                    ${this.BasicTemplate}
+                  `;
             }
           }
           this.routes.push({
