@@ -2,7 +2,7 @@ import { Injectable, Inject } from '@rxdi/core';
 import { from, BehaviorSubject, combineLatest, of } from 'rxjs';
 import { ApolloClient } from '@rxdi/graphql-client';
 import gql from 'graphql-tag';
-import { map, tap } from 'rxjs/operators';
+import { map, tap, mergeMap } from 'rxjs/operators';
 import {
   html,
   unsafeHTML,
@@ -69,7 +69,7 @@ export class ReactOnChangeService {
             return `${method} ${k} { ${k} { ${Object.keys(nestedFields)
               .map(field => {
                 const nestedField = nestedFields[field];
-                if (nestedField && nestedField.type.getFields) {
+                if (nestedField && nestedField.type && nestedField.type.getFields) {
                   const nestedTypes = nestedField.type.getFields();
                   field = `${field} { ${Object.keys(nestedTypes)
                     .filter(t => t !== field)
@@ -122,12 +122,12 @@ export class ReactOnChangeService {
             private BasicTemplate = observable.pipe(map(h => unsafeHTML(h)));
 
             @TemplateObservable()
-            private QueryTemplate = combineLatest(
-              observable,
+            private QueryTemplate = observable.pipe(mergeMap((html) => combineLatest(
+              of(html),
               v.query ? this.makeQuery() : of({})
             ).pipe(
-              map(([html, query]) => this.parseTemplateQuery(html, query))
-            );
+              map(([html, query]) => this.parseTemplateQuery(html, query)),
+            )));
 
             parseTemplateQuery(h: string, query: any) {
               let stringValue = h
@@ -198,13 +198,16 @@ export class ReactOnChangeService {
             }
 
             render() {
-              return v.query
+              return html`
+              ${v.query
                 ? html`
                     ${this.QueryTemplate}
                   `
                 : html`
                     ${this.BasicTemplate}
-                  `;
+                  `
+                }
+              `;
             }
           }
           this.routes.push({
@@ -249,7 +252,7 @@ export class ReactOnChangeService {
   }
 
   getApp(views: IClientViewType[]) {
-    return this.parseHtml(views.find(v => v.name === 'app').html);
+    return this.parseHtml(views[0].html);
   }
 
   parseHtml(template: string) {

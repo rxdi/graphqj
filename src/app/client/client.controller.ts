@@ -14,6 +14,7 @@ import {
 import { ClientType } from './types/client.type';
 import { Config, ConfigViews } from '../app.tokens';
 import { ClientReadyStatusType } from './types/status.type';
+import { mapComponentsPath, modifyViewsConfig } from '../../helpers/component.parser';
 
 export const viewsToArray = <T>(a: { [key: string]: T }): Array<T> =>
   Object.keys(a).reduce(
@@ -46,7 +47,8 @@ export class ClientController {
   @Type(ClientReadyStatusType)
   @Mutation()
   async clientReady(root, payload, context) {
-    const config = Container.get<any>('main-config-compiled');
+    const config = Container.get<Config>('main-config-compiled');
+    config.$views = modifyViewsConfig(config.$views, await mapComponentsPath(config.$views));
     this.pubsub.publish('listenForChanges', config.$views);
     return {
       status: 'READY'

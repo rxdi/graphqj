@@ -10,6 +10,7 @@ import { configWatchers } from './watch-bundles';
 import { MakeBasicSchema } from './basic-schema';
 import { transpilerCache } from './transpiler-cache';
 import { FSWatcher } from 'chokidar';
+import { transpileComponents } from './component.parser';
 
 function findMetaKey(path: string, meta: { [key: string]: string }) {
   return Object.keys(meta).find(k => meta[k] === path);
@@ -70,18 +71,22 @@ export async function reactToChanges(path: string, config: Config) {
       await MakeAdvancedSchema(config);
     }
     Container.get(ApolloService).init();
-    console.log(`📦  Bundle realoaded! ${Date.now() - timer}ms`, path);
     isRunning = false;
     // await SchemaIntrospection()
   } catch (e) {
     isRunning = false;
     console.error(e);
   }
+
+  config.$views = await transpileComponents(config.$views)
+
   Container.reset(Config)
   Container.remove(Config)
   Container.set(Config, config);
+
   Container.get(PubSubService).publish('listenForChanges', config.$views);
   Container.reset('main-config-compiled')
   Container.remove('main-config-compiled')
   Container.set('main-config-compiled', config)
+  console.log(`📦  Bundle realoaded! ${Date.now() - timer}ms`, path);
 }
