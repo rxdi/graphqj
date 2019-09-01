@@ -1,8 +1,8 @@
 import { Injectable, Inject } from '@rxdi/core';
-import { from, BehaviorSubject, merge, combineLatest, of } from 'rxjs';
+import { from, BehaviorSubject, combineLatest, of } from 'rxjs';
 import { ApolloClient } from '@rxdi/graphql-client';
 import gql from 'graphql-tag';
-import { map, tap, filter, race } from 'rxjs/operators';
+import { map, tap } from 'rxjs/operators';
 import {
   html,
   unsafeHTML,
@@ -12,9 +12,8 @@ import {
 } from '@rxdi/lit-html';
 import { ISubscription, IClientViewType } from '../../../../../@introspection';
 import { Router } from '@rxdi/router';
-import { async } from '@rxdi/lit-html';
 import { BaseComponent } from './base.component';
-const QueryGenerator = require('graphql-query-generator'); // Remove this it is 400 KB :O 
+import { buildSchema, GraphQLFieldMap } from 'graphql';
 
 @Injectable()
 export class ReactOnChangeService {
@@ -46,28 +45,39 @@ export class ReactOnChangeService {
         `
       })
     ).pipe(
-      map(({ data }) => data.listenForChanges.views),
-      tap(views =>
+      map(({ data }) => data.listenForChanges),
+      tap(change =>
         this.loadDynamicBundles(
-          [].concat(...views.map(v => v.components)).filter(i => !!i)
+          [].concat(...change.views.map(v => v.components)).filter(i => !!i)
         )
       ),
-      tap(async views => {
-        QueryGenerator;
-        const queryGenerator = new QueryGenerator(
-          'http://localhost:9000/graphql'
-        );
-        let { queries }: { queries: string[] } = await queryGenerator.run();
-        queries = queries.map((q: string) => {
-          let newString: string = '';
-          const gg = q.split(' ').filter(query => !query.includes(':'));
-          gg.map((v: string) => (!v ? ' ' : v)).forEach(
-            (v: string) => (newString += v)
+      tap(async change => {
+        const schema = buildSchema(change.schema);
+        const createExecutableQuery = (
+          type: GraphQLFieldMap<any, any>,
+          method: 'query' | 'mutation' | 'subscription'
+        ) =>
+          Object.keys(type).map(
+            k =>
+              `${method} ${k} { ${k} { ${Object.keys(
+                type[k].type['getFields']()
+              ).join(' ')} } }`
           );
-          return newString;
-        });
+        const Queries = createExecutableQuery(
+          schema.getQueryType().getFields(),
+          'query'
+        );
+        const Mutations = createExecutableQuery(
+          schema.getMutationType().getFields(),
+          'mutation'
+        );
+        const Subscriptions = createExecutableQuery(
+          schema.getSubscriptionType().getFields(),
+          'subscription'
+        );
+        const queries = [...Queries, Mutations, Subscriptions];
         this.routes = [];
-        views.forEach(v => {
+        change.views.forEach(v => {
           const selector = `${v.name}-component`;
           if (v.name === 'app') {
             return;
@@ -132,8 +142,7 @@ export class ReactOnChangeService {
                 query: gql`
                   ${queries.find(q => q.includes(v.query))}
                 `
-              })
-                .pipe(map(res => res.data[v.query]))
+              }).pipe(map(res => res.data[v.query]));
             }
 
             render() {
@@ -164,7 +173,7 @@ export class ReactOnChangeService {
           }
         ]);
       }),
-      map(views => this.getApp(views))
+      map(change => this.getApp(change.views))
     );
     if (!this.clientReady) {
       setTimeout(async () => {

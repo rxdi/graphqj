@@ -3,7 +3,7 @@
 
 
   export interface IGraphQLResponseRoot {
-    data?: IQuery | ISubscription;
+    data?: IQuery | IMutation | ISubscription;
     errors?: Array<IGraphQLResponseError>;
   }
 
@@ -51,6 +51,20 @@
 }
 
   /**
+    description?: Mutation type for all requests which will change persistent data
+  */
+  export interface IMutation {
+    __typename?: "Mutation";
+    clientReady?: IClientReadyStatusType | null;
+}
+
+  
+  export interface IClientReadyStatusType {
+    __typename?: "ClientReadyStatusType";
+    status?: string | null;
+}
+
+  /**
     description?: Subscription type for all subscriptions via pub sub
   */
   export interface ISubscription {
@@ -62,6 +76,7 @@
   export interface IClientType {
     __typename?: "ClientType";
     views?: Array<IClientViewType> | null;
+    schema?: string | null;
 }
 
   
