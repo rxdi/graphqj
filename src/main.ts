@@ -227,7 +227,7 @@ $resolvers:
     const imports = [];
     if (file && file.$imports) {
       const transpiledModules = await TranspileAndGetAll(
-        file.$imports.map(file => ({ file } as Externals)),
+        file.$imports.map(file => ({ file: file.replace('💉', '') } as Externals)),
         'imports'
       );
       imports.push(
