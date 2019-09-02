@@ -1,0 +1,25 @@
+app:
+  html: 💉./views/app.html
+home:
+  components:
+    - http://localhost:9000/components/hamburger.client.module.js
+  query: |
+    query findUser {
+      findUser {
+        name
+        email
+        phone
+        user {
+          name
+        }
+      }
+    }
+  output: UserPayload
+  policy: network-only
+  html: 💉./views/home.html
+
+not-found:
+  html: 💉./views/not-found.html
+about:
+  query: findUser
+  html: 💉./views/about.html

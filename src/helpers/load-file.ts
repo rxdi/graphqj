@@ -3,7 +3,7 @@ import { TranspileAndLoad } from './transpile-and-load';
 import { exists, readFile } from 'fs';
 import { isInValidPath } from './is-invalid-path';
 import { traverseMap } from './traverse-map';
-import { join, normalize } from 'path';
+import { join, normalize, basename } from 'path';
 import { loadYml } from './load-yml';
 import { IsBundlerInstalled } from '../app/app.tokens';
 import clearModule = require('clear-module');
@@ -22,20 +22,30 @@ export async function loadFile(path: string) {
         lastElement.parent,
         path.replace(process.cwd(), '')
       );
+      if (!(await promisify(exists)(path))) {
+        path = join(process.cwd(), lastElement.parent, basename(path));
+      }
     }
   }
   if (path.includes('.yml')) {
     loadedModule = loadYml(path);
   } else if (path.includes('.json')) {
     path = normalize(join(process.cwd(), path));
-    clearModule(path)
+    clearModule(path);
     loadedModule = require(path);
-  } else if (path.includes('.html') || path.includes('.graphql') || path.includes('.gql')) {
+  } else if (
+    path.includes('.html') ||
+    path.includes('.graphql') ||
+    path.includes('.gql')
+  ) {
     loadedModule = await promisify(readFile)(path, { encoding: 'utf-8' });
-  } else if (Container.get(IsBundlerInstalled).gapi && path.includes('.ts') || path.includes('.js')) {
+  } else if (
+    (Container.get(IsBundlerInstalled).gapi && path.includes('.ts')) ||
+    path.includes('.js')
+  ) {
     loadedModule = await TranspileAndLoad(path, './.gj/out');
-  }  else {
-    loadedModule = require('esm')(module, {cache: false})(path);
+  } else {
+    loadedModule = require('esm')(module, { cache: false })(path);
   }
 
   const parent = path

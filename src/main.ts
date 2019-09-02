@@ -215,7 +215,7 @@ $resolvers:
       onSubConnection(connectionParams) {
         return connectionParams;
       },
-      async onSubOperation(connectionParams, params, webSocket) {
+      onSubOperation(connectionParams, params, webSocket) {
         connectionParams;
         return params;
       }
@@ -270,6 +270,8 @@ $resolvers:
                   'Access-Control-Allow-Origin',
                   'Access-Control-Request-Headers',
                   'Origin',
+                  'ETag',
+                  'clientId',
                   'Connection',
                   'Pragma',
                   'Cache-Control'

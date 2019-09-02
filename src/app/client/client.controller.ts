@@ -5,16 +5,20 @@ import {
   Subscription,
   Subscribe,
   PubSubService,
-  Inject,
   Container,
   Mutation,
   BootstrapService,
-  printSchema
+  printSchema,
+  withFilter,
+  GraphQLString,
+  GraphQLNonNull
 } from '@gapi/core';
 import { ClientType } from './types/client.type';
 import { Config, ConfigViews } from '../app.tokens';
-import { ClientReadyStatusType } from './types/status.type';
-import { mapComponentsPath, modifyViewsConfig, predictConfig } from '../../helpers/component.parser';
+import {
+  mapComponentsPath,
+  modifyViewsConfig
+} from '../../helpers/component.parser';
 
 export const viewsToArray = <T>(a: { [key: string]: T }): Array<T> =>
   Object.keys(a).reduce(
@@ -26,36 +30,52 @@ export const viewsToArray = <T>(a: { [key: string]: T }): Array<T> =>
   type: []
 })
 export class ClientController {
-  constructor(
-    private pubsub: PubSubService,
-    @Inject(Config) private config: Config
-  ) {}
+  constructor(private pubsub: PubSubService) {}
 
   @Type(ClientType)
-  @Subscribe(function(this: ClientController) {
-    return this.pubsub.asyncIterator('listenForChanges');
+  @Subscribe(
+    withFilter(
+      function(self: ClientController) {
+        return self.pubsub.asyncIterator('listenForChanges');
+      },
+      function(global, unused, payload, context) {
+        const isCorrectLength = context.clientid.length + context.clientid.length;
+        if (isCorrectLength === 100 && payload.clientId === context.clientid) {
+          return true;
+        }
+        return false;
+      }
+    )
+  )
+  @Subscription({
+    clientId: {
+      type: new GraphQLNonNull(GraphQLString)
+    }
   })
-  @Subscription()
   async listenForChanges(views: ConfigViews) {
-    const config = Container.get<Config>('main-config-compiled');
-    const res = {
-      components: config.$components,
-      views: viewsToArray(views),
-      schema: printSchema(Container.get(BootstrapService).schema)
-    };
-    return res;
+    return this.getViewsConfig(views);
   }
 
-  @Type(ClientReadyStatusType)
+  getViewsConfig(views?: ConfigViews) {
+    const config = Container.get<Config>('main-config-compiled');
+    return {
+      components: config.$components,
+      views: viewsToArray(views || config.$views),
+      schema: printSchema(Container.get(BootstrapService).schema)
+    };
+  }
+
+  @Type(ClientType)
   @Mutation()
   async clientReady(root, payload, context) {
-    const config = Container.get<Config>('main-config-compiled');
-    if (config.$views) {
-      config.$views = modifyViewsConfig(config.$views, await mapComponentsPath(config.$views));
-      this.pubsub.publish('listenForChanges', config.$views);
-    }
-    return {
-      status: 'READY'
-    };
+    // const config = Container.get<Config>('main-config-compiled');
+    // if (config.$views) {
+    //   config.$views = modifyViewsConfig(
+    //     config.$views,
+    //     await mapComponentsPath(config.$views)
+    //   );
+    //   this.pubsub.publish('listenForChanges', config.$views);
+    // }
+    return this.getViewsConfig();
   }
 }

@@ -11,9 +11,10 @@ import { MakeBasicSchema } from './basic-schema';
 import { transpilerCache } from './transpiler-cache';
 import { FSWatcher } from 'chokidar';
 import { transpileComponentsForViews, transpileComponentsInit } from './component.parser';
+import { basename } from 'path';
 
 function findMetaKey(path: string, meta: { [key: string]: string }) {
-  return Object.keys(meta).find(k => meta[k] === path);
+  return Object.keys(meta).find(k => meta[k] === path || basename(meta[k]).includes(basename(path)));
 }
 
 function getMetaPath(path: string) {
@@ -33,30 +34,36 @@ export async function reactToChanges(path: string, config: Config) {
   const timer = Date.now();
   console.log(`💡  Bundle changed: ${path}`);
   isRunning = true;
+  async function traverseConfig(path: string, file: string, config: Config) {
+    await traverse(config, async (k, v) => {
+      if (typeof v === 'object' && v._meta) {
+        const metaPath = getMetaPath(path);
+        const foundMetaKey = findMetaKey(metaPath, v._meta);
+        if (foundMetaKey) {
+          v[foundMetaKey] = await deep(getFirstItem(file));
+          return true;
+        }
+      }
+      return false;
+    });
+    return config;
+  }
   try {
     transpilerCache.delete(path.replace(process.cwd(), ''))
     transpilerCache.delete(path.replace(process.cwd(), '').replace('.', ''))
     const newFile = await loadFile(path);
+    let metaKey: string;
+    if (config._meta) {
+      metaKey = findMetaKey(getMetaPath(path), config._meta);
+    }
     if (configWatchers.filter(p => path.includes(p)).length) {
       config = await deep(newFile);
-    } else if (config._meta) {
+    } else if (config._meta && metaKey) {
       // First level deepnest
-      const metaKey = findMetaKey(getMetaPath(path), config._meta);
-      if (metaKey) {
-        config[metaKey] = await deep(newFile);
-      }
+      config[metaKey] = await deep(newFile);
     } else {
       // Traverse recursive and find metadata for specific file and update it
-      await traverse(config, async (k, v) => {
-        if (typeof v === 'object' && v._meta) {
-          const foundMetaKey = findMetaKey(getMetaPath(path), v._meta);
-          if (foundMetaKey) {
-            v[foundMetaKey] = await deep(getFirstItem(newFile));
-            return true;
-          }
-        }
-        return false;
-      });
+      config = await traverseConfig(path, newFile, config)
     }
 
     lazyTypes.clear();

@@ -42,7 +42,7 @@
     arrayOfNumbers?: Array<number> | null;
     arrayOfStrings?: Array<string> | null;
     arrayOfStrings2?: Array<string> | null;
-    users?: IUser | null;
+    user?: IUser | null;
 }
 
   
@@ -56,29 +56,7 @@
   */
   export interface IMutation {
     __typename?: "Mutation";
-    clickHamburgerButton?: IHamburgerStatisticsType | null;
-    clientReady?: IClientReadyStatusType | null;
-}
-
-  
-  export interface IHamburgerStatisticsType {
-    __typename?: "HamburgerStatisticsType";
-    clicks?: number | null;
-}
-
-  
-  export interface IClientReadyStatusType {
-    __typename?: "ClientReadyStatusType";
-    status?: string | null;
-}
-
-  /**
-    description?: Subscription type for all subscriptions via pub sub
-  */
-  export interface ISubscription {
-    __typename?: "Subscription";
-    subscribeToStatistics?: IHamburgerStatisticsType | null;
-    listenForChanges?: IClientType | null;
+    clientReady?: IClientType | null;
 }
 
   
@@ -99,6 +77,14 @@
     query?: string | null;
     props?: Array<string> | null;
     output?: string | null;
+}
+
+  /**
+    description?: Subscription type for all subscriptions via pub sub
+  */
+  export interface ISubscription {
+    __typename?: "Subscription";
+    listenForChanges?: IClientType | null;
 }
 
 

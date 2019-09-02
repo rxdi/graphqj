@@ -17,3 +17,11 @@ config:
   schema:
     introspectionEndpoint: http://localhost:9000/graphql
     introspectionOutputFolder: ./src/app/@introspection
+
+commands:
+   run:
+     server: npm start
+     client: npm run start-client
+   build:
+     server: npm run build
+     client: npm run build-client

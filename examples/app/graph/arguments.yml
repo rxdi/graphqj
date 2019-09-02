@@ -1,0 +1,3 @@
+UserPayload:
+  name: String!
+  pesho: String
