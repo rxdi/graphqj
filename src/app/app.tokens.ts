@@ -60,6 +60,13 @@ export type BooleanUnion = keyof typeof BooleanUnion;
 export type StringUnion = keyof typeof StringUnion;
 export type IntegerUnion = keyof typeof IntegerUnion;
 export type GlobalUnion = BooleanUnion | StringUnion | IntegerUnion;
+export interface PredictedTranspilation {
+  originalPath: string;
+  filePath: string;
+  transpilerPath: string;
+  newPath: string;
+  link: string;
+}
 
 export const Roots = {
   booleanNode: BooleanUnion,
@@ -102,6 +109,8 @@ export interface ConfigViews {
 }
 export interface Config {
   $mode: 'basic' | 'advanced';
+  $imports?: string[];
+  $components?: string[] | PredictedTranspilation[];
   $types: { [key: string]: Args };
   $resolvers: Resolver;
   $directives: string;

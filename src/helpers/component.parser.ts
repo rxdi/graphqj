@@ -1,13 +1,14 @@
 import { promisify } from 'util';
 import { exists } from 'fs';
 import { join, basename } from 'path';
-import { ConfigViews } from 'src/app/app.tokens';
+import { ConfigViews, PredictedTranspilation } from '../app/app.tokens';
 import {
   TranspileTypescript,
   TranspileTypescriptParcel
 } from './typescript.builder';
 
-export async function transpileComponent(path: string = '') {
+
+export async function transpileComponent(path: string = ''): Promise<PredictedTranspilation> {
   if (!path.includes('💉')) {
     return;
   }
@@ -58,7 +59,7 @@ export function modifyViewsConfig(
   });
   return views;
 }
-export async function transpileComponents(views: ConfigViews) {
+export async function transpileComponentsForViews(views: ConfigViews) {
   const components = await mapComponentsPath(views);
   for (const { transpilerPath } of components) {
     await TranspileTypescriptParcel(
@@ -66,7 +67,22 @@ export async function transpileComponents(views: ConfigViews) {
         join(process.cwd(), 'components')
       );
   }
-
   modifyViewsConfig(views, components);
   return views;
+}
+
+
+export async function predictConfig(components: string[]) {
+  return Promise.all(components.map(async c => (await transpileComponent(c))))
+}
+
+export async function transpileComponentsInit(components: string[]) {
+  const config = await predictConfig(components);
+  for (const predictedConfig of config) {
+    await TranspileTypescriptParcel(
+      [predictedConfig.transpilerPath],
+      join(process.cwd(), 'components')
+    );
+  }
+  return config;
 }

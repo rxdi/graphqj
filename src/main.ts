@@ -1,4 +1,4 @@
-import { BootstrapFramework, Container } from '@rxdi/core';
+import { BootstrapFramework, Container, setup } from '@rxdi/core';
 import { AppModule } from './app/app.module';
 import { CoreModule } from '@gapi/core';
 import { nextOrDefault, includes } from './helpers/args-extractors';
@@ -7,8 +7,16 @@ import { promisify } from 'util';
 import { watch } from 'chokidar';
 import { SelfChild } from './helpers/self-child';
 import { Subscription } from 'rxjs';
-import { Config } from './app/app.tokens';
-
+import { Config, Externals } from './app/app.tokens';
+import { switchMap } from 'rxjs/operators';
+import {
+  TranspileAndLoad,
+  TranspileAndGetAll
+} from './helpers/transpile-and-load';
+import { getFirstItem } from './helpers/get-first-item';
+import { loadFile } from './helpers/load-file';
+import { getConfig } from './helpers/set-config';
+import { transpileComponentsInit } from './helpers/component.parser';
 if (includes('--watch')) {
   let subscription: Subscription;
   const configPath = nextOrDefault('--config');
@@ -202,55 +210,77 @@ $resolvers:
     );
   }
 } else {
-  Container.set('pubsub-auth', {
-    onSubConnection(connectionParams) {
-      return connectionParams;
-    },
-    async onSubOperation(connectionParams, params, webSocket) {
-      connectionParams
-      return params;
+  async function main() {
+    Container.set('pubsub-auth', {
+      onSubConnection(connectionParams) {
+        return connectionParams;
+      },
+      async onSubOperation(connectionParams, params, webSocket) {
+        connectionParams;
+        return params;
+      }
+    });
+    let file: Config;
+    try {
+      file = await getConfig('gj');
+    } catch (e) {}
+    const imports = [];
+    if (file && file.$imports) {
+      const transpiledModules = await TranspileAndGetAll(
+        file.$imports.map(file => ({ file } as Externals)),
+        'imports'
+      );
+      imports.push(
+        ...transpiledModules.map(f => getFirstItem(require(f.transpiledFile)))
+      );
     }
-  });
-  BootstrapFramework(AppModule, [
-    CoreModule.forRoot({
-      graphql: {
-        openBrowser: nextOrDefault('--random', true, v =>
-          v === 'true' ? false : true
-        ),
-        buildAstDefinitions: false, // Removed ast definition since directives are lost,
-        graphiQlPath: '/graphiql',
-        graphiqlOptions: {
-          endpointURL: '/graphiql'
-        }
-      },
-      pubsub: {
-        authentication: 'pubsub-auth'
-      },
-      server: {
-        randomPort: nextOrDefault('--random', false),
-        hapi: {
-          port: nextOrDefault('--port', 9000, p => Number(p)),
-          routes: {
-            cors: {
-              origin: ['*'],
-              additionalHeaders: [
-                'Host',
-                'User-Agent',
-                'Accept',
-                'Accept-Language',
-                'Accept-Encoding',
-                'Access-Control-Request-Method',
-                'Access-Control-Allow-Origin',
-                'Access-Control-Request-Headers',
-                'Origin',
-                'Connection',
-                'Pragma',
-                'Cache-Control'
-              ]
+    if (file && file.$components) {
+      await transpileComponentsInit(file.$components as string[]);
+    }
+    BootstrapFramework(AppModule, [
+      ...imports,
+      CoreModule.forRoot({
+        graphql: {
+          openBrowser: nextOrDefault('--random', true, v =>
+            v === 'true' ? false : true
+          ),
+          buildAstDefinitions: false, // Removed ast definition since directives are lost,
+          graphiQlPath: '/graphiql',
+          graphiqlOptions: {
+            endpointURL: '/graphiql'
+          }
+        },
+        pubsub: {
+          authentication: 'pubsub-auth'
+        },
+        server: {
+          randomPort: nextOrDefault('--random', false),
+          hapi: {
+            port: nextOrDefault('--port', 9000, p => Number(p)),
+            routes: {
+              cors: {
+                origin: ['*'],
+                additionalHeaders: [
+                  'Host',
+                  'User-Agent',
+                  'Accept',
+                  'Accept-Language',
+                  'Accept-Encoding',
+                  'Access-Control-Request-Method',
+                  'Access-Control-Allow-Origin',
+                  'Access-Control-Request-Headers',
+                  'Origin',
+                  'Connection',
+                  'Pragma',
+                  'Cache-Control'
+                ]
+              }
             }
           }
         }
-      }
-    })
-  ]).subscribe(() => console.log('Started'), console.log.bind(console));
+      })
+    ]).subscribe(() => console.log('Started'), console.log.bind(console));
+  }
+
+  main();
 }

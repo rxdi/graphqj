@@ -46,6 +46,7 @@ export class ReactOnChangeService {
                 components
                 policy
               }
+              components
               schema
             }
           }
@@ -55,7 +56,7 @@ export class ReactOnChangeService {
       map(({ data }) => data.listenForChanges),
       tap(change =>
         this.loadDynamicBundles(
-          [].concat(...change.views.map(v => v.components)).filter(i => !!i)
+          [].concat(...change.components ? change.components : [], ...change.views.map(v => v.components)).filter(i => !!i)
         )
       ),
       tap(async change => {

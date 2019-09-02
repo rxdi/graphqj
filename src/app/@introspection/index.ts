@@ -56,7 +56,14 @@
   */
   export interface IMutation {
     __typename?: "Mutation";
+    clickHamburgerButton?: IHamburgerStatisticsType | null;
     clientReady?: IClientReadyStatusType | null;
+}
+
+  
+  export interface IHamburgerStatisticsType {
+    __typename?: "HamburgerStatisticsType";
+    clicks?: number | null;
 }
 
   
@@ -70,12 +77,14 @@
   */
   export interface ISubscription {
     __typename?: "Subscription";
+    subscribeToStatistics?: IHamburgerStatisticsType | null;
     listenForChanges?: IClientType | null;
 }
 
   
   export interface IClientType {
     __typename?: "ClientType";
+    components?: Array<string> | null;
     views?: Array<IClientViewType> | null;
     schema?: string | null;
 }
@@ -86,14 +95,11 @@
     html?: string | null;
     components?: Array<string> | null;
     name?: string | null;
-    policy?: ICachePolicyTypeEnum | null;
+    policy?: string | null;
     query?: string | null;
-    props?: string | null;
+    props?: Array<string> | null;
     output?: string | null;
 }
-
-export
-  type ICachePolicyTypeEnum = 'cacheFirst' | 'cacheOnly' | 'networkOnly' | 'noCache' | 'standby';
 
 
 // tslint:enable

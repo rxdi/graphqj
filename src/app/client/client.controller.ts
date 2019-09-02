@@ -14,7 +14,7 @@ import {
 import { ClientType } from './types/client.type';
 import { Config, ConfigViews } from '../app.tokens';
 import { ClientReadyStatusType } from './types/status.type';
-import { mapComponentsPath, modifyViewsConfig } from '../../helpers/component.parser';
+import { mapComponentsPath, modifyViewsConfig, predictConfig } from '../../helpers/component.parser';
 
 export const viewsToArray = <T>(a: { [key: string]: T }): Array<T> =>
   Object.keys(a).reduce(
@@ -36,8 +36,10 @@ export class ClientController {
     return this.pubsub.asyncIterator('listenForChanges');
   })
   @Subscription()
-  listenForChanges(views: ConfigViews) {
+  async listenForChanges(views: ConfigViews) {
+    const config = Container.get<Config>('main-config-compiled');
     const res = {
+      components: (await predictConfig(config.$components as string[])).map(c => c.link),
       views: viewsToArray(views),
       schema: printSchema(Container.get(BootstrapService).schema)
     };

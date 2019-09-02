@@ -10,7 +10,7 @@ import { configWatchers } from './watch-bundles';
 import { MakeBasicSchema } from './basic-schema';
 import { transpilerCache } from './transpiler-cache';
 import { FSWatcher } from 'chokidar';
-import { transpileComponents } from './component.parser';
+import { transpileComponentsForViews, transpileComponentsInit } from './component.parser';
 
 function findMetaKey(path: string, meta: { [key: string]: string }) {
   return Object.keys(meta).find(k => meta[k] === path);
@@ -78,7 +78,11 @@ export async function reactToChanges(path: string, config: Config) {
     console.error(e);
   }
 
-  config.$views = await transpileComponents(config.$views)
+  config.$views = await transpileComponentsForViews(config.$views)
+
+  if(config.$components) {
+    config.$components = await transpileComponentsInit(config.$components as string[])
+  }
 
   Container.reset(Config)
   Container.remove(Config)
