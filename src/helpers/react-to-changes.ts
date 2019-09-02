@@ -27,6 +27,7 @@ export async function reactToChanges(path: string, config: Config) {
     console.log(
       `✋  Bundle is updating previews change! Unable to update ${path}`
     );
+    isRunning = false;
     return;
   }
   const timer = Date.now();
@@ -71,12 +72,11 @@ export async function reactToChanges(path: string, config: Config) {
       await MakeAdvancedSchema(config);
     }
     Container.get(ApolloService).init();
-    isRunning = false;
     // await SchemaIntrospection()
   } catch (e) {
-    isRunning = false;
     console.error(e);
   }
+  isRunning = false;
   if (config.$views) {
     config.$views = await transpileComponentsForViews(config.$views)
   }

@@ -1,6 +1,6 @@
 $mode: advanced
-# $imports:
-#   - 💉./examples/mix/hamburger/server/hamburger.server.module.ts
+$imports:
+  - 💉./examples/mix/hamburger/server/hamburger.server.module.ts
 # $components:
 #   - 💉./examples/mix/hamburger/client/hamburger.client.module.ts
 
@@ -23,20 +23,10 @@ $resolvers:
     type: User
     args:
       userId: UserPayload
-    resolve: !!js/function >
-      function foobar(root, payload, context, info) {
-        return {
-          "name": "Кристиян Тачев",
-          "arrayOfStrings": ["dada", "dada"],
-          "email": "kristiqn.tachev@gmail.com",
-          "phone": 876667537
-        }
-      }
+    resolve: 💉./examples/js/findUser.js
 
 $views:
   app:
-    components:
-
     html: |
       <style>
         .spacer {
@@ -90,6 +80,9 @@ $views:
       </div>
 
   home:
+    components:
+      - 💉./examples/mix/hamburger/client/hamburger.client.module.ts
+
     query: |
       query findUser {
         findUser {
@@ -122,6 +115,6 @@ $views:
       <p>Email: {email}</p>
       <p>Phone: {phone}</p>
 
-  dadada:
+  tri:
     html: |
       Welcome to Dadada
