@@ -29,6 +29,7 @@ import { TranspileAndLoad } from '../helpers/transpile-and-load';
 import { buildExternals } from '../helpers/dynamic-schema/mutators/build-externals';
 import { CoreModule } from './core/core.module';
 import { ClientModule } from './client/client.module';
+import { predictConfig } from '../helpers/component.parser';
 
 @Module({
   imports: [CoreModule, VoyagerModule.forRoot(), ClientModule],
@@ -155,7 +156,10 @@ ${printSchema(mergedSchemas)}
           );
           watchBundles(traverseMap.map(f => f.path), config);
         }
-        
+        config.$components = config.$components || [];
+        if (config.$components.length) {
+          config.$components = (await predictConfig(config.$components as string[]) || []).map(c => c.link)
+        }
         Container.set('main-config-compiled', config)
         console.log(
           'You can extract this schema by running --generate command'

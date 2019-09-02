@@ -39,7 +39,7 @@ export class ClientController {
   async listenForChanges(views: ConfigViews) {
     const config = Container.get<Config>('main-config-compiled');
     const res = {
-      components: config.$components || [],
+      components: config.$components,
       views: viewsToArray(views),
       schema: printSchema(Container.get(BootstrapService).schema)
     };
