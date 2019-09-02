@@ -149,7 +149,9 @@ ${printSchema(mergedSchemas)}
         // if (config.$components) {
         //   traverseMap.push(...(config.$components as string[]).map(c => ({path: c.replace('💉', ''), parent: null})))
         // }
-        process.argv.push('--hot-reload', '--client')
+        if (config.$views) {
+          process.argv.push('--hot-reload', '--client')
+        }
         if (includes('--hot-reload')) {
           config.$externals.forEach(e =>
             traverseMap.push({ parent: null, path: e.file })

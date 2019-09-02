@@ -50,8 +50,10 @@ export class ClientController {
   @Mutation()
   async clientReady(root, payload, context) {
     const config = Container.get<Config>('main-config-compiled');
-    config.$views = modifyViewsConfig(config.$views, await mapComponentsPath(config.$views));
-    this.pubsub.publish('listenForChanges', config.$views);
+    if (config.$views) {
+      config.$views = modifyViewsConfig(config.$views, await mapComponentsPath(config.$views));
+      this.pubsub.publish('listenForChanges', config.$views);
+    }
     return {
       status: 'READY'
     };
