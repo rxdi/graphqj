@@ -145,6 +145,9 @@ ${printSchema(mergedSchemas)}
         if (config.$mode === 'advanced') {
           await MakeAdvancedSchema(config);
         }
+        // if (config.$components) {
+        //   traverseMap.push(...(config.$components as string[]).map(c => ({path: c.replace('💉', ''), parent: null})))
+        // }
         process.argv.push('--hot-reload', '--client')
         if (includes('--hot-reload')) {
           config.$externals.forEach(e =>
@@ -152,6 +155,7 @@ ${printSchema(mergedSchemas)}
           );
           watchBundles(traverseMap.map(f => f.path), config);
         }
+        
         Container.set('main-config-compiled', config)
         console.log(
           'You can extract this schema by running --generate command'

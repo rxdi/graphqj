@@ -81,7 +81,7 @@ export async function reactToChanges(path: string, config: Config) {
   config.$views = await transpileComponentsForViews(config.$views)
 
   if(config.$components) {
-    config.$components = await transpileComponentsInit(config.$components as string[])
+    config.$components = (await transpileComponentsInit(config.$components as string[])).map(c => c && c.link ? c.link : c) as any;
   }
 
   Container.reset(Config)

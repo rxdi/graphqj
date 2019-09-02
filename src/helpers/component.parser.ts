@@ -9,7 +9,7 @@ import {
 
 
 export async function transpileComponent(path: string = ''): Promise<PredictedTranspilation> {
-  if (!path.includes('💉')) {
+  if (!path || path && !path.includes('💉')) {
     return;
   }
   const originalPath = `${path}`;
