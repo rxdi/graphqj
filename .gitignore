@@ -4,7 +4,6 @@ projects
 .cache
 lib
 args.yml
-gj.yml
 resolvers.yml
 test.html
 types.yml
