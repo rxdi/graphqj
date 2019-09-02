@@ -766,8 +766,11 @@ findUser2: 💉./resolvers/findUser.resolver.yml
 # Possible view configuration
 
 ```yml
-
 $mode: advanced
+# $imports:
+#   - 💉./examples/mix/hamburger/server/hamburger.server.module.ts
+# $components:
+#   - 💉./examples/mix/hamburger/client/hamburger.client.module.ts
 
 $types:
   User:
@@ -777,7 +780,7 @@ $types:
     arrayOfNumbers: Number[]
     arrayOfStrings: String[]
     arrayOfStrings2: String[]
-
+    users: User[]
 $args:
   UserPayload:
     name: String!
@@ -791,16 +794,17 @@ $resolvers:
     resolve: !!js/function >
       function foobar(root, payload, context, info) {
         return {
-          "name": "22233",
-          "email": "22",
-          "phone": 2223
+          "name": "Кристиян Тачев",
+          "arrayOfStrings": ["dada", "dada"],
+          "email": "kristiqn.tachev@gmail.com",
+          "phone": 876667537
         }
       }
 
 $views:
   app:
     components:
-     - http://0.0.0.0:9000/components/hamburger.component.js
+
     html: |
       <style>
         .spacer {
@@ -848,38 +852,53 @@ $views:
         <li><a href="/">Home</a></li>
         <li><a href="/gosho">Gosho</a></li>
         <li><a href="/gosho444">Gosho444</a></li>
-            <li><a href="/dadada">Dadadada</a></li>
+        <li><a href="/dadada">1</a></li>
+        <li><a href="/dadada">2</a></li>
+        <li><a href="/dadada">3</a></li>
+        <li><a href="/dadada">4</a></li>
+        <li><a href="/dadada">5</a></li>
         <span class="spacer"></span>
       </ul>
+
       <div class="footer" slot="footer">
         <p>Footer</p>
       </div>
 
   home:
-    query: findUser
-    props: User
+    query: |
+      query findUser {
+        findUser {
+          name
+          email
+          phone
+          arrayOfStrings
+        }
+      }
     output: UserPayload
+    policy: network-only
     html: |
-      Welcome to Home
+      Welcome to Home component
+      <p>Name: {name}</p>
+      <p>Email: {email}</p>
+      <p>Phone: {phone}</p>
+      {arrayOfStrings}
       <div style="background-color: red">
-        <hamburger-component type="3dx" active=true></hamburger-component>
+        <hamburger-component type="3dx" active=true enableBackendStatistics=${true}></hamburger-component>
       </div>
 
   not-found:
     html: |
-      module is really hot ddd
-      dadada31313131ddd22222222222225
-
+      Not found
   gosho:
+    query: findUser
     html: |
       Welcome to Gosho
-
-
-  gosho444:
-    html: |
-      Welcome to Gosho 44445
+      <p>Name: {name}</p>
+      <p>Email: {email}</p>
+      <p>Phone: {phone}</p>
 
   dadada:
     html: |
-      Welcome to Dadadada
+      Welcome to Dadada
+
 ```

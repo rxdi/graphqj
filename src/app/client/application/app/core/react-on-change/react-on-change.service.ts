@@ -25,11 +25,17 @@ import {
 export class ReactOnChangeService {
   @Inject(ApolloClient)
   private apollo: ApolloClient;
-  private loadedComponents: Map<string, BehaviorSubject<string>> = new Map();
-  private routes = [];
+
   @Router()
   private router: Router;
+
+  private loadedComponents: Map<
+    string,
+    BehaviorSubject<IClientViewType>
+  > = new Map();
+  private routes = [];
   private clientReady: boolean;
+  private initalized: boolean;
 
   subscribeToAppChanges() {
     const app = from(
@@ -56,7 +62,12 @@ export class ReactOnChangeService {
       map(({ data }) => data.listenForChanges),
       tap(change =>
         this.loadDynamicBundles(
-          [].concat(...change.components ? change.components : [], ...change.views.map(v => v.components)).filter(i => !!i)
+          []
+            .concat(
+              ...(change.components ? change.components : []),
+              ...change.views.map(v => v.components)
+            )
+            .filter(i => !!i)
         )
       ),
       tap(async change => {
@@ -70,7 +81,11 @@ export class ReactOnChangeService {
             return `${method} ${k} { ${k} { ${Object.keys(nestedFields)
               .map(field => {
                 const nestedField = nestedFields[field];
-                if (nestedField && nestedField.type && nestedField.type.getFields) {
+                if (
+                  nestedField &&
+                  nestedField.type &&
+                  nestedField.type.getFields
+                ) {
                   const nestedTypes = nestedField.type.getFields();
                   field = `${field} { ${Object.keys(nestedTypes)
                     .filter(t => t !== field)
@@ -101,17 +116,17 @@ export class ReactOnChangeService {
           if (v.name === 'app') {
             return;
           }
-          let observable: BehaviorSubject<string>;
+          let observable: BehaviorSubject<IClientViewType>;
           const exists = this.loadedComponents.get(selector);
           if (exists) {
             this.routes.push({
               path: `/${v.name}`,
               component: selector
             });
-            exists.next(v.html);
+            exists.next(v);
             return;
           } else {
-            observable = new BehaviorSubject(v.html);
+            observable = new BehaviorSubject(v);
           }
 
           @Component({ selector })
@@ -119,32 +134,54 @@ export class ReactOnChangeService {
             @property()
             values: Object;
 
-            @TemplateObservable()
-            private BasicTemplate = observable.pipe(map(h => unsafeHTML(h)));
+            @property()
+            options: IClientViewType;
 
             @TemplateObservable()
-            private QueryTemplate = observable.pipe(mergeMap((html) => combineLatest(
-              of(html),
-              v.query ? this.makeQuery() : of({})
-            ).pipe(
-              map(([html, query]) => this.parseTemplateQuery(html, query)),
-            )));
+            private BasicTemplate = observable.pipe(
+              tap(options => (this.options = options)),
+              map(({ html }) => html),
+              map(h => unsafeHTML(h))
+            );
 
-            parseTemplateQuery(h: string, query: any) {
-              let stringValue = h
-                .split('{')
-                .join('')
-                .split('}')
-                .join('');
+            @TemplateObservable()
+            private QueryTemplate = observable.pipe(
+              tap(options => (this.options = options)),
+              map(({ html }) => html),
+              mergeMap(html =>
+                combineLatest(
+                  of(html),
+                  this.options.query ? from(this.makeQuery()) : of({})
+                ).pipe(
+                  map(([html, query]) => this.parseTemplateQuery(html, query))
+                )
+              )
+            );
 
-              Object.keys(query)
-                .reduce((acc, curr) => [...acc, curr], [])
-                .forEach(v =>
-                  stringValue.includes(v)
-                    ? (stringValue = stringValue.replace(v, query[v]))
-                    : null
+            private replaceSpecialCharacter(
+              template: string,
+              object: Object,
+              options: { left: string; right: string } = {
+                left: '{',
+                right: '}'
+              }
+            ) {
+              let modifiedTemplate: string = template;
+              const replaceArray = Object.keys(object);
+              for (var i = 0; i < replaceArray.length; i++) {
+                modifiedTemplate = modifiedTemplate.replace(
+                  new RegExp(
+                    options.left + replaceArray[i] + options.right,
+                    'gi'
+                  ),
+                  object[replaceArray[i]]
                 );
-              return unsafeHTML(stringValue);
+              }
+              return modifiedTemplate;
+            }
+
+            private parseTemplateQuery(h: string, query: Object) {
+              return unsafeHTML(this.replaceSpecialCharacter(h, query));
             }
 
             async OnDestroy() {
@@ -155,34 +192,36 @@ export class ReactOnChangeService {
               console.log(`Enter component ${selector}`);
             }
 
-            makeQuery() {
+            private makeQuery() {
               const isWrittenQuery =
-                v.query.includes('query') ||
-                v.query.includes('mutation') ||
-                v.query.includes('subscription');
+                this.options.query.includes('query') ||
+                this.options.query.includes('mutation') ||
+                this.options.query.includes('subscription');
               let query: string;
               let querySelector: string;
 
               let queryType: 'mutate' | 'query' | 'subscription';
 
               if (isWrittenQuery) {
-                const splittedQuery = v.query.split(' ');
+                const splittedQuery = this.options.query.split(' ');
                 querySelector = splittedQuery[1];
                 queryType = splittedQuery[0] as any;
                 query = gql`
-                  ${v.query}
+                  ${this.options.query}
                 `;
               } else {
-                querySelector = v.query;
+                querySelector = this.options.query;
+                queryType = 'query';
                 query = gql`
-                  ${queries.find(q => q.includes(v.query))}
+                  ${queries.find(q => q.includes(this.options.query))}
                 `;
               }
               let options:
                 | QueryOptions
                 | SubscriptionOptions
                 | MutationOptions = {
-                fetchPolicy: (v.policy as FetchPolicy) || 'network-only',
+                fetchPolicy:
+                  (this.options.policy as FetchPolicy) || 'network-only',
                 query: null,
                 mutation: null
               };
@@ -200,14 +239,13 @@ export class ReactOnChangeService {
 
             render() {
               return html`
-              ${v.query
-                ? html`
-                    ${this.QueryTemplate}
-                  `
-                : html`
-                    ${this.BasicTemplate}
-                  `
-                }
+                ${v.query
+                  ? html`
+                      ${this.QueryTemplate}
+                    `
+                  : html`
+                      ${this.BasicTemplate}
+                    `}
               `;
             }
           }
@@ -217,11 +255,16 @@ export class ReactOnChangeService {
           });
           this.loadedComponents.set(selector, observable);
         });
-        this.router.setRoutes([
-          {
-            path: '/',
-            component: 'home-component'
-          },
+        if (!this.initalized) {
+          this.router.setRoutes([
+            {
+              path: '/',
+              component: 'home-component'
+            }
+          ]);
+          this.initalized = true;
+        }
+        this.router.addRoutes([
           ...this.routes,
           {
             path: '(.*)',
