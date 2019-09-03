@@ -278,8 +278,8 @@
                 "kind": "LIST",
                 "name": null,
                 "ofType": {
-                  "kind": "SCALAR",
-                  "name": "String",
+                  "kind": "OBJECT",
+                  "name": "ComponentsType",
                   "ofType": null
                 }
               },
@@ -304,6 +304,41 @@
             },
             {
               "name": "schema",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            }
+          ],
+          "inputFields": null,
+          "interfaces": [],
+          "enumValues": null,
+          "possibleTypes": null
+        },
+        {
+          "kind": "OBJECT",
+          "name": "ComponentsType",
+          "description": null,
+          "fields": [
+            {
+              "name": "link",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "selector",
               "description": null,
               "args": [],
               "type": {
@@ -357,8 +392,8 @@
                 "kind": "LIST",
                 "name": null,
                 "ofType": {
-                  "kind": "SCALAR",
-                  "name": "String",
+                  "kind": "OBJECT",
+                  "name": "ComponentsType",
                   "ofType": null
                 }
               },

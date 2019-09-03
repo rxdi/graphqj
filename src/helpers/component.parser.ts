@@ -6,6 +6,7 @@ import {
   TranspileTypescript,
   TranspileTypescriptParcel
 } from './typescript.builder';
+import { IComponentsType } from 'src/app/@introspection';
 
 
 export async function transpileComponent(path: string = ''): Promise<PredictedTranspilation> {
@@ -37,7 +38,7 @@ export async function mapComponentsPath(views: ConfigViews) {
     []
       .concat(...Object.keys(views).map(v => views[v].components))
       .filter(i => !!i)
-      .map(c => transpileComponent(c))
+      .map(c => transpileComponent(c.link))
   )).filter(i => !!i);
 }
 
@@ -50,9 +51,10 @@ export function modifyViewsConfig(
       return;
     }
     views[v].components = views[v].components.map(c => {
-      const exists = components.find(p => p.originalPath === c);
+      const exists = components.find(p => p.originalPath === c.link);
       if (exists) {
-        return exists.link;
+        c.link = exists.link;
+        return c;
       }
       return c;
     });
@@ -72,11 +74,11 @@ export async function transpileComponentsForViews(views: ConfigViews) {
 }
 
 
-export async function predictConfig(components: string[]) {
-  return Promise.all(components.map(async c => (await transpileComponent(c))))
+export async function predictConfig(components: IComponentsType[]) {
+  return Promise.all(components.map(async c => (await transpileComponent(c.link))))
 }
 
-export async function transpileComponentsInit(components: string[]) {
+export async function transpileComponentsInit(components: IComponentsType[]) {
   const config = await predictConfig(components);
   for (const predictedConfig of config) {
     await TranspileTypescriptParcel(

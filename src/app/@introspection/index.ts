@@ -62,9 +62,16 @@
   
   export interface IClientType {
     __typename?: "ClientType";
-    components?: Array<string> | null;
+    components?: Array<IComponentsType> | null;
     views?: Array<IClientViewType> | null;
     schema?: string | null;
+}
+
+  
+  export interface IComponentsType {
+    __typename?: "ComponentsType";
+    link?: string | null;
+    selector?: string | null;
 }
 
   
@@ -72,7 +79,7 @@
     __typename?: "ClientViewType";
     html?: string | null;
     lhtml?: string | null;
-    components?: Array<string> | null;
+    components?: Array<IComponentsType> | null;
     name?: string | null;
     policy?: string | null;
     query?: string | null;

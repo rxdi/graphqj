@@ -14,7 +14,8 @@ import {
   ISubscription,
   IClientViewType,
   IClientType,
-  IMutation
+  IMutation,
+  IComponentsType
 } from '../../../../../@introspection';
 import { Router } from '@rxdi/router';
 import { BaseComponent } from './base.component';
@@ -30,7 +31,10 @@ import { parse, parseDefaults } from 'himalaya';
 const CLIENT_READY_QUERY = gql`
   mutation {
     clientReady {
-      components
+      components {
+        link
+        selector
+      }
       views {
         name
         lhtml
@@ -38,7 +42,10 @@ const CLIENT_READY_QUERY = gql`
         query
         props
         output
-        components
+        components {
+          link
+          selector
+        }
         policy
       }
       schema
@@ -55,10 +62,16 @@ const SUBSCRIBE_TO_CHANGES = gql`
         query
         props
         output
-        components
+        components {
+          link
+          selector
+        }
         policy
       }
-      components
+      components {
+        link
+        selector
+      }
       schema
     }
   }
@@ -130,18 +143,15 @@ export class ReactOnChangeService {
         })
       )
     ).pipe(
-      map(
-        ({ data: { clientReady, listenForChanges } }: MixinReactToChanges) =>
-          (clientReady || listenForChanges) as IClientType
-      ),
-      tap(change => this.loadBundles(change)),
+      map( ({ data: { clientReady, listenForChanges } }: MixinReactToChanges) => (clientReady || listenForChanges)),
+      switchMap((change) => this.loadComponents(change)),
       tap(change => this.applyChanges(change)),
       map(change => this.getApp(change.views))
     );
   }
 
-  private loadBundles(change: IClientType) {
-    return this.loadDynamicBundles(
+  private async loadComponents(change: IClientType) {
+    await this.loadDynamicComponents(
       []
         .concat(
           ...(change.components ? change.components : []),
@@ -149,6 +159,7 @@ export class ReactOnChangeService {
         )
         .filter(i => !!i)
     );
+    return change;
   }
 
   private createExecutableQuery(
@@ -190,8 +201,8 @@ export class ReactOnChangeService {
     );
     const queries = [...Queries, Mutations, Subscriptions];
     this.routes = [];
-
-    change.views.forEach(v => {
+    await Promise.all(change.views.map(async v => {
+  
       const selector = `${v.name}-component`;
       if (v.name === 'app') {
         return;
@@ -318,23 +329,21 @@ export class ReactOnChangeService {
         @property()
         loaded: Object;
         @property()
-        options: IClientViewType;
+        options: IClientViewType = v;
 
         @TemplateObservable()
         private BasicTemplate = observable.pipe(
           tap(options => (this.options = options)),
-          map(({ html }) => html),
-          map(h => unsafeHTML(h))
+          map(({ html }) => unsafeHTML(html))
         );
 
         @TemplateObservable()
         private QueryTemplate = observable.pipe(
           tap(options => (this.options = options)),
-          map(({ html }) => html),
-          mergeMap(html =>
+          mergeMap(clientView =>
             combineLatest(
-              of(html),
-              this.options.query ? from(this.makeQuery()) : of({})
+              of(clientView.html),
+              clientView.query ? from(this.makeQuery()) : of({})
             ).pipe(
               map(([html, query]) =>
                 unsafeHTML(replaceSpecialCharacter(html, query))
@@ -377,7 +386,7 @@ export class ReactOnChangeService {
             `;
           }
           let options: QueryOptions | SubscriptionOptions | MutationOptions = {
-            fetchPolicy: (this.options.policy as FetchPolicy) || 'network-only',
+            fetchPolicy: (this.options.policy as FetchPolicy),
             query: null,
             mutation: null
           };
@@ -399,7 +408,7 @@ export class ReactOnChangeService {
 
         render() {
           return html`
-          ${!this.loaded ? html`${v.lhtml ? unsafeHTML(v.lhtml) : html`<loading-screen-component></loading-screen-component>`}` : ''}
+          ${!this.loaded && this.options.query ? html`${this.options.lhtml ? unsafeHTML(this.options.lhtml) : html`<loading-screen-component></loading-screen-component>`}` : ''}
             ${v.query
               ? html`
                   ${this.QueryTemplate}
@@ -410,12 +419,14 @@ export class ReactOnChangeService {
           `;
         }
       }
+      await window.customElements.whenDefined(selector)
       this.routes.push({
         path: `/${v.name}`,
         component: selector
       });
       this.loadedComponents.set(selector, observable);
-    });
+    }))
+
     if (!this.initalized) {
       this.router.setRoutes([
         {
@@ -452,8 +463,8 @@ export class ReactOnChangeService {
     `;
   }
 
-  loadDynamicBundles(bundles: string[]) {
-    bundles.forEach(link => {
+  async loadDynamicComponents(bundles: IComponentsType[]) {
+    return await Promise.all(bundles.map(async ({ link, selector }) => {
       if (this.loadedComponents.has(link)) {
         // location.reload();
         return;
@@ -463,6 +474,7 @@ export class ReactOnChangeService {
       scriptFileEl.setAttribute('src', link);
       this.loadedComponents.set(link, scriptFileEl as any);
       document.body.appendChild(scriptFileEl);
-    });
+      await window.customElements.whenDefined(selector)
+    }))
   }
 }

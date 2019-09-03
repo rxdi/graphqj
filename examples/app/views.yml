@@ -2,7 +2,8 @@ app:
   html: 💉./views/app.html
 home:
   components:
-    - http://localhost:9000/components/hamburger.client.module.js
+    - link: http://localhost:9000/components/hamburger.client.module.js
+      selector: hamburger-component
   query: |
     query findUser {
       findUser {
@@ -37,6 +38,11 @@ about:
     }
   html: 💉./views/about.html
 aboutwithloading:
+  components:
+    - link: http://localhost:9000/components/hamburger.client.module.js
+      selector: hamburger-component
+    - link: http://localhost:9000/components/hamburger.client.module.js
+      selector: hamburger-component
   query: |
     query findUser {
       findUser {
@@ -51,7 +57,9 @@ aboutwithloading:
         status
       }
     }
-  lhtml: ada222222222222
   html: |
     d
+    ada
+    ad
+    ad
     <div *if="name">{name}</div>

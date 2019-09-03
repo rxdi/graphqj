@@ -1,4 +1,10 @@
-import { GraphQLObjectType, GraphQLString, GraphQLList, GraphQLEnumType } from 'graphql';
+import {
+  GraphQLObjectType,
+  GraphQLString,
+  GraphQLList,
+  GraphQLEnumType
+} from 'graphql';
+import { ComponentsType } from './components.type';
 
 export const ClientViewType = new GraphQLObjectType({
   name: 'ClientViewType',
@@ -10,7 +16,7 @@ export const ClientViewType = new GraphQLObjectType({
       type: GraphQLString
     },
     components: {
-      type: new GraphQLList(GraphQLString)
+      type: new GraphQLList(ComponentsType)
     },
     name: {
       type: GraphQLString
