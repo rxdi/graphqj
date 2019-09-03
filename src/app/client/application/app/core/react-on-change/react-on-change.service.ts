@@ -28,6 +28,7 @@ import {
 } from '@rxdi/graphql-client';
 import { parse, parseDefaults, stringify } from 'himalaya';
 interface Element {
+  tagName: string;
   children: Element[];
   content: string;
   type: 'element' | 'text';
@@ -260,31 +261,97 @@ export class ReactOnChangeService {
                 const specialIteratorOperator = element.attributes.find(
                   a => a.key === '*let'
                 );
-                const ofOperator = element.attributes.find(a => a.key === 'of')
+
+                const ofOperator = element.attributes.find(a => a.key === 'of');
 
                 if (specialIteratorOperator && ofOperator) {
                   const findRecursive = (childrens: Element[]) => {
                     return childrens.map(c => {
-                        if(c.content && c.content.includes(`{{${specialIteratorOperator.value}}}`)) {
-                          const values = JSON.parse(ofOperator.value) as Array<string>;
-                          c.content = '';
-                          values.forEach(v => {
-                            c.content += `${v}`;
-                          })
-                        }
-                        if (c.children) {
-                          c.children = findRecursive(c.children);
-                        }
-                        return c;
-                    });
-                  }
-                  element.children = findRecursive(element.children);
-                  const uniqueContainerId = createUniqueHash(JSON.stringify(element.position));
-                  Container.set(uniqueContainerId, ofOperator.value)
-                  // const container = Container.get(uniqueContainerId)
-                  element.attributes.splice(element.attributes.indexOf(specialIteratorOperator, 1))
-                  element.attributes.splice(element.attributes.indexOf(ofOperator, 1))
+                      if (c.attributes) {
+                        const TemplateOperator = c.attributes.find(
+                          a => a.key === '*template'
+                        );
+                        if (
+                          TemplateOperator &&
+                          c.children &&
+                          c.children.length
+                        ) {
+                          const values = JSON.parse(ofOperator.value) as Array<
+                            string
+                          >;
 
+                          const highOrderComponent = c.children.find(
+                            c => c.type === 'element'
+                          );
+
+                          let element: Element;
+                          if (highOrderComponent) {
+                            element = highOrderComponent;
+                          } else {
+                            element = c;
+                          }
+                          if (c.children && c.children.length) {
+                            c.children[0].tagName = element.tagName;
+                          }
+                          // c.children[0].content = '';
+
+                          const parseLoop = () => {
+                            const specialExtractor = c.children[0].content.match(
+                              new RegExp(options.left + '(.*)' + options.right)
+                            );
+                            debugger
+                            if (
+                              specialExtractor &&
+                              specialExtractor.length >= 1
+                            ) {
+                              const o = specialExtractor[1]
+                                .replace('{', '')
+                                .replace('}', '')
+                                .trim()
+                                .split('.');
+                              o.shift();
+                              return c.children[0].content.replace(
+                                specialExtractor[0],
+                                values
+                                  .map(v => {
+                                    return `<${
+                                      element.tagName
+                                    } ${element.attributes
+                                      .map(a => ` ${a.key}="${a.value}"`)
+                                      .join(' ')}>${resolve(o.join('.'), v) ||
+                                      v}</${element.tagName}>`;
+                                  })
+                                  .join(' ')
+                              );
+                            }
+                            return '';
+                          };
+                          c.children[0].content = parseLoop();
+                          c.children.splice(c.children.indexOf(element), 1)
+                          c.attributes.splice(
+                            c.attributes.indexOf(TemplateOperator),
+                            1
+                          );
+                        }
+                      }
+                      if (c.children) {
+                        c.children = findRecursive(c.children);
+                      }
+                      return c;
+                    });
+                  };
+                  element.children = findRecursive(element.children);
+                  // const uniqueContainerId = createUniqueHash(
+                  //   JSON.stringify(element.position)
+                  // );
+                  // Container.set(uniqueContainerId, ofOperator.value);
+                  // const container = Container.get(uniqueContainerId)
+                  element.attributes.splice(
+                    element.attributes.indexOf(specialIteratorOperator, 1)
+                  );
+                  element.attributes.splice(
+                    element.attributes.indexOf(ofOperator, 1)
+                  );
                 }
                 if (specialConditionalOperator) {
                   if (
@@ -292,17 +359,23 @@ export class ReactOnChangeService {
                       replaceSpecialBracklets(specialConditionalOperator.value)
                     ]
                   ) {
-                    elementToRemove.push(elements.indexOf(element))
+                    elementToRemove.push(elements.indexOf(element));
                   }
-                  element.attributes.splice(element.attributes.indexOf(specialConditionalOperator, 1))
+                  element.attributes.splice(
+                    element.attributes.indexOf(specialConditionalOperator, 1)
+                  );
                 }
-
               }
               if (element.content) {
-              const specialExtractor = element.content.match(
-                new RegExp(options.left + '(.*)' + options.right)
-              );
-              if (element.type === 'text' && element.content.includes('') && specialExtractor && specialExtractor.length > 1) {
+                const specialExtractor = element.content.match(
+                  new RegExp(options.left + '(.*)' + options.right)
+                );
+                if (
+                  element.type === 'text' &&
+                  element.content.includes('') &&
+                  specialExtractor &&
+                  specialExtractor.length > 1
+                ) {
                   const specialCharacters = specialExtractor[1];
                   const prop = resolve(specialCharacters, object);
                   if (prop) {
@@ -314,14 +387,16 @@ export class ReactOnChangeService {
                 }
               }
               return element;
+            });
+          };
+          let newTemplate = iterateOverElement(
+            parse(template || '', {
+              ...parseDefaults,
+              includePositions: true
             })
-          }
-          let newTemplate = iterateOverElement(parse(template, {
-            ...parseDefaults,
-            includePositions: true
-          }));
-          elementToRemove.forEach(e => newTemplate.splice(e, 1))
-          elementToRemove = []
+          );
+          elementToRemove.forEach(e => newTemplate.splice(e, 1));
+          elementToRemove = [];
           const HTML = stringify(newTemplate);
           return HTML;
         };

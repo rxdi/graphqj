@@ -1,23 +1,12 @@
-Welcome to Gosho223
+Welcome to Gosho
 <p>Name: {name}</p>
 <p>Email: {email}</p>
 <p>Phone: {phone}</p>
 
-<div *let="x" of="[1, 2]">
-    <p>{{x}}</p>
+<div *if="{phone}">
+  <div *let="tedyBear" of="[{"pesho": {"gosho": "omg"}}]">
+    <div *template style="background-color: red">
+      { tedyBear.pesho.gosho }
+    </div>
+  </div>
 </div>
-
-<p *if="{email}">
-  Phone: {phone}
-
-  <div style="background-color: red">
-        <hamburger-component type="3dx" active=true ></hamburger-component>
-    </div>
-    <div style="background-color: red">
-            <hamburger-component type="3dx" active=true ></hamburger-component>
-        </div>
-
-<div style="background-color: red">
-        <hamburger-component type="3dx" active=true ></hamburger-component>
-    </div>
-</p>
