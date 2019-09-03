@@ -21,5 +21,18 @@ home:
 not-found:
   html: 💉./views/not-found.html
 about:
-  query: findUser
+  query: |
+    query findUser {
+      findUser {
+        name
+        email
+        phone
+        user {
+          name
+        }
+      }
+      status {
+        status
+      }
+    }
   html: 💉./views/about.html

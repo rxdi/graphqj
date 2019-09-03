@@ -25,6 +25,7 @@ import {
   SubscriptionOptions,
   MutationOptions
 } from '@rxdi/graphql-client';
+import { parse, parseDefaults } from 'himalaya';
 
 const CLIENT_READY_QUERY = gql`
   mutation {
@@ -63,6 +64,41 @@ const SUBSCRIBE_TO_CHANGES = gql`
 
 interface MixinReactToChanges {
   data: { clientReady: IClientType; listenForChanges: IClientType };
+}
+
+interface Attributes {
+  argument: undefined;
+  endPos: 147;
+  literalValue: string;
+  name: string;
+  pos: 137;
+  value: string;
+}
+interface EventParser {
+  argument: any;
+  attributes: Attributes[];
+  concise: boolean;
+  emptyTagName: any;
+  endPos: number;
+  openTagOnly: boolean;
+  params: any;
+  pos: number;
+  selfClosed: boolean;
+  setParseOptions: Function;
+  tagName: string;
+  tagNameEndPos: number;
+  tagNameExpression: undefined;
+  type: 'openTag' | string;
+}
+function dec2hex(dec) {
+  return ('0' + dec.toString(16)).substr(-2);
+}
+
+// generateId :: Integer -> String
+function generateId(len) {
+  var arr = new Uint8Array((len || 40) / 2);
+  window.crypto.getRandomValues(arr);
+  return Array.from(arr, dec2hex).join('');
 }
 
 @Injectable()
@@ -135,7 +171,7 @@ export class ReactOnChangeService {
     });
   }
 
-  applyChanges(change: IClientType) {
+  async applyChanges(change: IClientType) {
     const schema = buildSchema(change.schema);
 
     const Queries = this.createExecutableQuery(
@@ -152,6 +188,7 @@ export class ReactOnChangeService {
     );
     const queries = [...Queries, Mutations, Subscriptions];
     this.routes = [];
+
     change.views.forEach(v => {
       const selector = `${v.name}-component`;
       if (v.name === 'app') {
@@ -169,8 +206,11 @@ export class ReactOnChangeService {
       } else {
         observable = new BehaviorSubject(v);
       }
-
-      const resolve = (path: string, obj: Object, separator = '.') => (Array.isArray(path) ? path : path.split(separator)).reduce((prev, curr) => prev && prev[curr], obj as string)
+      const resolve = (path: string, obj: Object, separator = '.') =>
+        (Array.isArray(path) ? path : path.split(separator)).reduce(
+          (prev, curr) => prev && prev[curr],
+          obj as string
+        );
       const replaceSpecialCharacter = (
         template: string,
         object: Object,
@@ -181,6 +221,62 @@ export class ReactOnChangeService {
       ) => {
         let modifiedTemplate: string = template;
         const replaceArray = Object.keys(object);
+        const directives: {
+          attributes: { value: string }[];
+          position: { end: { index: number }; start: { index: number } };
+        }[] = [].concat(
+          parse(modifiedTemplate, {
+            ...parseDefaults,
+            includePositions: true
+          })
+            .filter(
+              e =>
+                e.attributes &&
+                e.attributes.length &&
+                e.attributes.find(a => a.key === '*if')
+            )
+            .filter(i => !!i)
+        );
+        let toReplace = [];
+        for (const directive of directives) {
+          const magicKey = directive.attributes[0].value
+            .replace(options.left, '')
+            .replace(options.right, '');
+          const isTruthy = Boolean(
+            object[magicKey] || resolve(magicKey, object)
+          );
+          const partLength =
+            directive.position.end.index - directive.position.start.index;
+          const uniqueId = generateId(partLength);
+          if (!isTruthy) {
+            toReplace.push(uniqueId);
+            modifiedTemplate = modifiedTemplate.replace(
+              modifiedTemplate.substring(
+                directive.position.start.index,
+                directive.position.end.index
+              ),
+              uniqueId
+            );
+          } else {
+            const onlyDirective = modifiedTemplate
+              .substring(
+                directive.position.start.index,
+                directive.position.end.index
+              )
+              .replace(` *if="${directive.attributes[0].value}"`, '');
+            modifiedTemplate = modifiedTemplate.replace(
+              modifiedTemplate.substring(
+                directive.position.start.index,
+                directive.position.end.index
+              ),
+              onlyDirective
+            );
+          }
+        }
+        toReplace.forEach(
+          v => (modifiedTemplate = modifiedTemplate.replace(v, ''))
+        );
+        toReplace = [];
         for (var i = 0; i < replaceArray.length; i++) {
           const character = replaceArray[i];
           if (modifiedTemplate.includes(`${character}.`)) {
@@ -198,15 +294,18 @@ export class ReactOnChangeService {
               }
             }
           } else {
-            modifiedTemplate = modifiedTemplate.replace(
-              new RegExp(options.left + character + options.right, 'gi'),
-              object[character]
-            );
+            if (object[character]) {
+              modifiedTemplate = modifiedTemplate.replace(
+                new RegExp(options.left + character + options.right, 'gi'),
+                object[character]
+              );
+            }
           }
         }
+
         return modifiedTemplate;
-      }
-      const parseTemplateQuery = (h: string, query: Object) => unsafeHTML(replaceSpecialCharacter(h, query))
+      };
+
       @Component({ selector })
       class NewElement extends BaseComponent {
         @property()
@@ -230,7 +329,11 @@ export class ReactOnChangeService {
             combineLatest(
               of(html),
               this.options.query ? from(this.makeQuery()) : of({})
-            ).pipe(map(([html, query]) => parseTemplateQuery(html, query)))
+            ).pipe(
+              map(([html, query]) =>
+                unsafeHTML(replaceSpecialCharacter(html, query))
+              )
+            )
           )
         );
 
