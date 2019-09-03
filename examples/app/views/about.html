@@ -1,12 +1,23 @@
-Welcome to Gosho
+Welcome to Gosho223
 <p>Name: {name}</p>
 <p>Email: {email}</p>
 <p>Phone: {phone}</p>
 
-<p *if="email">
-    <p>Phone: {phone}</p>
-</p>
+<div *let="x" of="[1, 2]">
+    <p>{{x}}</p>
+</div>
+
+<p *if="{email}">
+  Phone: {phone}
+
+  <div style="background-color: red">
+        <hamburger-component type="3dx" active=true ></hamburger-component>
+    </div>
+    <div style="background-color: red">
+            <hamburger-component type="3dx" active=true ></hamburger-component>
+        </div>
 
 <div style="background-color: red">
-    <hamburger-component type="3dx" active=true ></hamburger-component>
-</div>
+        <hamburger-component type="3dx" active=true ></hamburger-component>
+    </div>
+</p>

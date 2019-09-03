@@ -1,4 +1,4 @@
-import { Injectable, Inject, Container } from '@rxdi/core';
+import { Injectable, Inject, Container, createUniqueHash } from '@rxdi/core';
 import { from, BehaviorSubject, combineLatest, of, merge } from 'rxjs';
 import { ApolloClient } from '@rxdi/graphql-client';
 import gql from 'graphql-tag';
@@ -26,8 +26,14 @@ import {
   SubscriptionOptions,
   MutationOptions
 } from '@rxdi/graphql-client';
-import { parse, parseDefaults } from 'himalaya';
-
+import { parse, parseDefaults, stringify } from 'himalaya';
+interface Element {
+  children: Element[];
+  content: string;
+  type: 'element' | 'text';
+  attributes: { value: string; key: string }[];
+  position: { end: { index: number }; start: { index: number } };
+}
 const CLIENT_READY_QUERY = gql`
   mutation {
     clientReady {
@@ -143,8 +149,14 @@ export class ReactOnChangeService {
         })
       )
     ).pipe(
-      map( ({ data: { clientReady, listenForChanges } }: MixinReactToChanges) => (clientReady || listenForChanges)),
-      switchMap((change) => this.loadComponents(change)),
+      map(
+        ({ data: { clientReady, listenForChanges } }: MixinReactToChanges) =>
+          clientReady || listenForChanges
+      ),
+      switchMap(async change => {
+        await this.loadComponents(change);
+        return change;
+      }),
       tap(change => this.applyChanges(change)),
       map(change => this.getApp(change.views))
     );
@@ -201,231 +213,233 @@ export class ReactOnChangeService {
     );
     const queries = [...Queries, Mutations, Subscriptions];
     this.routes = [];
-    await Promise.all(change.views.map(async v => {
-  
-      const selector = `${v.name}-component`;
-      if (v.name === 'app') {
-        return;
-      }
-      let observable: BehaviorSubject<IClientViewType>;
-      const exists = this.loadedComponents.get(selector);
-      if (exists) {
+    await Promise.all(
+      change.views.map(async v => {
+        const selector = `${v.name}-component`;
+        if (v.name === 'app') {
+          return;
+        }
+        let observable: BehaviorSubject<IClientViewType>;
+        const exists = this.loadedComponents.get(selector);
+        if (exists) {
+          this.routes.push({
+            path: `/${v.name}`,
+            component: selector
+          });
+          exists.next(v);
+          return;
+        } else {
+          observable = new BehaviorSubject(v);
+        }
+        const resolve = (path: string, obj: Object, separator = '.') =>
+          (Array.isArray(path) ? path : path.split(separator)).reduce(
+            (prev, curr) => prev && prev[curr],
+            obj as string
+          );
+        const replaceSpecialCharacter = (
+          template: string,
+          object: Object,
+          options: { left: string; right: string } = {
+            left: '{',
+            right: '}'
+          }
+        ) => {
+          function replaceSpecialBracklets(symbol: string) {
+            return symbol.replace(options.left, '').replace(options.right, '');
+          }
+          let elementToRemove = [];
+          const iterateOverElement = (elements: Element[]) => {
+            return elements.map(element => {
+              if (element.children) {
+                element.children = iterateOverElement(element.children);
+              }
+              if (element.attributes && element.type === 'element') {
+                const specialConditionalOperator = element.attributes.find(
+                  a => a.key === '*if'
+                );
+                const specialIteratorOperator = element.attributes.find(
+                  a => a.key === '*let'
+                );
+                const ofOperator = element.attributes.find(a => a.key === 'of')
+
+                if (specialIteratorOperator && ofOperator) {
+                  const findRecursive = (childrens: Element[]) => {
+                    return childrens.map(c => {
+                        if(c.content && c.content.includes(`{{${specialIteratorOperator.value}}}`)) {
+                          const values = JSON.parse(ofOperator.value) as Array<string>;
+                          c.content = '';
+                          values.forEach(v => {
+                            c.content += `${v}`;
+                          })
+                        }
+                        if (c.children) {
+                          c.children = findRecursive(c.children);
+                        }
+                        return c;
+                    });
+                  }
+                  element.children = findRecursive(element.children);
+                  const uniqueContainerId = createUniqueHash(JSON.stringify(element.position));
+                  Container.set(uniqueContainerId, ofOperator.value)
+                  // const container = Container.get(uniqueContainerId)
+                  element.attributes.splice(element.attributes.indexOf(specialIteratorOperator, 1))
+                  element.attributes.splice(element.attributes.indexOf(ofOperator, 1))
+
+                }
+                if (specialConditionalOperator) {
+                  if (
+                    !object[
+                      replaceSpecialBracklets(specialConditionalOperator.value)
+                    ]
+                  ) {
+                    elementToRemove.push(elements.indexOf(element))
+                  }
+                  element.attributes.splice(element.attributes.indexOf(specialConditionalOperator, 1))
+                }
+
+              }
+              if (element.content) {
+              const specialExtractor = element.content.match(
+                new RegExp(options.left + '(.*)' + options.right)
+              );
+              if (element.type === 'text' && element.content.includes('') && specialExtractor && specialExtractor.length > 1) {
+                  const specialCharacters = specialExtractor[1];
+                  const prop = resolve(specialCharacters, object);
+                  if (prop) {
+                    element.content = element.content.replace(
+                      `${options.left}${specialCharacters}${options.right}`,
+                      prop
+                    );
+                  }
+                }
+              }
+              return element;
+            })
+          }
+          let newTemplate = iterateOverElement(parse(template, {
+            ...parseDefaults,
+            includePositions: true
+          }));
+          elementToRemove.forEach(e => newTemplate.splice(e, 1))
+          elementToRemove = []
+          const HTML = stringify(newTemplate);
+          return HTML;
+        };
+
+        @Component({ selector })
+        class NewElement extends BaseComponent {
+          @property()
+          values: Object;
+          @property()
+          loaded: Object;
+          @property()
+          options: IClientViewType = v;
+          @TemplateObservable()
+          private BasicTemplate = observable.pipe(
+            tap(options => (this.options = options)),
+            map(({ html }) => unsafeHTML(html))
+          );
+
+          @TemplateObservable()
+          private QueryTemplate = observable.pipe(
+            tap(options => (this.options = options)),
+            mergeMap(clientView =>
+              combineLatest(
+                of(clientView.html),
+                clientView.query ? from(this.makeQuery()) : of({})
+              ).pipe(
+                map(([html, query]) => replaceSpecialCharacter(html, query)),
+                map(html => unsafeHTML(html)),
+                tap(() => (this.loaded = true))
+              )
+            )
+          );
+
+          async OnDestroy() {
+            console.log(`Leave component ${selector}`);
+          }
+
+          async OnInit() {
+            console.log(`Enter component ${selector}`);
+          }
+
+          private makeQuery() {
+            const isWrittenQuery =
+              this.options.query.includes('query') ||
+              this.options.query.includes('mutation') ||
+              this.options.query.includes('subscription');
+            let query: string;
+            let querySelector: string;
+
+            let queryType: 'mutate' | 'query' | 'subscription' | 'subscribe';
+
+            if (isWrittenQuery) {
+              const splittedQuery = this.options.query.split(' ');
+              querySelector = splittedQuery[1];
+              queryType = splittedQuery[0] as any;
+              query = gql`
+                ${this.options.query}
+              `;
+            } else {
+              querySelector = this.options.query;
+              queryType = 'query';
+              query = gql`
+                ${queries.find(q => q.includes(this.options.query))}
+              `;
+            }
+            let options:
+              | QueryOptions
+              | SubscriptionOptions
+              | MutationOptions = {
+              fetchPolicy: this.options.policy as FetchPolicy,
+              query: null,
+              mutation: null
+            };
+            if (queryType === 'mutate') {
+              options['mutation'] = query;
+            }
+
+            if (queryType === 'query') {
+              options['query'] = query;
+            }
+            if (queryType === 'subscription') {
+              options['query'] = query;
+              queryType = 'subscribe';
+            }
+            return this[queryType as string](options).pipe(
+              map(res => (res as any).data[querySelector])
+            );
+          }
+
+          render() {
+            return html`
+              ${!this.loaded && this.options.query
+                ? html`
+                    ${this.options.lhtml
+                      ? unsafeHTML(this.options.lhtml)
+                      : html`
+                          <loading-screen-component></loading-screen-component>
+                        `}
+                  `
+                : ''}
+              ${v.query
+                ? html`
+                    ${this.QueryTemplate}
+                  `
+                : html`
+                    ${this.BasicTemplate}
+                  `}
+            `;
+          }
+        }
+        await window.customElements.whenDefined(selector);
         this.routes.push({
           path: `/${v.name}`,
           component: selector
         });
-        exists.next(v);
-        return;
-      } else {
-        observable = new BehaviorSubject(v);
-      }
-      const resolve = (path: string, obj: Object, separator = '.') =>
-        (Array.isArray(path) ? path : path.split(separator)).reduce(
-          (prev, curr) => prev && prev[curr],
-          obj as string
-        );
-      const replaceSpecialCharacter = (
-        template: string,
-        object: Object,
-        options: { left: string; right: string } = {
-          left: '{',
-          right: '}'
-        }
-      ) => {
-        let modifiedTemplate: string = template;
-        const replaceArray = Object.keys(object);
-        let directives: {
-          attributes: { value: string }[];
-          position: { end: { index: number }; start: { index: number } };
-        }[] = [];
-        try {
-          directives = [].concat(
-            parse(modifiedTemplate, {
-              ...parseDefaults,
-              includePositions: true
-            })
-              .filter(
-                e =>
-                  e.attributes &&
-                  e.attributes.length &&
-                  e.attributes.find(a => a.key === '*if')
-              )
-              .filter(i => !!i)
-          );
-        } catch (e) {}
-        let toReplace = [];
-        for (const directive of directives) {
-          const magicKey = directive.attributes[0].value
-            .replace(options.left, '')
-            .replace(options.right, '');
-          const isTruthy = Boolean(
-            object[magicKey] || resolve(magicKey, object)
-          );
-          const partLength =
-            directive.position.end.index - directive.position.start.index;
-          const uniqueId = generateId(partLength);
-          if (!isTruthy) {
-            toReplace.push(uniqueId);
-            modifiedTemplate = modifiedTemplate.replace(
-              modifiedTemplate.substring(
-                directive.position.start.index,
-                directive.position.end.index
-              ),
-              uniqueId
-            );
-          } else {
-            const onlyDirective = modifiedTemplate
-              .substring(
-                directive.position.start.index,
-                directive.position.end.index
-              )
-              .replace(` *if="${directive.attributes[0].value}"`, '');
-            modifiedTemplate = modifiedTemplate.replace(
-              modifiedTemplate.substring(
-                directive.position.start.index,
-                directive.position.end.index
-              ),
-              onlyDirective
-            );
-          }
-        }
-        toReplace.forEach(
-          v => (modifiedTemplate = modifiedTemplate.replace(v, ''))
-        );
-        toReplace = [];
-        for (var i = 0; i < replaceArray.length; i++) {
-          const character = replaceArray[i];
-          if (modifiedTemplate.includes(`${character}.`)) {
-            const specialExtractor = modifiedTemplate.match(
-              new RegExp(options.left + '(.*)' + options.right)
-            );
-            if (specialExtractor && specialExtractor.length > 1) {
-              const specialCharacters = specialExtractor[1];
-              const prop = resolve(specialCharacters, object);
-              if (prop) {
-                modifiedTemplate = modifiedTemplate.replace(
-                  `${options.left}${specialCharacters}${options.right}`,
-                  prop
-                );
-              }
-            }
-          } else {
-            if (object[character]) {
-              modifiedTemplate = modifiedTemplate.replace(
-                new RegExp(options.left + character + options.right, 'gi'),
-                object[character]
-              );
-            }
-          }
-        }
-
-        return modifiedTemplate;
-      };
-
-      @Component({ selector })
-      class NewElement extends BaseComponent {
-        @property()
-        values: Object;
-        @property()
-        loaded: Object;
-        @property()
-        options: IClientViewType = v;
-
-        @TemplateObservable()
-        private BasicTemplate = observable.pipe(
-          tap(options => (this.options = options)),
-          map(({ html }) => unsafeHTML(html))
-        );
-
-        @TemplateObservable()
-        private QueryTemplate = observable.pipe(
-          tap(options => (this.options = options)),
-          mergeMap(clientView =>
-            combineLatest(
-              of(clientView.html),
-              clientView.query ? from(this.makeQuery()) : of({})
-            ).pipe(
-              map(([html, query]) =>
-                unsafeHTML(replaceSpecialCharacter(html, query))
-              ),
-              tap(() => this.loaded = true)
-            )
-          )
-        );
-
-        async OnDestroy() {
-          console.log(`Leave component ${selector}`);
-        }
-
-        async OnInit() {
-          console.log(`Enter component ${selector}`);
-        }
-
-        private makeQuery() {
-          const isWrittenQuery =
-            this.options.query.includes('query') ||
-            this.options.query.includes('mutation') ||
-            this.options.query.includes('subscription');
-          let query: string;
-          let querySelector: string;
-
-          let queryType: 'mutate' | 'query' | 'subscription' | 'subscribe';
-
-          if (isWrittenQuery) {
-            const splittedQuery = this.options.query.split(' ');
-            querySelector = splittedQuery[1];
-            queryType = splittedQuery[0] as any;
-            query = gql`
-              ${this.options.query}
-            `;
-          } else {
-            querySelector = this.options.query;
-            queryType = 'query';
-            query = gql`
-              ${queries.find(q => q.includes(this.options.query))}
-            `;
-          }
-          let options: QueryOptions | SubscriptionOptions | MutationOptions = {
-            fetchPolicy: (this.options.policy as FetchPolicy),
-            query: null,
-            mutation: null
-          };
-          if (queryType === 'mutate') {
-            options['mutation'] = query;
-          }
-
-          if (queryType === 'query') {
-            options['query'] = query;
-          }
-          if (queryType === 'subscription') {
-            options['query'] = query;
-            queryType = 'subscribe';
-          }
-          return this[queryType as string](options).pipe(
-            map(res => (res as any).data[querySelector])
-          );
-        }
-
-        render() {
-          return html`
-          ${!this.loaded && this.options.query ? html`${this.options.lhtml ? unsafeHTML(this.options.lhtml) : html`<loading-screen-component></loading-screen-component>`}` : ''}
-            ${v.query
-              ? html`
-                  ${this.QueryTemplate}
-                `
-              : html`
-                  ${this.BasicTemplate}
-                `}
-          `;
-        }
-      }
-      await window.customElements.whenDefined(selector)
-      this.routes.push({
-        path: `/${v.name}`,
-        component: selector
-      });
-      this.loadedComponents.set(selector, observable);
-    }))
+        this.loadedComponents.set(selector, observable);
+      })
+    );
 
     if (!this.initalized) {
       this.router.setRoutes([
@@ -464,17 +478,19 @@ export class ReactOnChangeService {
   }
 
   async loadDynamicComponents(bundles: IComponentsType[]) {
-    return await Promise.all(bundles.map(async ({ link, selector }) => {
-      if (this.loadedComponents.has(link)) {
-        // location.reload();
-        return;
-      }
-      const scriptFileEl = document.createElement('script');
-      scriptFileEl.setAttribute('async', '');
-      scriptFileEl.setAttribute('src', link);
-      this.loadedComponents.set(link, scriptFileEl as any);
-      document.body.appendChild(scriptFileEl);
-      await window.customElements.whenDefined(selector)
-    }))
+    return await Promise.all(
+      bundles.map(async ({ link, selector }) => {
+        if (this.loadedComponents.has(link)) {
+          // location.reload();
+          return;
+        }
+        const scriptFileEl = document.createElement('script');
+        scriptFileEl.setAttribute('async', '');
+        scriptFileEl.setAttribute('src', link);
+        this.loadedComponents.set(link, scriptFileEl as any);
+        document.body.appendChild(scriptFileEl);
+        await window.customElements.whenDefined(selector);
+      })
+    );
   }
 }
