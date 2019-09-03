@@ -6,6 +6,9 @@ export const ClientViewType = new GraphQLObjectType({
     html: {
       type: GraphQLString
     },
+    lhtml: {
+      type: GraphQLString
+    },
     components: {
       type: new GraphQLList(GraphQLString)
     },

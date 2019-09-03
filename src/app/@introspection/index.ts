@@ -71,6 +71,7 @@
   export interface IClientViewType {
     __typename?: "ClientViewType";
     html?: string | null;
+    lhtml?: string | null;
     components?: Array<string> | null;
     name?: string | null;
     policy?: string | null;

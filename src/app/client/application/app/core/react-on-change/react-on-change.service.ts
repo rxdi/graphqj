@@ -32,13 +32,14 @@ const CLIENT_READY_QUERY = gql`
     clientReady {
       components
       views {
-        html
-        components
         name
-        policy
+        lhtml
+        html
         query
         props
         output
+        components
+        policy
       }
       schema
     }
@@ -49,6 +50,7 @@ const SUBSCRIBE_TO_CHANGES = gql`
     listenForChanges(clientId: $clientId) {
       views {
         name
+        lhtml
         html
         query
         props
@@ -221,22 +223,25 @@ export class ReactOnChangeService {
       ) => {
         let modifiedTemplate: string = template;
         const replaceArray = Object.keys(object);
-        const directives: {
+        let directives: {
           attributes: { value: string }[];
           position: { end: { index: number }; start: { index: number } };
-        }[] = [].concat(
-          parse(modifiedTemplate, {
-            ...parseDefaults,
-            includePositions: true
-          })
-            .filter(
-              e =>
-                e.attributes &&
-                e.attributes.length &&
-                e.attributes.find(a => a.key === '*if')
-            )
-            .filter(i => !!i)
-        );
+        }[] = [];
+        try {
+          directives = [].concat(
+            parse(modifiedTemplate, {
+              ...parseDefaults,
+              includePositions: true
+            })
+              .filter(
+                e =>
+                  e.attributes &&
+                  e.attributes.length &&
+                  e.attributes.find(a => a.key === '*if')
+              )
+              .filter(i => !!i)
+          );
+        } catch (e) {}
         let toReplace = [];
         for (const directive of directives) {
           const magicKey = directive.attributes[0].value
@@ -310,7 +315,8 @@ export class ReactOnChangeService {
       class NewElement extends BaseComponent {
         @property()
         values: Object;
-
+        @property()
+        loaded: Object;
         @property()
         options: IClientViewType;
 
@@ -332,7 +338,8 @@ export class ReactOnChangeService {
             ).pipe(
               map(([html, query]) =>
                 unsafeHTML(replaceSpecialCharacter(html, query))
-              )
+              ),
+              tap(() => this.loaded = true)
             )
           )
         );
@@ -392,6 +399,7 @@ export class ReactOnChangeService {
 
         render() {
           return html`
+          ${!this.loaded ? html`${v.lhtml ? unsafeHTML(v.lhtml) : html`<loading-screen-component></loading-screen-component>`}` : ''}
             ${v.query
               ? html`
                   ${this.QueryTemplate}

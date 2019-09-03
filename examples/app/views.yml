@@ -36,3 +36,22 @@ about:
       }
     }
   html: 💉./views/about.html
+aboutwithloading:
+  query: |
+    query findUser {
+      findUser {
+        name
+        email
+        phone
+        user {
+          name
+        }
+      }
+      status {
+        status
+      }
+    }
+  lhtml: ada222222222222
+  html: |
+    d
+    <div *if="name">{name}</div>
