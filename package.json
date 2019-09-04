@@ -1,7 +1,7 @@
 {
   "name": "@rxdi/graphqj",
   "main": "./lib/main.js",
-  "version": "0.7.48",
+  "version": "0.7.49",
   "scripts": {
     "start": "gapi start --local --minify=false --inspect",
     "start-client": "parcel ./src/app/client/application/index.html",
@@ -15,7 +15,6 @@
     "@gapi/voyager": "^1.8.5",
     "chokidar": "^3.0.2",
     "clear-module": "^4.0.0",
-    "core-js": "^2.6.5",
     "esm": "^3.2.25",
     "fast-glob": "^3.0.4",
     "js-yaml": "^3.13.1"
@@ -40,6 +39,7 @@
   "devDependencies": {
     "@popeindustries/lit-html-server": "^1.3.0",
     "@babel/polyfill": "7.4.4",
+    "core-js": "^2.6.5",
     "@rxdi/graphql-client": "^0.7.16",
     "@rxdi/lit-html": "^0.7.16",
     "@rxdi/router": "^0.7.16",
