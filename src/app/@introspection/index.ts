@@ -79,6 +79,7 @@
     __typename?: "ClientViewType";
     html?: string | null;
     lhtml?: string | null;
+    rendering?: IClientViewRenderingEnumEnum | null;
     components?: Array<IComponentsType> | null;
     name?: string | null;
     policy?: string | null;
@@ -86,6 +87,9 @@
     props?: Array<string> | null;
     output?: string | null;
 }
+
+export   
+  type IClientViewRenderingEnumEnum = 'server' | 'client';
 
   /**
     description?: Subscription type for all subscriptions via pub sub

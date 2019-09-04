@@ -5,7 +5,7 @@ home:
     - link: http://localhost:9000/components/hamburger.client.module.js
       selector: hamburger-component
   query: |
-    query findUser {
+    query {
       findUser {
         name
         email
@@ -14,9 +14,11 @@ home:
           name
         }
       }
+      status {
+        status
+      }
     }
   output: UserPayload
-  policy: network-only
   html: 💉./views/home.html
 
 not-found:
@@ -31,11 +33,13 @@ about:
         user {
           name
         }
+        arrayOfStrings
       }
       status {
         status
       }
     }
+  # rendering: server
   html: 💉./views/about.html
 aboutwithloading:
   components:

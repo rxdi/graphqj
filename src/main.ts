@@ -149,43 +149,129 @@ export default {
       `
 $mode: advanced
 $types:
-  user:
+  User:
     name: String
     email: String
     phone: Number
     arrayOfNumbers: Number[]
     arrayOfStrings: String[]
+    arrayOfStrings2: String[]
+    users: User[]
+$args:
+  UserPayload:
+    name: String!
+    pesho: String
 
 $resolvers:
   findUser:
-    type: user
+    type: User
     args:
-      userId: String
-    resolve:
-      name: Kristiyan Tachev
-      email: test@gmail.com
-      phone: 414141
-      arrayOfNumbers: 
-        - 515151
-        - 412414
-      arrayOfStrings:
-        - '515151'
-        - '412414'
+      userId: UserPayload
+    resolve: !!js/function >
+      function foobar(root, payload, context, info) {
+        console.log('OMG')
+        return {
+          "name": "Kristiyan Tachev",
+          "email": "test@gmail.com",
+          "phone": 414141,
+          "arrayOfNumbers": [515151, 412414],
+          "arrayOfStrings": ['515151', '412414']
+        }
+      }
 
-  findUser2:
-    type: user
-    args:
-      userId: String!
-    resolve:
-      name: Kristiyan Tachev
-      email: test@gmail.com
-      phone: 414141
-      arrayOfNumbers: 
-        - 515151
-        - 412414
-      arrayOfStrings:
-        - '515151'
-        - '412414'
+$views:
+
+  app:
+    html: |
+      <style>
+        .spacer {
+          flex: 1 3 auto;
+        }
+        .container {
+          display: flex;
+        }
+        ul {
+          list-style-type: none;
+          margin: 0;
+          padding: 0;
+          overflow: hidden;
+          background-color: #f3f3f3;
+          cursor: pointer;
+        }
+        li {
+          float: left;
+        }
+        li a {
+          display: block;
+          color: #666;
+          text-align: center;
+          padding: 14px 16px;
+          text-decoration: none;
+        }
+        li a:hover:not(.active) {
+          background-color: #ddd;
+        }
+        li a.active {
+          color: white;
+          background-color: #4caf50;
+        }
+        .footer {
+          position: fixed;
+          left: 0;
+          bottom: 0;
+          width: 100%;
+          background-color: #03a9f4;
+          color: white;
+          text-align: center;
+        }
+      </style>
+      <ul class="container" slot="header">
+        <li><a href="/">Home</a></li>
+        <li><a href="/about">About</a></li>
+        <li><a href="/contacts">Contacts</a></li>
+        <span class="spacer"></span>
+      </ul>
+      <div class="footer" slot="footer">
+        <p>Footer</p>
+      </div>
+
+  home:
+    query: |
+      query findUser {
+        findUser {
+          name
+          email
+          phone
+          arrayOfStrings
+        }
+      }
+    output: UserPayload
+    policy: network-only
+    html: |
+      Welcome to Home component
+      <p>Name: {findUser.name}</p>
+      <p>Email: {findUser.email}</p>
+      <p>Phone: {findUser.phone}</p>
+      {findUser.arrayOfStrings}
+      <div style="background-color: red">
+        <hamburger-component type="3dx" active=true enableBackendStatistics=${true}></hamburger-component>
+      </div>
+
+  about:
+    query: findUser
+    html: |
+      Welcome to About
+      <p>Name: {findUser.name}</p>
+      <p>Email: {findUser.email}</p>
+      <p>Phone: {findUser.phone}</p>
+
+  contacts:
+    html: |
+      Welcome to Contacts
+
+  not-found:
+    html: |
+      Not found
 `,
       { encoding: 'utf-8' }
     );

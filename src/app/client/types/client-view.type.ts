@@ -5,6 +5,7 @@ import {
   GraphQLEnumType
 } from 'graphql';
 import { ComponentsType } from './components.type';
+import { IClientType, IClientViewType } from 'src/app/@introspection';
 
 export const ClientViewType = new GraphQLObjectType({
   name: 'ClientViewType',
@@ -14,6 +15,20 @@ export const ClientViewType = new GraphQLObjectType({
     },
     lhtml: {
       type: GraphQLString
+    },
+    rendering: {
+      type: new GraphQLEnumType({
+        name: 'ClientViewRenderingEnum',
+        values: {
+          server: {
+            value: 'server'
+          },
+          client: {
+            value: 'client'
+          }
+        },
+      }),
+      resolve: (root: IClientViewType) => !root.rendering ? 'client' : 'server'
     },
     components: {
       type: new GraphQLList(ComponentsType)

@@ -1,8 +1,15 @@
-import { Injectable, Inject, Container, createUniqueHash } from '@rxdi/core';
-import { from, BehaviorSubject, combineLatest, of, merge } from 'rxjs';
+import { Injectable, Inject, Container } from '@rxdi/core';
+import {
+  from,
+  BehaviorSubject,
+  combineLatest,
+  of,
+  merge,
+  Observable
+} from 'rxjs';
 import { ApolloClient } from '@rxdi/graphql-client';
 import gql from 'graphql-tag';
-import { map, tap, mergeMap, switchMap } from 'rxjs/operators';
+import { map, tap, mergeMap, switchMap, filter } from 'rxjs/operators';
 import {
   html,
   unsafeHTML,
@@ -15,8 +22,15 @@ import {
   IClientViewType,
   IClientType,
   IMutation,
+  IClientViewRenderingEnumEnum,
   IComponentsType
 } from '../../../../../@introspection';
+
+import {
+  ClientViewRenderingEnum,
+  ConditionalOperators
+} from '../../../../../shared/enums/render';
+
 import { Router } from '@rxdi/router';
 import { BaseComponent } from './base.component';
 import { buildSchema, GraphQLFieldMap } from 'graphql';
@@ -27,6 +41,8 @@ import {
   MutationOptions
 } from '@rxdi/graphql-client';
 import { parse, parseDefaults, stringify } from 'himalaya';
+import { GraphqlRequestTypes } from '../../../../../shared/types/graphql-request-type';
+
 interface Element {
   tagName: string;
   children: Element[];
@@ -35,51 +51,41 @@ interface Element {
   attributes: { value: string; key: string }[];
   position: { end: { index: number }; start: { index: number } };
 }
+
+const reusableViewQuery = `
+views {
+  name
+  lhtml
+  html
+  query
+  props
+  output
+  rendering
+  components {
+    link
+    selector
+  }
+  policy
+}
+components {
+  link
+  selector
+}
+schema
+`;
+
 const CLIENT_READY_QUERY = gql`
   mutation {
     clientReady {
-      components {
-        link
-        selector
-      }
-      views {
-        name
-        lhtml
-        html
-        query
-        props
-        output
-        components {
-          link
-          selector
-        }
-        policy
-      }
-      schema
+      ${reusableViewQuery}
     }
   }
 `;
+
 const SUBSCRIBE_TO_CHANGES = gql`
   subscription listenForChanges($clientId: String!) {
     listenForChanges(clientId: $clientId) {
-      views {
-        name
-        lhtml
-        html
-        query
-        props
-        output
-        components {
-          link
-          selector
-        }
-        policy
-      }
-      components {
-        link
-        selector
-      }
-      schema
+      ${reusableViewQuery}
     }
   }
 `;
@@ -88,39 +94,8 @@ interface MixinReactToChanges {
   data: { clientReady: IClientType; listenForChanges: IClientType };
 }
 
-interface Attributes {
-  argument: undefined;
-  endPos: 147;
-  literalValue: string;
-  name: string;
-  pos: 137;
-  value: string;
-}
-interface EventParser {
-  argument: any;
-  attributes: Attributes[];
-  concise: boolean;
-  emptyTagName: any;
-  endPos: number;
-  openTagOnly: boolean;
-  params: any;
-  pos: number;
-  selfClosed: boolean;
-  setParseOptions: Function;
-  tagName: string;
-  tagNameEndPos: number;
-  tagNameExpression: undefined;
-  type: 'openTag' | string;
-}
 function dec2hex(dec) {
   return ('0' + dec.toString(16)).substr(-2);
-}
-
-// generateId :: Integer -> String
-function generateId(len) {
-  var arr = new Uint8Array((len || 40) / 2);
-  window.crypto.getRandomValues(arr);
-  return Array.from(arr, dec2hex).join('');
 }
 
 @Injectable()
@@ -177,7 +152,7 @@ export class ReactOnChangeService {
 
   private createExecutableQuery(
     type: GraphQLFieldMap<any, any>,
-    method: 'query' | 'mutation' | 'subscription'
+    method: GraphqlRequestTypes
   ) {
     return Object.keys(type).map(k => {
       const nestedFields = type[k].type['getFields']();
@@ -202,15 +177,15 @@ export class ReactOnChangeService {
 
     const Queries = this.createExecutableQuery(
       schema.getQueryType().getFields(),
-      'query'
+      GraphqlRequestTypes.query
     );
     const Mutations = this.createExecutableQuery(
       schema.getMutationType().getFields(),
-      'mutation'
+      GraphqlRequestTypes.mutation
     );
     const Subscriptions = this.createExecutableQuery(
       schema.getSubscriptionType().getFields(),
-      'subscription'
+      GraphqlRequestTypes.subscription
     );
     const queries = [...Queries, Mutations, Subscriptions];
     this.routes = [];
@@ -241,8 +216,8 @@ export class ReactOnChangeService {
           template: string,
           object: Object,
           options: { left: string; right: string } = {
-            left: '{',
-            right: '}'
+            left: ConditionalOperators['{'],
+            right: ConditionalOperators['}']
           }
         ) => {
           function replaceSpecialBracklets(symbol: string) {
@@ -256,30 +231,59 @@ export class ReactOnChangeService {
               }
               if (element.attributes && element.type === 'element') {
                 const specialConditionalOperator = element.attributes.find(
-                  a => a.key === '*if'
+                  a => a.key === ConditionalOperators['*if']
                 );
                 const specialIteratorOperator = element.attributes.find(
-                  a => a.key === '*let'
+                  a => a.key === ConditionalOperators['*let']
+                );
+                const ofOperator = element.attributes.find(
+                  a => a.key === ConditionalOperators.of
                 );
 
-                const ofOperator = element.attributes.find(a => a.key === 'of');
-
                 if (specialIteratorOperator && ofOperator) {
+                  let values: string[] = resolve(ofOperator.value, object);
+                  if (!values) {
+                    try {
+                      values = JSON.parse(ofOperator.value);
+                    } catch (e) {
+                      values = [];
+                    }
+                  }
                   const findRecursive = (childrens: Element[]) => {
                     return childrens.map(c => {
+                      if (c.type === 'text') {
+                        const specialExtractor = c.content.match(
+                          new RegExp(options.left + '(.*)' + options.right)
+                        );
+                        if (specialExtractor && specialExtractor.length) {
+                          const key = specialExtractor[1]
+                            .replace(ConditionalOperators['{'], '')
+                            .replace(ConditionalOperators['}'], '');
+                          c.content = c.content.replace(
+                            specialExtractor[0],
+                            values
+                              .map(val => {
+                                return `<${
+                                  element.tagName
+                                } ${element.attributes
+                                  .map(a => ` ${a.key}="${a.value}"`)
+                                  .join(' ')}>${resolve(key, val) || val}</${
+                                  element.tagName
+                                }>`;
+                              })
+                              .join(' ')
+                          );
+                        }
+                      }
                       if (c.attributes) {
                         const TemplateOperator = c.attributes.find(
-                          a => a.key === '*template'
+                          a => a.key === ConditionalOperators['*template']
                         );
                         if (
                           TemplateOperator &&
                           c.children &&
                           c.children.length
                         ) {
-                          const values = JSON.parse(ofOperator.value) as Array<
-                            string
-                          >;
-
                           const highOrderComponent = c.children.find(
                             c => c.type === 'element'
                           );
@@ -299,27 +303,23 @@ export class ReactOnChangeService {
                             const specialExtractor = c.children[0].content.match(
                               new RegExp(options.left + '(.*)' + options.right)
                             );
-                            debugger
                             if (
                               specialExtractor &&
                               specialExtractor.length >= 1
                             ) {
-                              const o = specialExtractor[1]
-                                .replace('{', '')
-                                .replace('}', '')
-                                .trim()
-                                .split('.');
-                              o.shift();
+                              const key = specialExtractor[1]
+                                .replace(ConditionalOperators['{'], '')
+                                .replace(ConditionalOperators['}'], '');
                               return c.children[0].content.replace(
                                 specialExtractor[0],
                                 values
-                                  .map(v => {
+                                  .map(val => {
                                     return `<${
                                       element.tagName
                                     } ${element.attributes
                                       .map(a => ` ${a.key}="${a.value}"`)
-                                      .join(' ')}>${resolve(o.join('.'), v) ||
-                                      v}</${element.tagName}>`;
+                                      .join(' ')}>${resolve(key, val) ||
+                                      val}</${element.tagName}>`;
                                   })
                                   .join(' ')
                               );
@@ -327,7 +327,7 @@ export class ReactOnChangeService {
                             return '';
                           };
                           c.children[0].content = parseLoop();
-                          c.children.splice(c.children.indexOf(element), 1)
+                          c.children.splice(c.children.indexOf(element), 1);
                           c.attributes.splice(
                             c.attributes.indexOf(TemplateOperator),
                             1
@@ -354,11 +354,11 @@ export class ReactOnChangeService {
                   );
                 }
                 if (specialConditionalOperator) {
-                  if (
-                    !object[
-                      replaceSpecialBracklets(specialConditionalOperator.value)
-                    ]
-                  ) {
+                  const val = replaceSpecialBracklets(
+                    specialConditionalOperator.value
+                  );
+                  const obj = resolve(val, object);
+                  if (!obj) {
                     elementToRemove.push(elements.indexOf(element));
                   }
                   element.attributes.splice(
@@ -372,7 +372,6 @@ export class ReactOnChangeService {
                 );
                 if (
                   element.type === 'text' &&
-                  element.content.includes('') &&
                   specialExtractor &&
                   specialExtractor.length > 1
                 ) {
@@ -397,10 +396,21 @@ export class ReactOnChangeService {
           );
           elementToRemove.forEach(e => newTemplate.splice(e, 1));
           elementToRemove = [];
-          const HTML = stringify(newTemplate);
-          return HTML;
+          return stringify(newTemplate);
         };
 
+        const isServerSideRender = (clientView: IClientViewType) =>
+          clientView.rendering === ClientViewRenderingEnum.server;
+        const isClientSideRender = (clientView: IClientViewType) =>
+          clientView.rendering === ClientViewRenderingEnum.client;
+        function renderAtTheEnd() {
+          return new Observable(o => {
+            setTimeout(() => {
+              o.next(true);
+              o.complete();
+            }, 0);
+          });
+        }
         @Component({ selector })
         class NewElement extends BaseComponent {
           @property()
@@ -411,12 +421,14 @@ export class ReactOnChangeService {
           options: IClientViewType = v;
           @TemplateObservable()
           private BasicTemplate = observable.pipe(
+            filter(options => isClientSideRender(options)),
             tap(options => (this.options = options)),
             map(({ html }) => unsafeHTML(html))
           );
 
           @TemplateObservable()
           private QueryTemplate = observable.pipe(
+            filter(options => isClientSideRender(options)),
             tap(options => (this.options = options)),
             mergeMap(clientView =>
               combineLatest(
@@ -424,6 +436,19 @@ export class ReactOnChangeService {
                 clientView.query ? from(this.makeQuery()) : of({})
               ).pipe(
                 map(([html, query]) => replaceSpecialCharacter(html, query)),
+                map(html => unsafeHTML(html)),
+                tap(() => (this.loaded = true))
+              )
+            )
+          );
+
+          @TemplateObservable()
+          private ServerSideRenderTemplate = observable.pipe(
+            filter(options => isServerSideRender(options)),
+            tap(options => (this.options = options)),
+            mergeMap(clientView =>
+              combineLatest(of(clientView.html), renderAtTheEnd()).pipe(
+                map(([html]) => html),
                 map(html => unsafeHTML(html)),
                 tap(() => (this.loaded = true))
               )
@@ -444,19 +469,15 @@ export class ReactOnChangeService {
               this.options.query.includes('mutation') ||
               this.options.query.includes('subscription');
             let query: string;
-            let querySelector: string;
-
             let queryType: 'mutate' | 'query' | 'subscription' | 'subscribe';
 
             if (isWrittenQuery) {
               const splittedQuery = this.options.query.split(' ');
-              querySelector = splittedQuery[1];
               queryType = splittedQuery[0] as any;
               query = gql`
                 ${this.options.query}
               `;
             } else {
-              querySelector = this.options.query;
               queryType = 'query';
               query = gql`
                 ${queries.find(q => q.includes(this.options.query))}
@@ -482,7 +503,7 @@ export class ReactOnChangeService {
               queryType = 'subscribe';
             }
             return this[queryType as string](options).pipe(
-              map(res => (res as any).data[querySelector])
+              map(res => (res as any).data)
             );
           }
 
@@ -497,7 +518,11 @@ export class ReactOnChangeService {
                         `}
                   `
                 : ''}
-              ${v.query
+              ${v.rendering === 'server'
+                ? html`
+                    ${this.ServerSideRenderTemplate}
+                  `
+                : v.query
                 ? html`
                     ${this.QueryTemplate}
                   `

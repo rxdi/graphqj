@@ -1,12 +1,14 @@
 Welcome to Gosho
-<p>Name: {name}</p>
-<p>Email: {email}</p>
-<p>Phone: {phone}</p>
+<p>Name: {findUser.name}</p>
+<p>Email: {findUser.email}</p>
+<p>Phone: {findUser.phone}</p>
+<p>Phone: {findUser.arrayOfStrings}</p>
 
-<div *if="{phone}">
-  <div *let="tedyBear" of="[{"pesho": {"gosho": "omg"}}]">
+<div>
+  <div *let="x" of="findUser.arrayOfStrings">
     <div *template style="background-color: red">
-      { tedyBear.pesho.gosho }
+      {{ x }}
+      <hamburger-component type="3dx" active="true"></hamburger-component>
     </div>
   </div>
 </div>
