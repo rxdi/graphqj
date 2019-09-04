@@ -804,7 +804,6 @@ $resolvers:
 $views:
   app:
     components:
-
     html: |
       <style>
         .spacer {
@@ -878,10 +877,19 @@ $views:
     policy: network-only
     html: |
       Welcome to Home component
-      <p>Name: {name}</p>
-      <p>Email: {email}</p>
-      <p>Phone: {phone}</p>
-      {arrayOfStrings}
+      <p>Name: {findUser.name}</p>
+      <p>Email: {findUser.email}</p>
+      <p>Phone: {findUser.phone}</p>
+      {findUser.arrayOfStrings}
+      <div>
+        <div *let="x" of="findUser.arrayOfStrings">
+          <div *template style="background-color: red">
+            {{ x }}
+            <hamburger-component type="3dx" active="true"></hamburger-component>
+          </div>
+        </div>
+      </div>
+
       <div style="background-color: red">
         <hamburger-component type="3dx" active=true enableBackendStatistics=${true}></hamburger-component>
       </div>
@@ -893,9 +901,9 @@ $views:
     query: findUser
     html: |
       Welcome to Gosho
-      <p>Name: {name}</p>
-      <p>Email: {email}</p>
-      <p>Phone: {phone}</p>
+      <p>Name: {findUser.name}</p>
+      <p>Email: {findUser.email}</p>
+      <p>Phone: {findUser.phone}</p>
 
   dadada:
     html: |
