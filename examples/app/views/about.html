@@ -4,10 +4,28 @@ Welcome to Gosho
 <p>Phone: {findUser.phone}</p>
 <p>Phone: {findUser.arrayOfStrings}</p>
 
+<div *if="views.doctor">
+    <p style="border: 1px solid black; background-color: aquamarine;">
+      I am a doctor
+    </p>
+</div>
+
+<div *if="views.registrator">
+    <p style="border: 1px solid black; background-color: aquamarine;">
+      I am a registrator
+    </p>
+</div>
+
+<div *if="views.patient">
+    <p style="border: 1px solid black; background-color: aquamarine;">
+      I am a patient
+    </p>
+</div>
+
 <div>
   <div *let="x" of="findUser.arrayOfStrings">
     <div *template style="background-color: red">
-      {{ x }}
+      {{}}
       <hamburger-component type="3dx" active="true"></hamburger-component>
     </div>
   </div>

@@ -21,8 +21,7 @@ home:
   output: UserPayload
   html: 💉./views/home.html
 
-not-found:
-  html: 💉./views/not-found.html
+
 about:
   query: |
     query findUser {
@@ -35,12 +34,19 @@ about:
         }
         arrayOfStrings
       }
+      views {
+        registrator
+        patient
+        doctor
+      }
       status {
         status
       }
     }
   # rendering: server
+  policy: network-only
   html: 💉./views/about.html
+
 aboutwithloading:
   components:
     - link: http://localhost:9000/components/hamburger.client.module.js
@@ -51,19 +57,15 @@ aboutwithloading:
     query findUser {
       findUser {
         name
-        email
-        phone
-        user {
-          name
-        }
       }
       status {
         status
       }
     }
+  lhtml: <loading-screen-component></loading-screen-component>
   html: |
-    d
-    ada
-    ad
-    ad
-    <div *if="name">{name}</div>
+    <div *if="status">{status.status}</div>
+    <div *if="findUser.name">{findUser.name}</div>
+
+not-found:
+  html: 💉./views/not-found.html

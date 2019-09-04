@@ -1,4 +1,7 @@
 $mode: advanced
+$imports:
+  - 💉./examples/app/graph/core/core.module.ts
+
 # $imports:
 #   - 💉./examples/mix/hamburger/server/hamburger.server.module.ts
 # $components:
