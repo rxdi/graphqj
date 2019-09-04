@@ -1,7 +1,7 @@
 {
   "name": "@rxdi/graphqj",
   "main": "./lib/main.js",
-  "version": "0.7.49",
+  "version": "0.7.50",
   "scripts": {
     "start": "gapi start --local --minify=false --inspect",
     "start-client": "parcel ./src/app/client/application/index.html",
