@@ -1,0 +1,16 @@
+findUser:
+  type: User
+  args:
+    userId: UserPayload
+  resolve: 💉./resolvers/findUser.ts
+
+views:
+  type: Views
+  resolve: 💉./resolvers/views.ts
+
+views2:
+  type: Views
+  resolve: 💉./resolvers/views.ts
+views3:
+  type: Views
+  resolve: 💉./resolvers/views.ts

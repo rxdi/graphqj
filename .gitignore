@@ -4,11 +4,10 @@ projects
 .cache
 lib
 args.yml
-resolvers.yml
+
 test.html
-types.yml
+
 api
-resolvers
 gj.json
 gj.js
 findUser.resolver.yml

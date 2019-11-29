@@ -10,9 +10,7 @@ home:
         name
         email
         phone
-        user {
-          name
-        }
+
       }
       status {
         status
@@ -29,9 +27,7 @@ about:
         name
         email
         phone
-        user {
-          name
-        }
+
         arrayOfStrings
       }
       views {
@@ -51,8 +47,8 @@ aboutwithloading:
   components:
     - link: http://localhost:9000/components/hamburger.client.module.js
       selector: hamburger-component
-    - link: http://localhost:9000/components/hamburger.client.module.js
-      selector: hamburger-component
+    - link: http://127.0.0.1:8080/ipfs/QmQQActEMDke4BGXso7f17ZQnkEHh9Bcp6V7DyYceZwSfh
+      selector: trello-component
   query: |
     query findUser {
       findUser {
@@ -64,6 +60,7 @@ aboutwithloading:
     }
   lhtml: <loading-screen-component></loading-screen-component>
   html: |
+    <trello-component></trello-component>
     <div *if="status">{status.status}</div>
     <div *if="findUser.name">{findUser.name}</div>
 

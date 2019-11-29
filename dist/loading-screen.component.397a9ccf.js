@@ -117,169 +117,96 @@ parcelRequire = (function (modules, cache, entry, globalName) {
   }
 
   return newRequire;
-})({"service-worker.js":[function(require,module,exports) {
-//Cache polyfil to support cacheAPI in all browsers
-var cacheName = 'cache-v4'; //Files to save in cache
+})({"loading-screen/loading-screen.component.ts":[function(require,module,exports) {
+"use strict";
 
-var files = ['./', './index.html', //SW treats query string as new request
-'./manifest.webmanifest']; //Adding `install` event listener
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
 
-self.addEventListener('install', event => {
-  console.info('Event: Install');
-  event.waitUntil(caches.open(cacheName).then(cache => {
-    //[] of files to cache & if any of the file not present `addAll` will fail
-    return cache.addAll(files).then(() => {
-      console.info('All files are cached');
-      return self.skipWaiting(); //To forces the waiting service worker to become the active service worker
-    }).catch(error => {
-      console.error('Failed to cache', error);
+class LoadingScreenComponent extends HTMLElement {
+  constructor() {
+    super();
+    const shadow = this.attachShadow({
+      mode: 'open'
     });
-  }));
-});
-/*
-  FETCH EVENT: triggered for every request made by index page, after install.
-*/
-//Adding `fetch` event listener
+    const element = document.createElement('div');
+    element.id = 'loader';
+    element.innerHTML = `
+      <style>
+        #loader {
+          position: absolute;
+          left: 50%;
+          top: 50%;
+          z-index: 1;
+          width: 150px;
+          height: 150px;
+          margin: -75px 0 0 -75px;
+          border: 16px solid #f3f3f3;
+          border-radius: 50%;
+          border-top: 16px solid #3498db;
+          width: 120px;
+          height: 120px;
+          -webkit-animation: spin 2s linear infinite;
+          animation: spin 2s linear infinite;
+        }
+        @-webkit-keyframes spin {
+          0% {
+            -webkit-transform: rotate(0deg);
+          }
+          100% {
+            -webkit-transform: rotate(360deg);
+          }
+        }
 
-self.addEventListener('fetch', event => {
-  console.info('Event: Fetch');
-  var request = event.request; //Tell the browser to wait for newtwork request and respond with below
+        @keyframes spin {
+          0% {
+            transform: rotate(0deg);
+          }
+          100% {
+            transform: rotate(360deg);
+          }
+        }
 
-  event.respondWith( //If request is already in cache, return it
-  caches.match(request).then(response => {
-    if (response) {
-      return response;
-    } // // Checking for navigation preload response
-    // if (event.preloadResponse) {
-    //   console.info('Using navigation preload');
-    //   return response;
-    // }
-    //if request is not cached or navigation preload response, add it to cache
+        .animate-bottom {
+          position: relative;
+          -webkit-animation-name: animatebottom;
+          -webkit-animation-duration: 1s;
+          animation-name: animatebottom;
+          animation-duration: 1s;
+        }
 
+        @-webkit-keyframes animatebottom {
+          from {
+            bottom: -100px;
+            opacity: 0;
+          }
+          to {
+            bottom: 0px;
+            opacity: 1;
+          }
+        }
 
-    return fetch(request).then(response => {
-      var responseToCache = response.clone();
-      caches.open(cacheName).then(cache => {
-        cache.put(request, responseToCache).catch(err => {
-          console.warn(request.url + ': ' + err.message);
-        });
-      });
-      return response;
-    });
-  }));
-});
-/*
-  ACTIVATE EVENT: triggered once after registering, also used to clean up caches.
-*/
-//Adding `activate` event listener
+        @keyframes animatebottom {
+          from {
+            bottom: -100px;
+            opacity: 0;
+          }
+          to {
+            bottom: 0;
+            opacity: 1;
+          }
+        }
 
-self.addEventListener('activate', event => {
-  console.info('Event: Activate'); //Navigation preload is help us make parallel request while service worker is booting up.
-  //Enable - chrome://flags/#enable-service-worker-navigation-preload
-  //Support - Chrome 57 beta (behing the flag)
-  //More info - https://developers.google.com/web/updates/2017/02/navigation-preload#the-problem
-  // Check if navigationPreload is supported or not
-  // if (self.registration.navigationPreload) { 
-  //   self.registration.navigationPreload.enable();
-  // }
-  // else if (!self.registration.navigationPreload) { 
-  //   console.info('Your browser does not support navigation preload.');
-  // }
-  //Remove old and unwanted caches
-
-  event.waitUntil(caches.keys().then(cacheNames => {
-    return Promise.all(cacheNames.map(cache => {
-      if (cache !== cacheName) {
-        return caches.delete(cache); //Deleting the old cache (cache v1)
-      }
-    }));
-  }).then(function () {
-    console.info("Old caches are cleared!"); // To tell the service worker to activate current one 
-    // instead of waiting for the old one to finish.
-
-    return self.clients.claim();
-  }));
-});
-/*
-  PUSH EVENT: triggered everytime, when a push notification is received.
-*/
-//Adding `push` event listener
-
-self.addEventListener('push', event => {
-  console.info('Event: Push');
-  var title = 'Push notification demo';
-  var body = {
-    'body': 'click to return to application',
-    'tag': 'demo',
-    'icon': './images/icons/apple-touch-icon.png',
-    'badge': './images/icons/apple-touch-icon.png',
-    //Custom actions buttons
-    'actions': [{
-      'action': 'yes',
-      'title': 'I ♥ this app!'
-    }, {
-      'action': 'no',
-      'title': 'I don\'t like this app'
-    }]
-  };
-  event.waitUntil(self.registration.showNotification(title, body));
-});
-/*
-  BACKGROUND SYNC EVENT: triggers after `bg sync` registration and page has network connection.
-  It will try and fetch github username, if its fulfills then sync is complete. If it fails,
-  another sync is scheduled to retry (will will also waits for network connection)
-*/
-
-self.addEventListener('sync', event => {
-  console.info('Event: Sync'); //Check registered sync name or emulated sync from devTools
-
-  if (event.tag === 'github' || event.tag === 'test-tag-from-devtools') {
-    event.waitUntil( //To check all opened tabs and send postMessage to those tabs
-    self.clients.matchAll().then(all => {
-      return all.map(client => {
-        return client.postMessage('online'); //To make fetch request, check app.js - line no: 122
-      });
-    }).catch(error => {
-      console.error(error);
-    }));
-  }
-});
-/*
-  NOTIFICATION EVENT: triggered when user click the notification.
-*/
-//Adding `notification` click event listener
-
-self.addEventListener('notificationclick', event => {
-  var url = 'https://demopwa.in/'; //Listen to custom action buttons in push notification
-
-  if (event.action === 'yes') {
-    console.log('I ♥ this app!');
-  } else if (event.action === 'no') {
-    console.warn('I don\'t like this app');
+      </style>
+    `;
+    shadow.append(element);
   }
 
-  event.notification.close(); //Close the notification
-  //To open the app after clicking notification
+}
 
-  event.waitUntil(clients.matchAll({
-    type: 'window'
-  }).then(clients => {
-    for (var i = 0; i < clients.length; i++) {
-      var client = clients[i]; //If site is opened, focus to the site
-
-      if (client.url === url && 'focus' in client) {
-        return client.focus();
-      }
-    } //If site is cannot be opened, open in new window
-
-
-    if (clients.openWindow) {
-      return clients.openWindow('/');
-    }
-  }).catch(error => {
-    console.error(error);
-  }));
-});
+exports.LoadingScreenComponent = LoadingScreenComponent;
+customElements.define('loading-screen-component', LoadingScreenComponent);
 },{}],"../../../../../../../../../.nvm/versions/node/v10.16.0/lib/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
@@ -484,5 +411,5 @@ function hmrAcceptRun(bundle, id) {
     return true;
   }
 }
-},{}]},{},["../../../../../../../../../.nvm/versions/node/v10.16.0/lib/node_modules/parcel-bundler/src/builtins/hmr-runtime.js","service-worker.js"], null)
-//# sourceMappingURL=/service-worker.js.map
+},{}]},{},["../../../../../../../../../.nvm/versions/node/v10.16.0/lib/node_modules/parcel-bundler/src/builtins/hmr-runtime.js","loading-screen/loading-screen.component.ts"], null)
+//# sourceMappingURL=/loading-screen.component.397a9ccf.js.map

@@ -1,0 +1,13 @@
+User:
+  name: String
+  email: String
+  phone: Number
+  arrayOfNumbers: Number[]
+  arrayOfStrings: String[]
+  arrayOfStrings2: String[]
+
+Views:
+  registrator: String
+  patient: String
+  doctor: String
+  aboutwithloading: String

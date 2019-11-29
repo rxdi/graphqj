@@ -297,11 +297,19 @@ $views:
   async function main() {
     Container.set('pubsub-auth', {
       onSubConnection(connectionParams) {
+        debugger;
         return connectionParams;
       },
       onSubOperation(connectionParams, params) {
         connectionParams;
+        debugger;
         return params;
+      },
+      onDisconnect() {
+        debugger;
+      },
+      onSubDisconnect() {
+        debugger;
       },
     });
     let file: Config;
