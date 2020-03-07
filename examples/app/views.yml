@@ -10,7 +10,6 @@ home:
         name
         email
         phone
-
       }
       status {
         status
@@ -26,7 +25,6 @@ about:
         name
         email
         phone
-
         arrayOfStrings
       }
       views {
