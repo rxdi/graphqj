@@ -15,12 +15,12 @@
   },
   "dependencies": {
     "@gapi/core": "^1.8.5",
+    "@popeindustries/lit-html-server": "^1.3.0",
     "@gapi/voyager": "^1.8.5",
     "chokidar": "^3.0.2",
     "clear-module": "^4.0.0",
     "esm": "^3.2.25",
     "fast-glob": "^3.0.4",
-    "graphql": "^14.6.0",
     "js-yaml": "^3.13.1"
   },
   "esm": {
@@ -40,10 +40,15 @@
     "gg": "./dist/main.js",
     "graphqj": "./dist/main.js"
   },
+  "husky": {
+    "hooks": {
+      "pre-push": "npm run lint"
+    }
+  },
   "devDependencies": {
     "@babel/polyfill": "7.4.4",
-    "@popeindustries/lit-html-server": "^1.3.0",
     "@rxdi/graphql-client": "^0.7.16",
+    "husky": "^4.2.3",
     "@rxdi/lit-html": "^0.7.16",
     "@rxdi/parcel-plugin-shebang": "^0.7.39",
     "@rxdi/router": "^0.7.16",

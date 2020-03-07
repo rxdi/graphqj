@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function foobar(root, payload, context, info) {
   return {
     name: 'Кристиян Тачев',
@@ -9,6 +10,6 @@ export async function foobar(root, payload, context, info) {
       arrayOfStrings: ['dada', 'dada', 'dada', 'dada', 'dada', 'dada', 'dada'],
       email: 'kristiqn.tachev@gmail.com',
       phone: 45454222,
-    }
+    },
   };
 }

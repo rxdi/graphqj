@@ -2,7 +2,7 @@ import { BootstrapService, GraphQLSchema } from '@gapi/core';
 import { Container } from '@rxdi/core';
 
 import { Config, IResolverDependencies } from '../../../app/app.tokens';
-import { getFirstItem } from '../../get-first-item';
+import { getFirstItemIfFuncton } from '../../get-first-item';
 import { isFunction } from '../../isFunction';
 import { lazyTypes } from '../../lazy-types';
 import { buildArgumentsSchema } from '../../parse-args-schema';
@@ -28,7 +28,7 @@ export function buildResolvers(config: Config, types, buildedSchema: GraphQLSche
     let resolve = config.$resolvers[resolver].resolve;
     if (resolve && !isFunction(resolve) && !Array.isArray(resolve)) {
       /* Take the first method inside file for resolver */
-      resolve = getFirstItem(resolve);
+      resolve = getFirstItemIfFuncton(resolve);
     }
     const oldResolve = resolve;
     resolve = isFunction(resolve) ? resolve : () => oldResolve;

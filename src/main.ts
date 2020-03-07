@@ -10,7 +10,7 @@ import { AppModule } from './app/app.module';
 import { Config, Externals } from './app/app.tokens';
 import { includes, nextOrDefault } from './helpers/args-extractors';
 import { transpileComponentsInit } from './helpers/component.parser';
-import { getFirstItem } from './helpers/get-first-item';
+import { getFirstItemIfFuncton } from './helpers/get-first-item';
 import { SelfChild } from './helpers/self-child';
 import { getConfig } from './helpers/set-config';
 import { TranspileAndGetAll } from './helpers/transpile-and-load';
@@ -323,7 +323,7 @@ $views:
         'imports',
       );
       // eslint-disable-next-line @typescript-eslint/no-var-requires
-      imports.push(...transpiledModules.map(f => getFirstItem(require(f.transpiledFile))));
+      imports.push(...transpiledModules.map(f => getFirstItemIfFuncton(require(f.transpiledFile))));
     }
     if (file && file.$components) {
       await transpileComponentsInit(file.$components as IComponentsType[]);

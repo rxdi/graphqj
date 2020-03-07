@@ -5,7 +5,7 @@ import { Config, IPredictedTranspilation } from '../app/app.tokens';
 import { MakeAdvancedSchema } from './advanced-schema';
 import { MakeBasicSchema } from './basic-schema';
 import { transpileComponentsForViews, transpileComponentsInit } from './component.parser';
-import { getFirstItem } from './get-first-item';
+import { getFirstItemIfFuncton } from './get-first-item';
 import { lazyTypes } from './lazy-types';
 import { loadFile } from './load-file';
 import { transpilerCache } from './transpiler-cache';
@@ -38,7 +38,7 @@ export async function reactToChanges(path: string, config: Config) {
         const metaPath = getMetaPath(path);
         const foundMetaKey = findMetaKey(metaPath, v._meta);
         if (foundMetaKey) {
-          v[foundMetaKey] = await deep(getFirstItem(file));
+          v[foundMetaKey] = await deep(getFirstItemIfFuncton(file));
           return true;
         }
       }
