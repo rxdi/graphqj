@@ -2,7 +2,7 @@ import { traverse } from './traverse/traverse';
 import { BootstrapService, Container, ApolloService, PubSubService, GraphQLSchema, printSchema } from '@gapi/core';
 import { getFirstItem } from './get-first-item';
 import { loadFile } from './load-file';
-import { Config } from '../app/app.tokens';
+import { Config, PredictedTranspilation } from '../app/app.tokens';
 import { MakeAdvancedSchema } from './advanced-schema';
 import { deep } from './traverse/test';
 import { lazyTypes } from './lazy-types';
@@ -89,7 +89,7 @@ export async function reactToChanges(path: string, config: Config) {
   }
 
   if(config.$components) {
-    config.$components = (await transpileComponentsInit(config.$components as string[])).map(c => c && c.link ? c.link : c) as any;
+    config.$components = (await transpileComponentsInit(config.$components as PredictedTranspilation[])).map(c => c && c.link ? c.link : c) as any;
   }
 
   Container.reset(Config)

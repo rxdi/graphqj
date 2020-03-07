@@ -20,7 +20,7 @@ import {
   mergeSchemas,
   GRAPHQL_PLUGIN_CONFIG,
   GraphQLDirective,
-  Container
+  Container,
 } from '@gapi/core';
 
 import { TypesToken, Config, IsBundlerInstalled } from './app.tokens';
@@ -30,17 +30,18 @@ import { buildExternals } from '../helpers/dynamic-schema/mutators/build-externa
 import { CoreModule } from './core/core.module';
 import { ClientModule } from './client/client.module';
 import { predictConfig } from '../helpers/component.parser';
+import { IComponentsType } from './@introspection';
 
 @Module({
   imports: [CoreModule, VoyagerModule.forRoot(), ClientModule],
   providers: [
     {
       provide: TypesToken,
-      useValue: new Map()
+      useValue: new Map(),
     },
     {
       provide: IsBundlerInstalled,
-      useValue: { parcel: false, gapi: false }
+      useValue: { parcel: false, gapi: false },
     },
     {
       provide: SCHEMA_OVERRIDE,
@@ -49,13 +50,13 @@ import { predictConfig } from '../helpers/component.parser';
         try {
           const config = JSON.parse(
             readFileSync(join(process.cwd(), 'gj.json'), {
-              encoding: 'utf-8'
-            })
+              encoding: 'utf-8',
+            }),
           );
           config.$schema = config.$schema || nextOrDefault('--schema', false);
           if (config.$schema) {
             externalSchema = readFileSync(config.$schema, {
-              encoding: 'utf-8'
+              encoding: 'utf-8',
             });
             externalSchema = buildSchema(externalSchema);
           }
@@ -66,7 +67,7 @@ import { predictConfig } from '../helpers/component.parser';
           mergedSchemas = schema;
         } else {
           mergedSchemas = mergeSchemas({
-            schemas
+            schemas,
           });
         }
 
@@ -79,21 +80,19 @@ ${printSchema(mergedSchemas)}
 
         if (process.argv.toString().includes('--generate')) {
           promisify(writeFile)('./schema.graphql', printSchema(mergedSchemas), {
-            encoding: 'utf-8'
+            encoding: 'utf-8',
           }).then(() => {
             console.log('Schema created!');
             process.exit(0);
           });
         }
         return mergedSchemas;
-      }
+      },
     },
     {
       provide: Config,
       useFactory: async () => {
-        let config = await getConfig(
-          nextOrDefault('--config', 'graphqj-config')
-        );
+        let config = await getConfig(nextOrDefault('--config', 'graphqj-config'));
         if (!config) {
           config = await getConfig('gj');
         }
@@ -101,7 +100,7 @@ ${printSchema(mergedSchemas)}
           config = basicTemplate;
         }
         return config['default'] || config;
-      }
+      },
     },
     {
       provide: 'Run',
@@ -110,7 +109,7 @@ ${printSchema(mergedSchemas)}
       useFactory: async (
         config: Config,
         graphqlConfig: GRAPHQL_PLUGIN_CONFIG,
-        isBundlerInstalled: IsBundlerInstalled
+        isBundlerInstalled: IsBundlerInstalled,
       ) => {
         config = await config;
         config = await deep(config);
@@ -126,18 +125,15 @@ ${printSchema(mergedSchemas)}
 
         if ((await promisify(exists)(filePath)) && filePath !== process.cwd()) {
           if (filePath.includes('.ts')) {
-            directives = await TranspileAndLoad(
-              config.$directives.replace('.', ''),
-              './.gj/out'
-            );
+            directives = await TranspileAndLoad(config.$directives.replace('.', ''), './.gj/out');
           } else {
             directives = require('esm')(module)(filePath);
           }
-          graphqlConfig.directives = (await Promise.all(
-            Object.keys(directives).map(d =>
-              typeof directives[d] === 'function' ? directives[d]() : null
+          graphqlConfig.directives = (
+            await Promise.all(
+              Object.keys(directives).map(d => (typeof directives[d] === 'function' ? directives[d]() : null)),
             )
-          )).filter(i => !!i);
+          ).filter(i => !!i);
         }
 
         if (config.$mode === 'basic') {
@@ -150,25 +146,24 @@ ${printSchema(mergedSchemas)}
         //   traverseMap.push(...(config.$components as string[]).map(c => ({path: c.replace('💉', ''), parent: null})))
         // }
         if (config.$views) {
-          process.argv.push('--hot-reload', '--client')
+          process.argv.push('--hot-reload', '--client');
         }
         if (includes('--hot-reload')) {
-          config.$externals.forEach(e =>
-            traverseMap.push({ parent: null, path: e.file })
+          config.$externals.forEach(e => traverseMap.push({ parent: null, path: e.file }));
+          watchBundles(
+            traverseMap.map(f => f.path),
+            config,
           );
-          watchBundles(traverseMap.map(f => f.path), config);
         }
         config.$components = config.$components || [];
         if (config.$components.length) {
-          config.$components = (await predictConfig(config.$components as string[]) || []).map(c => c.link)
+          config.$components = ((await predictConfig(config.$components as IComponentsType[])) || []).map(c => c.link);
         }
-        Container.set('main-config-compiled', config)
-        console.log(
-          'You can extract this schema by running --generate command'
-        );
+        Container.set('main-config-compiled', config);
+        console.log('You can extract this schema by running --generate command');
         return true;
-      }
-    }
-  ]
+      },
+    },
+  ],
 })
 export class AppModule {}

@@ -14,11 +14,27 @@ import {
   GraphQLNonNull
 } from '@gapi/core';
 import { ClientType } from './types/client.type';
-import { Config, ConfigViews } from '../app.tokens';
+import { Config, ConfigViews, PredictedTranspilation } from '../app.tokens';
 import {
   mapComponentsPath,
   modifyViewsConfig
 } from '../../helpers/component.parser';
+import { IClientViewType } from '../@introspection';
+
+interface Reader<R, A> {
+  (r: R): A
+}
+interface ViewConfig {
+  components: string[] | PredictedTranspilation[];
+  views: IClientViewType[];
+  schema: string;
+}
+
+const getViewsConfig = (views?: ConfigViews): Reader<Config, ViewConfig> => (config: Config) => ({
+  components: config.$components,
+  views: viewsToArray(views || config.$views),
+  schema: printSchema(Container.get(BootstrapService).schema)
+})
 
 export const viewsToArray = <T>(a: { [key: string]: T }): Array<T> =>
   Object.keys(a).reduce(
@@ -53,17 +69,9 @@ export class ClientController {
     }
   })
   async listenForChanges(views: ConfigViews) {
-    return this.getViewsConfig(views);
+    return getViewsConfig(views)(Container.get<Config>('main-config-compiled'));
   }
 
-  getViewsConfig(views?: ConfigViews) {
-    const config = Container.get<Config>('main-config-compiled');
-    return {
-      components: config.$components,
-      views: viewsToArray(views || config.$views),
-      schema: printSchema(Container.get(BootstrapService).schema)
-    };
-  }
 
   @Type(ClientType)
   @Mutation()
@@ -76,6 +84,6 @@ export class ClientController {
     //   );
     //   this.pubsub.publish('listenForChanges', config.$views);
     // }
-    return this.getViewsConfig();
+    return getViewsConfig()(Container.get<Config>('main-config-compiled'));
   }
 }

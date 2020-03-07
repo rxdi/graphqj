@@ -9,14 +9,13 @@ import { SelfChild } from './helpers/self-child';
 import { Subscription } from 'rxjs';
 import { Config, Externals } from './app/app.tokens';
 import { switchMap } from 'rxjs/operators';
-import {
-  TranspileAndLoad,
-  TranspileAndGetAll
-} from './helpers/transpile-and-load';
+import { TranspileAndLoad, TranspileAndGetAll } from './helpers/transpile-and-load';
 import { getFirstItem } from './helpers/get-first-item';
 import { loadFile } from './helpers/load-file';
 import { getConfig } from './helpers/set-config';
 import { transpileComponentsInit } from './helpers/component.parser';
+import { IComponentsType } from './app/@introspection';
+
 if (includes('--watch')) {
   let subscription: Subscription;
   const configPath = nextOrDefault('--config');
@@ -71,7 +70,7 @@ if (includes('--watch')) {
     }
   }
 }`,
-      { encoding: 'utf-8' }
+      { encoding: 'utf-8' },
     );
   } else if (includes('es6')) {
     promisify(writeFile)(
@@ -106,7 +105,7 @@ export default {
   }
 };
 `,
-      { encoding: 'utf-8' }
+      { encoding: 'utf-8' },
     );
   } else if (includes('typescript')) {
     promisify(writeFile)(
@@ -141,7 +140,7 @@ export default {
   }
 };
 `,
-      { encoding: 'utf-8' }
+      { encoding: 'utf-8' },
     );
   } else if (includes('yml')) {
     promisify(writeFile)(
@@ -273,7 +272,7 @@ $views:
     html: |
       Not found
 `,
-      { encoding: 'utf-8' }
+      { encoding: 'utf-8' },
     );
   } else {
     promisify(writeFile)(
@@ -292,7 +291,7 @@ $views:
   }
 }
 `,
-      { encoding: 'utf-8' }
+      { encoding: 'utf-8' },
     );
   }
 } else {
@@ -304,7 +303,7 @@ $views:
       onSubOperation(connectionParams, params, webSocket) {
         connectionParams;
         return params;
-      }
+      },
     });
     let file: Config;
     try {
@@ -314,30 +313,27 @@ $views:
     if (file && file.$imports) {
       const transpiledModules = await TranspileAndGetAll(
         file.$imports.map(file => ({ file: file.replace('💉', '') } as Externals)),
-        'imports'
+        'imports',
       );
-      imports.push(
-        ...transpiledModules.map(f => getFirstItem(require(f.transpiledFile)))
-      );
+      imports.push(...transpiledModules.map(f => getFirstItem(require(f.transpiledFile))));
     }
     if (file && file.$components) {
-      await transpileComponentsInit(file.$components as string[]);
+      await transpileComponentsInit(file.$components as IComponentsType[]);
     }
+
     BootstrapFramework(AppModule, [
       ...imports,
       CoreModule.forRoot({
         graphql: {
-          openBrowser: nextOrDefault('--random', true, v =>
-            v === 'true' ? false : true
-          ),
+          openBrowser: nextOrDefault('--random', true, v => (v === 'true' ? false : true)),
           buildAstDefinitions: false, // Removed ast definition since directives are lost,
           graphiQlPath: '/graphiql',
           graphiqlOptions: {
-            endpointURL: '/graphiql'
-          }
+            endpointURL: '/graphiql',
+          },
         },
         pubsub: {
-          authentication: 'pubsub-auth'
+          authentication: 'pubsub-auth',
         },
         server: {
           randomPort: nextOrDefault('--random', false),
@@ -360,13 +356,13 @@ $views:
                   'clientId',
                   'Connection',
                   'Pragma',
-                  'Cache-Control'
-                ]
-              }
-            }
-          }
-        }
-      })
+                  'Cache-Control',
+                ],
+              },
+            },
+          },
+        },
+      }),
     ]).subscribe(() => console.log('Started'), console.log.bind(console));
   }
 
