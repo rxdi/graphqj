@@ -9,7 +9,7 @@ import { getFirstItem } from './get-first-item';
 import { lazyTypes } from './lazy-types';
 import { loadFile } from './load-file';
 import { transpilerCache } from './transpiler-cache';
-import { deep } from './traverse/test';
+import { deep } from './traverse/omg';
 import { traverse } from './traverse/traverse';
 import { configWatchers } from './watch-bundles';
 

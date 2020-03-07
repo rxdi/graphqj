@@ -24,7 +24,7 @@ import { isGapiInstalled } from '../helpers/is-runner-installed';
 import { getConfig } from '../helpers/set-config';
 import { TranspileAndLoad } from '../helpers/transpile-and-load';
 import { traverseMap } from '../helpers/traverse-map';
-import { deep } from '../helpers/traverse/test';
+import { deep } from '../helpers/traverse/omg';
 import { watchBundles } from '../helpers/watch-bundles';
 import { IComponentsType } from './@introspection';
 import { Config, IsBundlerInstalled, TypesToken } from './app.tokens';
