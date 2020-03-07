@@ -11,7 +11,7 @@ import clearModule = require('clear-module');
 import { Container } from '@rxdi/core';
 
 export async function loadFile(path: string) {
-  let loadedModule: unknown;
+  let loadedModule: string;
   if (isInValidPath(path)) {
     return path;
   }
@@ -25,7 +25,7 @@ export async function loadFile(path: string) {
     }
   }
   if (path.includes('.yml')) {
-    loadedModule = loadYml(path);
+    loadedModule = await loadYml(path);
   } else if (path.includes('.json')) {
     path = normalize(join(process.cwd(), path));
     clearModule(path);

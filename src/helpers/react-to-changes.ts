@@ -55,7 +55,8 @@ export async function reactToChanges(path: string, config: Config) {
       metaKey = findMetaKey(getMetaPath(path), config._meta);
     }
     if (configWatchers.filter(p => path.includes(p)).length) {
-      config = await deep(newFile);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      config = (await deep(newFile)) as any;
     } else if (config._meta && metaKey) {
       // First level deepnest
       config[metaKey] = await deep(newFile);
