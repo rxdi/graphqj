@@ -1,9 +1,10 @@
 import { Module } from '@rxdi/core';
-import { HamburgerController } from './hamburger.controller';
+
 import { HamburgerControllerEffect } from './hamburger-controller.effect';
+import { HamburgerController } from './hamburger.controller';
 
 @Module({
   controllers: [HamburgerController],
-  effects: [HamburgerControllerEffect]
+  effects: [HamburgerControllerEffect],
 })
 export class HamburgerServerModule {}

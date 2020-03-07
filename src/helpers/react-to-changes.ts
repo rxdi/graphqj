@@ -1,17 +1,17 @@
-import { traverse } from './traverse/traverse';
-import { BootstrapService, Container, ApolloService, PubSubService, GraphQLSchema, printSchema } from '@gapi/core';
-import { getFirstItem } from './get-first-item';
-import { loadFile } from './load-file';
-import { Config, PredictedTranspilation } from '../app/app.tokens';
-import { MakeAdvancedSchema } from './advanced-schema';
-import { deep } from './traverse/test';
-import { lazyTypes } from './lazy-types';
-import { configWatchers } from './watch-bundles';
-import { MakeBasicSchema } from './basic-schema';
-import { transpilerCache } from './transpiler-cache';
-import { FSWatcher } from 'chokidar';
-import { transpileComponentsForViews, transpileComponentsInit } from './component.parser';
+import { ApolloService, BootstrapService, Container, PubSubService } from '@gapi/core';
 import { basename } from 'path';
+
+import { Config, IPredictedTranspilation } from '../app/app.tokens';
+import { MakeAdvancedSchema } from './advanced-schema';
+import { MakeBasicSchema } from './basic-schema';
+import { transpileComponentsForViews, transpileComponentsInit } from './component.parser';
+import { getFirstItem } from './get-first-item';
+import { lazyTypes } from './lazy-types';
+import { loadFile } from './load-file';
+import { transpilerCache } from './transpiler-cache';
+import { deep } from './traverse/test';
+import { traverse } from './traverse/traverse';
+import { configWatchers } from './watch-bundles';
 
 function findMetaKey(path: string, meta: { [key: string]: string }) {
   return Object.keys(meta).find(k => meta[k] === path || basename(meta[k]).includes(basename(path)));
@@ -25,9 +25,7 @@ let isRunning: boolean;
 
 export async function reactToChanges(path: string, config: Config) {
   if (isRunning) {
-    console.log(
-      `✋  Bundle is updating previews change! Unable to update ${path}`
-    );
+    console.log(`✋  Bundle is updating previews change! Unable to update ${path}`);
     isRunning = false;
     return;
   }
@@ -49,8 +47,8 @@ export async function reactToChanges(path: string, config: Config) {
     return config;
   }
   try {
-    transpilerCache.delete(path.replace(process.cwd(), ''))
-    transpilerCache.delete(path.replace(process.cwd(), '').replace('.', ''))
+    transpilerCache.delete(path.replace(process.cwd(), ''));
+    transpilerCache.delete(path.replace(process.cwd(), '').replace('.', ''));
     const newFile = await loadFile(path);
     let metaKey: string;
     if (config._meta) {
@@ -63,14 +61,14 @@ export async function reactToChanges(path: string, config: Config) {
       config[metaKey] = await deep(newFile);
     } else {
       // Traverse recursive and find metadata for specific file and update it
-      config = await traverseConfig(path, newFile, config)
+      config = await traverseConfig(path, newFile, config);
     }
 
     lazyTypes.clear();
     Container.get(BootstrapService).Fields = {
       mutation: {},
       query: {},
-      subscription: {}
+      subscription: {},
     };
     if (config.$mode === 'basic') {
       await MakeBasicSchema(config);
@@ -85,21 +83,23 @@ export async function reactToChanges(path: string, config: Config) {
   }
   isRunning = false;
   if (config.$views) {
-    config.$views = await transpileComponentsForViews(config.$views)
+    config.$views = await transpileComponentsForViews(config.$views);
   }
 
-  if(config.$components) {
-    config.$components = (await transpileComponentsInit(config.$components as PredictedTranspilation[])).map(c => c && c.link ? c.link : c) as any;
+  if (config.$components) {
+    config.$components = (await transpileComponentsInit(config.$components as IPredictedTranspilation[])).map(c =>
+      c && c.link ? c.link : c,
+    ) as IPredictedTranspilation[];
   }
 
-  Container.reset(Config)
-  Container.remove(Config)
+  Container.reset(Config);
+  Container.remove(Config);
   Container.set(Config, config);
   if (config.$views) {
     Container.get(PubSubService).publish('listenForChanges', config.$views);
   }
-  Container.reset('main-config-compiled')
-  Container.remove('main-config-compiled')
-  Container.set('main-config-compiled', config)
+  Container.reset('main-config-compiled');
+  Container.remove('main-config-compiled');
+  Container.set('main-config-compiled', config);
   console.log(`📦  Bundle realoaded! ${Date.now() - timer}ms`, path);
 }

@@ -1,20 +1,19 @@
-import { BootstrapFramework, Container, setup } from '@rxdi/core';
-import { AppModule } from './app/app.module';
 import { CoreModule } from '@gapi/core';
-import { nextOrDefault, includes } from './helpers/args-extractors';
-import { writeFile, existsSync } from 'fs';
-import { promisify } from 'util';
+import { BootstrapFramework, Container } from '@rxdi/core';
 import { watch } from 'chokidar';
-import { SelfChild } from './helpers/self-child';
+import { existsSync, writeFile } from 'fs';
 import { Subscription } from 'rxjs';
-import { Config, Externals } from './app/app.tokens';
-import { switchMap } from 'rxjs/operators';
-import { TranspileAndLoad, TranspileAndGetAll } from './helpers/transpile-and-load';
-import { getFirstItem } from './helpers/get-first-item';
-import { loadFile } from './helpers/load-file';
-import { getConfig } from './helpers/set-config';
-import { transpileComponentsInit } from './helpers/component.parser';
+import { promisify } from 'util';
+
 import { IComponentsType } from './app/@introspection';
+import { AppModule } from './app/app.module';
+import { Config, Externals } from './app/app.tokens';
+import { includes, nextOrDefault } from './helpers/args-extractors';
+import { transpileComponentsInit } from './helpers/component.parser';
+import { getFirstItem } from './helpers/get-first-item';
+import { SelfChild } from './helpers/self-child';
+import { getConfig } from './helpers/set-config';
+import { TranspileAndGetAll } from './helpers/transpile-and-load';
 
 if (includes('--watch')) {
   let subscription: Subscription;
@@ -24,7 +23,7 @@ if (includes('--watch')) {
   }
   const ignored = (p: string) => p.includes('node_modules');
 
-  watch(configPath, { ignored }).on('change', async (event, path) => {
+  watch(configPath, { ignored }).on('change', async () => {
     if (subscription) {
       subscription.unsubscribe();
     }
@@ -33,7 +32,7 @@ if (includes('--watch')) {
     });
   });
 
-  watch(configPath, { ignored }).on('ready', async (event, path) => {
+  watch(configPath, { ignored }).on('ready', async () => {
     if (subscription) {
       subscription.unsubscribe();
     }
@@ -300,7 +299,7 @@ $views:
       onSubConnection(connectionParams) {
         return connectionParams;
       },
-      onSubOperation(connectionParams, params, webSocket) {
+      onSubOperation(connectionParams, params) {
         connectionParams;
         return params;
       },
@@ -315,6 +314,7 @@ $views:
         file.$imports.map(file => ({ file: file.replace('💉', '') } as Externals)),
         'imports',
       );
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       imports.push(...transpiledModules.map(f => getFirstItem(require(f.transpiledFile))));
     }
     if (file && file.$components) {

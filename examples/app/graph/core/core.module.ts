@@ -1,7 +1,8 @@
 import { Module } from '@rxdi/core';
+
 import { ContextModule } from './context/context.module';
 
 @Module({
-  imports: [ContextModule]
+  imports: [ContextModule],
 })
 export class CoreModule {}

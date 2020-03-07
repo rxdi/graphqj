@@ -1,11 +1,4 @@
-import {
-  html,
-  property,
-  eventOptions,
-  css,
-  LitElement,
-  Component
-} from '@rxdi/lit-html';
+import { Component, css, eventOptions, html, LitElement, property } from '@rxdi/lit-html';
 
 /**
  * @customElement navbar-component
@@ -48,7 +41,7 @@ import {
   template(this: NavbarComponent) {
     return html`
       <ul class="container">
-        <li><a href="/" >Home</a></li>
+        <li><a href="/">Home</a></li>
         <li><a href="/about">About</a></li>
         <span class="spacer"></span>
         <li><a @click=${this.onIncrement}>Increment</a></li>
@@ -56,18 +49,18 @@ import {
         <li><a>${this.counter}</a></li>
       </ul>
     `;
-  }
+  },
 })
 export class NavbarComponent extends LitElement {
   @property({ type: Number }) counter = 0;
 
   @eventOptions({ capture: true })
-  onIncrement(e: Event) {
+  onIncrement() {
     this.counter++;
   }
 
   @eventOptions({ capture: true })
-  onDecrement(e: Event) {
+  onDecrement() {
     this.counter--;
   }
 }

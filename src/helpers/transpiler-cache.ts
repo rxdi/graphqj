@@ -1,1 +1,1 @@
-export const transpilerCache: Map<string, any> = new Map();
+export const transpilerCache: Map<string, string> = new Map();

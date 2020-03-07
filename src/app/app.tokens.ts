@@ -1,5 +1,6 @@
 import { InjectionToken } from '@rxdi/core';
 import { GraphQLInputFieldConfigMap } from 'graphql';
+
 import { IClientViewType } from './@introspection';
 
 function strEnum<T extends string>(o: Array<T>): { [K in T]: K } {
@@ -21,7 +22,7 @@ export const BooleanUnion = strEnum([
   'Boolean!',
   '[Boolean]!',
   'boolean[]!',
-  'Boolean[]!'
+  'Boolean[]!',
 ]);
 
 export const StringUnion = strEnum([
@@ -34,7 +35,7 @@ export const StringUnion = strEnum([
   'String!',
   'String[]!',
   'string[]!',
-  '[String]!'
+  '[String]!',
 ]);
 
 export const IntegerUnion = strEnum([
@@ -53,14 +54,14 @@ export const IntegerUnion = strEnum([
   'number[]!',
   'Number[]!',
   '[Number]!',
-  '[Int]!'
+  '[Int]!',
 ]);
 
 export type BooleanUnion = keyof typeof BooleanUnion;
 export type StringUnion = keyof typeof StringUnion;
 export type IntegerUnion = keyof typeof IntegerUnion;
 export type GlobalUnion = BooleanUnion | StringUnion | IntegerUnion;
-export interface PredictedTranspilation {
+export interface IPredictedTranspilation {
   originalPath: string;
   filePath: string;
   transpilerPath: string;
@@ -71,67 +72,59 @@ export interface PredictedTranspilation {
 export const Roots = {
   booleanNode: BooleanUnion,
   stringNode: StringUnion,
-  numberNode: IntegerUnion
+  numberNode: IntegerUnion,
 };
 
 export type Args = { [key: string]: GlobalUnion };
 export type Externals = {
   map: string;
   file: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   module?: any;
   transpiledFile?: string;
 };
 
-export interface ResolverDependencies {
+export interface IResolverDependencies {
   provide: string;
   map: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   container: any;
 }
 
+// eslint-disable-next-line @typescript-eslint/interface-name-prefix
 export interface Resolver {
   [key: string]: {
     type: string;
     args: Args;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolve: any;
-    method:
-      | 'Query'
-      | 'Mutation'
-      | 'Subscription'
-      | 'query'
-      | 'mutation'
-      | 'subscription';
-    deps?: ResolverDependencies[];
+    method: 'Query' | 'Mutation' | 'Subscription' | 'query' | 'mutation' | 'subscription';
+    deps?: IResolverDependencies[];
   };
 }
 
-export interface ConfigViews {
+export interface IConfigViews {
   [key: string]: IClientViewType;
 }
+// eslint-disable-next-line @typescript-eslint/interface-name-prefix
 export interface Config {
   $mode: 'basic' | 'advanced';
   $imports?: string[];
-  $components?: string[] | PredictedTranspilation[];
+  $components?: string[] | IPredictedTranspilation[];
   $types: { [key: string]: Args };
   $resolvers: Resolver;
   $directives: string;
   $externals: Externals[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   $args: any;
-  $views?: ConfigViews;
+  $views?: IConfigViews;
   _meta: { [key: string]: string }; // Folder mapping for every module
 }
 
-export const TypesToken = new InjectionToken<
-  Map<string, GraphQLInputFieldConfigMap>
->('(@rxdi/graphqj): types-token');
-export const ArgumentsToken = new InjectionToken<Map<string, Args>>(
-  '(@rxdi/graphqj): arguments-token'
-);
-export const ResolversToken = new InjectionToken<Map<string, Args>>(
-  '(@rxdi/graphqj): resolvers-token'
-);
-export const GuardsToken = new InjectionToken<Map<string, Args>>(
-  '(@rxdi/graphqj): resolvers-token'
-);
+export const TypesToken = new InjectionToken<Map<string, GraphQLInputFieldConfigMap>>('(@rxdi/graphqj): types-token');
+export const ArgumentsToken = new InjectionToken<Map<string, Args>>('(@rxdi/graphqj): arguments-token');
+export const ResolversToken = new InjectionToken<Map<string, Args>>('(@rxdi/graphqj): resolvers-token');
+export const GuardsToken = new InjectionToken<Map<string, Args>>('(@rxdi/graphqj): resolvers-token');
 export const IsBundlerInstalled = new InjectionToken<{
   parcel: boolean;
   gapi: boolean;

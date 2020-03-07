@@ -1,16 +1,11 @@
-import {
-  DirectiveLocation,
-  GraphQLCustomDirective,
-  GraphQLNonNull,
-  GraphQLString
-} from '@gapi/core';
+import { DirectiveLocation, GraphQLCustomDirective, GraphQLNonNull, GraphQLString } from '@gapi/core';
 
 export async function toUppercase() {
   return new GraphQLCustomDirective<string>({
     name: 'toUpperCase',
     description: 'change the case of a string to uppercase',
     locations: [DirectiveLocation.FIELD],
-    resolve: async resolve => (await resolve()).toUpperCase()
+    resolve: async resolve => (await resolve()).toUpperCase(),
   });
 }
 
@@ -22,17 +17,14 @@ export async function AddTextDirective() {
     args: {
       inside: {
         type: new GraphQLNonNull(GraphQLString),
-        description: 'the times to duplicate the string'
+        description: 'the times to duplicate the string',
       },
       outside: {
         type: new GraphQLNonNull(GraphQLString),
-        description: 'the times to duplicate the string'
-      }
+        description: 'the times to duplicate the string',
+      },
     },
-    resolve: async (
-      resolve: () => Promise<string>,
-      root,
-      args: { inside: string; outside: string }
-    ) => args.inside + (await resolve()).toUpperCase() + args.outside
+    resolve: async (resolve: () => Promise<string>, root, args: { inside: string; outside: string }) =>
+      args.inside + (await resolve()).toUpperCase() + args.outside,
   });
 }

@@ -1,5 +1,5 @@
 import { Module } from '@rxdi/core';
-import { ON_REQUEST_HANDLER, GRAPHQL_PLUGIN_CONFIG } from '@rxdi/graphql';
+import { GRAPHQL_PLUGIN_CONFIG, ON_REQUEST_HANDLER } from '@rxdi/graphql';
 import { ResponseToolkit } from 'hapi';
 
 @Module({
@@ -7,12 +7,8 @@ import { ResponseToolkit } from 'hapi';
     {
       provide: ON_REQUEST_HANDLER,
       deps: [GRAPHQL_PLUGIN_CONFIG],
-      useFactory: (config: GRAPHQL_PLUGIN_CONFIG) => async (
-        next,
-        request: Request,
-        h: ResponseToolkit,
-        err: Error
-      ) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      useFactory: (config: GRAPHQL_PLUGIN_CONFIG) => async (next, request: Request, h: ResponseToolkit, err: Error) => {
         // Authenticate user here if it is not authenticated return Boom.unauthorized()
         // if (request.headers.authorization) {
         //     const tokenData = ValidateToken(request.headers.authorization);
@@ -27,8 +23,8 @@ import { ResponseToolkit } from 'hapi';
         config.graphqlOptions.context.clientId = request.headers['clientid'];
         console.log('OMG', request.headers);
         return next();
-      }
-    }
-  ]
+      },
+    },
+  ],
 })
 export class ContextModule {}

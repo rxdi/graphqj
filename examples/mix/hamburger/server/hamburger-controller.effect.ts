@@ -1,12 +1,12 @@
 import { Effect } from '@rxdi/core';
-import { PubSubService } from '@rxdi/graphql-pubsub';
 import { OfType } from '@rxdi/graphql';
-import { EffectTypes } from '../../api-introspection/EffectTypes';
+import { PubSubService } from '@rxdi/graphql-pubsub';
+
 import { IHamburgerStatisticsType } from '../../api-introspection';
+import { EffectTypes } from '../../api-introspection/EffectTypes';
 
 @Effect()
 export class HamburgerControllerEffect {
-
   constructor(private pubsub: PubSubService) {}
 
   @OfType(EffectTypes.clickHamburgerButton)

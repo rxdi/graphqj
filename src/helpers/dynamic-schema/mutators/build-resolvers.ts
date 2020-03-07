@@ -1,42 +1,29 @@
-import { Config, ResolverDependencies } from '../../../app/app.tokens';
+import { BootstrapService, GraphQLSchema } from '@gapi/core';
+import { Container } from '@rxdi/core';
+
+import { Config, IResolverDependencies } from '../../../app/app.tokens';
+import { getFirstItem } from '../../get-first-item';
 import { isFunction } from '../../isFunction';
 import { lazyTypes } from '../../lazy-types';
-
-import { getFirstItem } from '../../get-first-item';
 import { buildArgumentsSchema } from '../../parse-args-schema';
 
-import { Container } from '@rxdi/core';
-import { BootstrapService, GraphQLSchema } from '@gapi/core';
-
-export function buildResolvers(
-  config: Config,
-  types,
-  buildedSchema: GraphQLSchema
-) {
+export function buildResolvers(config: Config, types, buildedSchema: GraphQLSchema) {
   Object.keys(config.$resolvers).forEach(resolver => {
     const type = config.$resolvers[resolver].type;
-    const method = (
-      config.$resolvers[resolver].method || 'query'
-    ).toLocaleLowerCase();
-    let deps = config.$resolvers[resolver].deps || [];
+    const method = (config.$resolvers[resolver].method || 'query').toLocaleLowerCase();
+    const deps = config.$resolvers[resolver].deps || [];
 
-    const mapDependencies = <T>(
-      dependencies: ResolverDependencies[]
-    ): { [map: string]: ResolverDependencies } =>
+    const mapDependencies = <T>(dependencies: IResolverDependencies[]): { [map: string]: IResolverDependencies } =>
       dependencies
         .map(({ provide, map }) => ({
           container: Container.get<keyof T>(provide),
           provide,
-          map
+          map,
         }))
         .reduce((acc, curr) => ({ ...acc, [curr.map]: curr.container }), {});
 
     if (!buildedSchema[type]) {
-      throw new Error(
-        `Missing type '${type}', Available types: '${Object.keys(
-          types
-        ).toString()}'`
-      );
+      throw new Error(`Missing type '${type}', Available types: '${Object.keys(types).toString()}'`);
     }
     let resolve = config.$resolvers[resolver].resolve;
     if (resolve && !isFunction(resolve) && !Array.isArray(resolve)) {
@@ -59,7 +46,7 @@ export function buildResolvers(
       public: true,
       method_type: method,
       target: mapDependencies(deps),
-      resolve
-    } as any;
+      resolve,
+    };
   });
 }

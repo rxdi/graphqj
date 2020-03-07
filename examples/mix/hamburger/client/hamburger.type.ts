@@ -36,6 +36,6 @@ export const HamburgerTypes = strEnum([
   'stand-r',
   'squeeze',
   'vortex',
-  'vortex-r'
+  'vortex-r',
 ]);
 export type HamburgerTypes = keyof typeof HamburgerTypes;

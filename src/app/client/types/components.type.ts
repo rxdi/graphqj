@@ -1,13 +1,13 @@
-import { GraphQLString, GraphQLObjectType } from 'graphql';
+import { GraphQLObjectType, GraphQLString } from 'graphql';
 
 export const ComponentsType = new GraphQLObjectType({
   name: 'ComponentsType',
   fields: {
     link: {
-      type: GraphQLString
+      type: GraphQLString,
     },
     selector: {
-      type: GraphQLString
-    }
-  }
+      type: GraphQLString,
+    },
+  },
 });

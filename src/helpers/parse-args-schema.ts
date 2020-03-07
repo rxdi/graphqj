@@ -1,12 +1,13 @@
-import { GraphQLInputObjectType, GraphQLNonNull } from 'graphql';
 import { Container } from '@rxdi/core';
-import { ParseArgs } from './parse-ast';
+import { GraphQLInputObjectType, GraphQLNonNull } from 'graphql';
+
 import { Config, TypesToken } from '../app/app.tokens';
+import { ParseArgs } from './parse-ast';
 
 const InputObjectTypes = new Map<string, GraphQLInputObjectType>();
 
 export const buildArgumentsSchema = (config: Config, resolver: string) => {
-  let args = config.$resolvers[resolver].args || {};
+  const args = config.$resolvers[resolver].args || {};
   let fields = {};
   const Arguments = Container.get(TypesToken);
   Object.keys(args).forEach(a => {
@@ -14,7 +15,7 @@ export const buildArgumentsSchema = (config: Config, resolver: string) => {
     if (Arguments.has(name)) {
       let reusableType = new GraphQLInputObjectType({
         name,
-        fields: () => Arguments.get(name)
+        fields: () => Arguments.get(name),
       });
       if (InputObjectTypes.has(name)) {
         reusableType = InputObjectTypes.get(name);
@@ -23,14 +24,14 @@ export const buildArgumentsSchema = (config: Config, resolver: string) => {
       if (args[a].includes('!')) {
         fields = {
           payload: {
-            type: new GraphQLNonNull(reusableType)
-          }
+            type: new GraphQLNonNull(reusableType),
+          },
         };
       } else {
         fields = {
           payload: {
-            type: reusableType
-          }
+            type: reusableType,
+          },
         };
       }
       return;

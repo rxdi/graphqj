@@ -1,36 +1,35 @@
-import { writeFile, readFileSync, exists } from 'fs';
-import { promisify } from 'util';
-import { includes, nextOrDefault } from '../helpers/args-extractors';
-import { VoyagerModule } from '@gapi/voyager';
-import { getConfig } from '../helpers/set-config';
-import { basicTemplate } from '../helpers/basic.template';
-import { MakeAdvancedSchema } from '../helpers/advanced-schema';
-import { MakeBasicSchema } from '../helpers/basic-schema';
-import { join } from 'path';
-import { deep } from '../helpers/traverse/test';
-import { traverseMap } from '../helpers/traverse-map';
-import { watchBundles } from '../helpers/watch-bundles';
-import { isGapiInstalled } from '../helpers/is-runner-installed';
 import {
-  Module,
-  SCHEMA_OVERRIDE,
-  GraphQLSchema,
-  printSchema,
   buildSchema,
-  mergeSchemas,
+  Container,
   GRAPHQL_PLUGIN_CONFIG,
   GraphQLDirective,
-  Container,
+  GraphQLSchema,
+  mergeSchemas,
+  Module,
+  printSchema,
+  SCHEMA_OVERRIDE,
 } from '@gapi/core';
+import { VoyagerModule } from '@gapi/voyager';
+import { exists, readFileSync, writeFile } from 'fs';
+import { join } from 'path';
+import { promisify } from 'util';
 
-import { TypesToken, Config, IsBundlerInstalled } from './app.tokens';
-
-import { TranspileAndLoad } from '../helpers/transpile-and-load';
-import { buildExternals } from '../helpers/dynamic-schema/mutators/build-externals';
-import { CoreModule } from './core/core.module';
-import { ClientModule } from './client/client.module';
+import { MakeAdvancedSchema } from '../helpers/advanced-schema';
+import { includes, nextOrDefault } from '../helpers/args-extractors';
+import { MakeBasicSchema } from '../helpers/basic-schema';
+import { basicTemplate } from '../helpers/basic.template';
 import { predictConfig } from '../helpers/component.parser';
+import { buildExternals } from '../helpers/dynamic-schema/mutators/build-externals';
+import { isGapiInstalled } from '../helpers/is-runner-installed';
+import { getConfig } from '../helpers/set-config';
+import { TranspileAndLoad } from '../helpers/transpile-and-load';
+import { traverseMap } from '../helpers/traverse-map';
+import { deep } from '../helpers/traverse/test';
+import { watchBundles } from '../helpers/watch-bundles';
 import { IComponentsType } from './@introspection';
+import { Config, IsBundlerInstalled, TypesToken } from './app.tokens';
+import { ClientModule } from './client/client.module';
+import { CoreModule } from './core/core.module';
 
 @Module({
   imports: [CoreModule, VoyagerModule.forRoot(), ClientModule],
@@ -120,13 +119,15 @@ ${printSchema(mergedSchemas)}
           config.$externals = await buildExternals(config);
         }
 
-        let filePath = join(process.cwd(), config.$directives || '');
+        const filePath = join(process.cwd(), config.$directives || '');
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let directives: GraphQLDirective[] | any[];
 
         if ((await promisify(exists)(filePath)) && filePath !== process.cwd()) {
           if (filePath.includes('.ts')) {
             directives = await TranspileAndLoad(config.$directives.replace('.', ''), './.gj/out');
           } else {
+            // eslint-disable-next-line @typescript-eslint/no-var-requires
             directives = require('esm')(module)(filePath);
           }
           graphqlConfig.directives = (

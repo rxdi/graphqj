@@ -1,11 +1,6 @@
-import {
-  GraphQLString,
-  GraphQLInt,
-  GraphQLList,
-  GraphQLObjectType,
-  GraphQLBoolean
-} from 'graphql';
 import { BootstrapService, Container } from '@gapi/core';
+import { GraphQLBoolean, GraphQLInt, GraphQLList, GraphQLObjectType, GraphQLString } from 'graphql';
+
 import { Config } from '../app/app.tokens';
 
 export function MakeBasicSchema(config: Config) {
@@ -42,14 +37,15 @@ export function MakeBasicSchema(config: Config) {
     Container.get(BootstrapService).Fields.query[method_name] = {
       type: new GraphQLObjectType({
         name: `${method_name}_type`,
-        fields: () => fields
+        fields: () => fields,
       }),
       args,
       method_name,
       public: true,
       method_type: 'query',
-      target: () => {},
-      resolve: typeof resolve === 'function' ? resolve : () => resolve
+      target: () => ({}),
+      resolve: typeof resolve === 'function' ? resolve : () => resolve,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any;
   });
 }

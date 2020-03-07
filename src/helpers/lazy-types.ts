@@ -1,1 +1,1 @@
-export const lazyTypes = new Map()
+export const lazyTypes = new Map();

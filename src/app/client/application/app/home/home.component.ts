@@ -1,17 +1,7 @@
-import {
-  html,
-  Component,
-  async,
-  LitElement,
-  property,
-  OnInit,
-  OnDestroy,
-  OnUpdate,
-  queryAll
-} from '@rxdi/lit-html';
+import { async, Component, html, LitElement, OnDestroy, OnInit, OnUpdate, property, queryAll } from '@rxdi/lit-html';
+import { RouteParams } from '@rxdi/router';
 import { timer } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { RouteParams } from '@rxdi/router';
 
 /**
  * @customElement 'home-component'
@@ -31,12 +21,12 @@ import { RouteParams } from '@rxdi/router';
         2
       </div>
     `;
-  }
+  },
 })
 export class HomeComponent extends LitElement implements OnInit, OnDestroy, OnUpdate {
   @property() private name: string;
 
-  @RouteParams() private params: any;
+  @RouteParams() private params;
 
   @queryAll('div') private divs: HTMLElement[];
 

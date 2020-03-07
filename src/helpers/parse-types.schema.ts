@@ -1,21 +1,18 @@
-import {
-  GraphQLString,
-  GraphQLInt,
-  GraphQLList,
-  GraphQLScalarType,
-  GraphQLType
-} from 'graphql';
-import { GlobalUnion } from '../app/app.tokens';
 import { Container, InjectionToken } from '@rxdi/core';
-import { of, isObservable } from 'rxjs';
+import { GraphQLInt, GraphQLList, GraphQLScalarType, GraphQLString, GraphQLType } from 'graphql';
+import { isObservable, of } from 'rxjs';
+
+import { GlobalUnion } from '../app/app.tokens';
 import { lazyTypes } from './lazy-types';
 
 export function ParseTypesSchema(
   ck: GlobalUnion,
   key: string,
   parentType: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   interceptors: InjectionToken<(...args: any[]) => any>[],
-  types: { [key: string]: any }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  types: { [key: string]: any },
 ) {
   let type: { type: GraphQLScalarType | GraphQLList<GraphQLType> };
   if (ck === 'string' || ck === 'String') {
@@ -50,8 +47,9 @@ export function ParseTypesSchema(
   if (parentType === isRecursiveType) {
     lazyTypes.set(parentType, {
       ...lazyTypes.get(parentType),
-      [key]: isRecursiveType
+      [key]: isRecursiveType,
     });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     type = { type: types[parentType] } as any; // хмм
   }
   if (!type) {
@@ -60,13 +58,7 @@ export function ParseTypesSchema(
   type['resolve'] = async function(...args) {
     let defaultValue = args[0][key];
     for (const interceptor of interceptors) {
-      defaultValue = await Container.get(interceptor)(
-        of(defaultValue),
-        args[0],
-        args[1],
-        args[2],
-        args[3]
-      );
+      defaultValue = await Container.get(interceptor)(of(defaultValue), args[0], args[1], args[2], args[3]);
       if (isObservable(defaultValue)) {
         defaultValue = await defaultValue.toPromise();
       }

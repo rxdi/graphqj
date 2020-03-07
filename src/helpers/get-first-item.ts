@@ -8,7 +8,7 @@ export function getFirstItem<T>(object: T) {
     return null;
   }
   let firstKey: string;
-  for (var key in object) {
+  for (const key in object) {
     firstKey = key;
     break;
   }

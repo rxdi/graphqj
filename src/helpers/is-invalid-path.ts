@@ -1,6 +1,7 @@
 import { parse } from 'path';
 
-export function isInValidPath(path: string, options = {} as any) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function isInValidPath(path: string, options = {} as { extended: boolean; file: string }) {
   if (path === '' || typeof path !== 'string') return true;
 
   // https://msdn.microsoft.com/en-us/library/windows/desktop/aa365247(v=vs.85).aspx#maxpath

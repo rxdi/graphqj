@@ -1,16 +1,13 @@
-import { promisify } from 'util';
 import { exists } from 'fs';
-import { join, basename } from 'path';
-import { ConfigViews, PredictedTranspilation } from '../app/app.tokens';
-import {
-  TranspileTypescript,
-  TranspileTypescriptParcel
-} from './typescript.builder';
+import { basename, join } from 'path';
 import { IComponentsType } from 'src/app/@introspection';
+import { promisify } from 'util';
 
+import { IConfigViews, IPredictedTranspilation } from '../app/app.tokens';
+import { TranspileTypescriptParcel } from './typescript.builder';
 
-export async function transpileComponent(path: string = ''): Promise<PredictedTranspilation> {
-  if (!path || path && !path.includes('💉')) {
+export async function transpileComponent(path = ''): Promise<IPredictedTranspilation> {
+  if (!path || (path && !path.includes('💉'))) {
     return;
   }
   const originalPath = `${path}`;
@@ -25,27 +22,22 @@ export async function transpileComponent(path: string = ''): Promise<PredictedTr
     originalPath,
     filePath,
     transpilerPath,
-    newPath: join(
-      process.cwd(),
-      'components',
-      path.replace(basename(path), '')
-    ),
-    link: `http://0.0.0.0:9000/components/${basename(path).replace('ts', 'js')}`
+    newPath: join(process.cwd(), 'components', path.replace(basename(path), '')),
+    link: `http://0.0.0.0:9000/components/${basename(path).replace('ts', 'js')}`,
   };
 }
-export async function mapComponentsPath(views: ConfigViews) {
-  return (await Promise.all(
-    []
-      .concat(...Object.keys(views).map(v => views[v].components))
-      .filter(i => !!i)
-      .map(c => transpileComponent(c.link))
-  )).filter(i => !!i);
+export async function mapComponentsPath(views: IConfigViews) {
+  return (
+    await Promise.all(
+      []
+        .concat(...Object.keys(views).map(v => views[v].components))
+        .filter(i => !!i)
+        .map(c => transpileComponent(c.link)),
+    )
+  ).filter(i => !!i);
 }
 
-export function modifyViewsConfig(
-  views: ConfigViews,
-  components: { originalPath: string; link: string }[]
-) {
+export function modifyViewsConfig(views: IConfigViews, components: { originalPath: string; link: string }[]) {
   Object.keys(views).forEach(v => {
     if (!views[v].components) {
       return;
@@ -61,30 +53,23 @@ export function modifyViewsConfig(
   });
   return views;
 }
-export async function transpileComponentsForViews(views: ConfigViews) {
+export async function transpileComponentsForViews(views: IConfigViews) {
   const components = await mapComponentsPath(views);
   for (const { transpilerPath } of components) {
-    await TranspileTypescriptParcel(
-        [transpilerPath],
-        join(process.cwd(), 'components')
-      );
+    await TranspileTypescriptParcel([transpilerPath], join(process.cwd(), 'components'));
   }
   modifyViewsConfig(views, components);
   return views;
 }
 
-
 export async function predictConfig(components: IComponentsType[]) {
-  return Promise.all(components.map(async c => (await transpileComponent(c.link))))
+  return Promise.all(components.map(async c => await transpileComponent(c.link)));
 }
 
 export async function transpileComponentsInit(components: IComponentsType[]) {
   const config = await predictConfig(components);
   for (const predictedConfig of config) {
-    await TranspileTypescriptParcel(
-      [predictedConfig.transpilerPath],
-      join(process.cwd(), 'components')
-    );
+    await TranspileTypescriptParcel([predictedConfig.transpilerPath], join(process.cwd(), 'components'));
   }
   return config;
 }

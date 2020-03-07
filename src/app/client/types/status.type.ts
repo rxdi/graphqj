@@ -4,7 +4,7 @@ export const ClientReadyStatusType = new GraphQLObjectType({
   name: 'ClientReadyStatusType',
   fields: () => ({
     status: {
-      type: GraphQLString
-    }
-  })
+      type: GraphQLString,
+    },
+  }),
 });

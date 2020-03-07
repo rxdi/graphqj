@@ -1,9 +1,10 @@
 import { Module } from '@rxdi/core';
-import { HamburgerComponent } from './hamburger.component';
+
 import { ConnectionModule } from '../../core/core.module';
+import { HamburgerComponent } from './hamburger.component';
 
 @Module({
   imports: [ConnectionModule],
-  components: [HamburgerComponent]
+  components: [HamburgerComponent],
 })
 export class HamburgerClientModule {}

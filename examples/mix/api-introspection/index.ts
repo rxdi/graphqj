@@ -1,5 +1,4 @@
 export interface IHamburgerStatisticsType {
-    __typename?: "HamburgerStatisticsType";
-    clicks: number | null;
-  }
-  
+  __typename?: 'HamburgerStatisticsType';
+  clicks: number | null;
+}

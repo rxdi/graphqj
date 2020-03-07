@@ -252,54 +252,46 @@ export const style = css`
    * Arrow Alt
    */
   .hamburger--arrowalt .hamburger-inner::before {
-    transition: top 0.1s 0.1s ease,
-      transform 0.1s cubic-bezier(0.165, 0.84, 0.44, 1);
+    transition: top 0.1s 0.1s ease, transform 0.1s cubic-bezier(0.165, 0.84, 0.44, 1);
   }
 
   .hamburger--arrowalt .hamburger-inner::after {
-    transition: bottom 0.1s 0.1s ease,
-      transform 0.1s cubic-bezier(0.165, 0.84, 0.44, 1);
+    transition: bottom 0.1s 0.1s ease, transform 0.1s cubic-bezier(0.165, 0.84, 0.44, 1);
   }
 
   .hamburger--arrowalt.is-active .hamburger-inner::before {
     top: 0;
     transform: translate3d(-8px, -10px, 0) rotate(-45deg) scale(0.7, 1);
-    transition: top 0.1s ease,
-      transform 0.1s 0.1s cubic-bezier(0.895, 0.03, 0.685, 0.22);
+    transition: top 0.1s ease, transform 0.1s 0.1s cubic-bezier(0.895, 0.03, 0.685, 0.22);
   }
 
   .hamburger--arrowalt.is-active .hamburger-inner::after {
     bottom: 0;
     transform: translate3d(-8px, 10px, 0) rotate(45deg) scale(0.7, 1);
-    transition: bottom 0.1s ease,
-      transform 0.1s 0.1s cubic-bezier(0.895, 0.03, 0.685, 0.22);
+    transition: bottom 0.1s ease, transform 0.1s 0.1s cubic-bezier(0.895, 0.03, 0.685, 0.22);
   }
 
   /*
    * Arrow Alt Right
    */
   .hamburger--arrowalt-r .hamburger-inner::before {
-    transition: top 0.1s 0.1s ease,
-      transform 0.1s cubic-bezier(0.165, 0.84, 0.44, 1);
+    transition: top 0.1s 0.1s ease, transform 0.1s cubic-bezier(0.165, 0.84, 0.44, 1);
   }
 
   .hamburger--arrowalt-r .hamburger-inner::after {
-    transition: bottom 0.1s 0.1s ease,
-      transform 0.1s cubic-bezier(0.165, 0.84, 0.44, 1);
+    transition: bottom 0.1s 0.1s ease, transform 0.1s cubic-bezier(0.165, 0.84, 0.44, 1);
   }
 
   .hamburger--arrowalt-r.is-active .hamburger-inner::before {
     top: 0;
     transform: translate3d(8px, -10px, 0) rotate(45deg) scale(0.7, 1);
-    transition: top 0.1s ease,
-      transform 0.1s 0.1s cubic-bezier(0.895, 0.03, 0.685, 0.22);
+    transition: top 0.1s ease, transform 0.1s 0.1s cubic-bezier(0.895, 0.03, 0.685, 0.22);
   }
 
   .hamburger--arrowalt-r.is-active .hamburger-inner::after {
     bottom: 0;
     transform: translate3d(8px, 10px, 0) rotate(-45deg) scale(0.7, 1);
-    transition: bottom 0.1s ease,
-      transform 0.1s 0.1s cubic-bezier(0.895, 0.03, 0.685, 0.22);
+    transition: bottom 0.1s ease, transform 0.1s 0.1s cubic-bezier(0.895, 0.03, 0.685, 0.22);
   }
 
   /*
@@ -361,8 +353,7 @@ export const style = css`
   }
   .hamburger--collapse .hamburger-inner::after {
     top: -20px;
-    transition: top 0.2s 0.2s cubic-bezier(0.33333, 0.66667, 0.66667, 1),
-      opacity 0.1s linear;
+    transition: top 0.2s 0.2s cubic-bezier(0.33333, 0.66667, 0.66667, 1), opacity 0.1s linear;
   }
   .hamburger--collapse .hamburger-inner::before {
     transition: top 0.12s 0.2s cubic-bezier(0.33333, 0.66667, 0.66667, 1),
@@ -377,8 +368,7 @@ export const style = css`
   .hamburger--collapse.is-active .hamburger-inner::after {
     top: 0;
     opacity: 0;
-    transition: top 0.2s cubic-bezier(0.33333, 0, 0.66667, 0.33333),
-      opacity 0.1s 0.22s linear;
+    transition: top 0.2s cubic-bezier(0.33333, 0, 0.66667, 0.33333), opacity 0.1s 0.22s linear;
   }
   .hamburger--collapse.is-active .hamburger-inner::before {
     top: 0;
@@ -399,8 +389,7 @@ export const style = css`
   }
   .hamburger--collapse-r .hamburger-inner::after {
     top: -20px;
-    transition: top 0.2s 0.2s cubic-bezier(0.33333, 0.66667, 0.66667, 1),
-      opacity 0.1s linear;
+    transition: top 0.2s 0.2s cubic-bezier(0.33333, 0.66667, 0.66667, 1), opacity 0.1s linear;
   }
   .hamburger--collapse-r .hamburger-inner::before {
     transition: top 0.12s 0.2s cubic-bezier(0.33333, 0.66667, 0.66667, 1),
@@ -415,8 +404,7 @@ export const style = css`
   .hamburger--collapse-r.is-active .hamburger-inner::after {
     top: 0;
     opacity: 0;
-    transition: top 0.2s cubic-bezier(0.33333, 0, 0.66667, 0.33333),
-      opacity 0.1s 0.22s linear;
+    transition: top 0.2s cubic-bezier(0.33333, 0, 0.66667, 0.33333), opacity 0.1s 0.22s linear;
   }
   .hamburger--collapse-r.is-active .hamburger-inner::before {
     top: 0;
@@ -496,14 +484,14 @@ export const style = css`
   }
   .hamburger--emphatic .hamburger-inner::before {
     left: 0;
-    transition: transform 0.125s cubic-bezier(0.6, 0.04, 0.98, 0.335),
-      top 0.05s 0.125s linear, left 0.125s 0.175s ease-in;
+    transition: transform 0.125s cubic-bezier(0.6, 0.04, 0.98, 0.335), top 0.05s 0.125s linear,
+      left 0.125s 0.175s ease-in;
   }
   .hamburger--emphatic .hamburger-inner::after {
     top: 10px;
     right: 0;
-    transition: transform 0.125s cubic-bezier(0.6, 0.04, 0.98, 0.335),
-      top 0.05s 0.125s linear, right 0.125s 0.175s ease-in;
+    transition: transform 0.125s cubic-bezier(0.6, 0.04, 0.98, 0.335), top 0.05s 0.125s linear,
+      right 0.125s 0.175s ease-in;
   }
   .hamburger--emphatic.is-active .hamburger-inner {
     transition-delay: 0s;
@@ -536,14 +524,14 @@ export const style = css`
   }
   .hamburger--emphatic-r .hamburger-inner::before {
     left: 0;
-    transition: transform 0.125s cubic-bezier(0.6, 0.04, 0.98, 0.335),
-      top 0.05s 0.125s linear, left 0.125s 0.175s ease-in;
+    transition: transform 0.125s cubic-bezier(0.6, 0.04, 0.98, 0.335), top 0.05s 0.125s linear,
+      left 0.125s 0.175s ease-in;
   }
   .hamburger--emphatic-r .hamburger-inner::after {
     top: 10px;
     right: 0;
-    transition: transform 0.125s cubic-bezier(0.6, 0.04, 0.98, 0.335),
-      top 0.05s 0.125s linear, right 0.125s 0.175s ease-in;
+    transition: transform 0.125s cubic-bezier(0.6, 0.04, 0.98, 0.335), top 0.05s 0.125s linear,
+      right 0.125s 0.175s ease-in;
   }
   .hamburger--emphatic-r.is-active .hamburger-inner {
     transition-delay: 0s;
@@ -570,15 +558,13 @@ export const style = css`
    */
   .hamburger--minus .hamburger-inner::before,
   .hamburger--minus .hamburger-inner::after {
-    transition: bottom 0.08s 0s ease-out, top 0.08s 0s ease-out,
-      opacity 0s linear;
+    transition: bottom 0.08s 0s ease-out, top 0.08s 0s ease-out, opacity 0s linear;
   }
 
   .hamburger--minus.is-active .hamburger-inner::before,
   .hamburger--minus.is-active .hamburger-inner::after {
     opacity: 0;
-    transition: bottom 0.08s ease-out, top 0.08s ease-out,
-      opacity 0s 0.08s linear;
+    transition: bottom 0.08s ease-out, top 0.08s ease-out, opacity 0s 0.08s linear;
   }
 
   .hamburger--minus.is-active .hamburger-inner::before {
@@ -654,8 +640,7 @@ export const style = css`
     transition: top 0.1s 0.25s ease-in, opacity 0.1s ease-in;
   }
   .hamburger--spin .hamburger-inner::after {
-    transition: bottom 0.1s 0.25s ease-in,
-      transform 0.22s cubic-bezier(0.55, 0.055, 0.675, 0.19);
+    transition: bottom 0.1s 0.25s ease-in, transform 0.22s cubic-bezier(0.55, 0.055, 0.675, 0.19);
   }
 
   .hamburger--spin.is-active .hamburger-inner {
@@ -671,8 +656,7 @@ export const style = css`
   .hamburger--spin.is-active .hamburger-inner::after {
     bottom: 0;
     transform: rotate(-90deg);
-    transition: bottom 0.1s ease-out,
-      transform 0.22s 0.12s cubic-bezier(0.215, 0.61, 0.355, 1);
+    transition: bottom 0.1s ease-out, transform 0.22s 0.12s cubic-bezier(0.215, 0.61, 0.355, 1);
   }
 
   /*
@@ -686,8 +670,7 @@ export const style = css`
     transition: top 0.1s 0.25s ease-in, opacity 0.1s ease-in;
   }
   .hamburger--spin-r .hamburger-inner::after {
-    transition: bottom 0.1s 0.25s ease-in,
-      transform 0.22s cubic-bezier(0.55, 0.055, 0.675, 0.19);
+    transition: bottom 0.1s 0.25s ease-in, transform 0.22s cubic-bezier(0.55, 0.055, 0.675, 0.19);
   }
 
   .hamburger--spin-r.is-active .hamburger-inner {
@@ -703,8 +686,7 @@ export const style = css`
   .hamburger--spin-r.is-active .hamburger-inner::after {
     bottom: 0;
     transform: rotate(90deg);
-    transition: bottom 0.1s ease-out,
-      transform 0.22s 0.12s cubic-bezier(0.215, 0.61, 0.355, 1);
+    transition: bottom 0.1s ease-out, transform 0.22s 0.12s cubic-bezier(0.215, 0.61, 0.355, 1);
   }
 
   /*
@@ -754,8 +736,7 @@ export const style = css`
   }
   .hamburger--spring-r .hamburger-inner::after {
     top: -20px;
-    transition: top 0.2s 0.2s cubic-bezier(0.33333, 0.66667, 0.66667, 1),
-      opacity 0s linear;
+    transition: top 0.2s 0.2s cubic-bezier(0.33333, 0.66667, 0.66667, 1), opacity 0s linear;
   }
   .hamburger--spring-r .hamburger-inner::before {
     transition: top 0.1s 0.2s cubic-bezier(0.33333, 0.66667, 0.66667, 1),
@@ -770,8 +751,7 @@ export const style = css`
   .hamburger--spring-r.is-active .hamburger-inner::after {
     top: 0;
     opacity: 0;
-    transition: top 0.2s cubic-bezier(0.33333, 0, 0.66667, 0.33333),
-      opacity 0s 0.22s linear;
+    transition: top 0.2s cubic-bezier(0.33333, 0, 0.66667, 0.33333), opacity 0s 0.22s linear;
   }
   .hamburger--spring-r.is-active .hamburger-inner::before {
     top: 0;
@@ -784,70 +764,58 @@ export const style = css`
    * Stand
    */
   .hamburger--stand .hamburger-inner {
-    transition: transform 0.075s 0.15s cubic-bezier(0.55, 0.055, 0.675, 0.19),
-      background-color 0s 0.075s linear;
+    transition: transform 0.075s 0.15s cubic-bezier(0.55, 0.055, 0.675, 0.19), background-color 0s 0.075s linear;
   }
   .hamburger--stand .hamburger-inner::before {
-    transition: top 0.075s 0.075s ease-in,
-      transform 0.075s 0s cubic-bezier(0.55, 0.055, 0.675, 0.19);
+    transition: top 0.075s 0.075s ease-in, transform 0.075s 0s cubic-bezier(0.55, 0.055, 0.675, 0.19);
   }
   .hamburger--stand .hamburger-inner::after {
-    transition: bottom 0.075s 0.075s ease-in,
-      transform 0.075s 0s cubic-bezier(0.55, 0.055, 0.675, 0.19);
+    transition: bottom 0.075s 0.075s ease-in, transform 0.075s 0s cubic-bezier(0.55, 0.055, 0.675, 0.19);
   }
 
   .hamburger--stand.is-active .hamburger-inner {
     transform: rotate(90deg);
     background-color: transparent !important;
-    transition: transform 0.075s 0s cubic-bezier(0.215, 0.61, 0.355, 1),
-      background-color 0s 0.15s linear;
+    transition: transform 0.075s 0s cubic-bezier(0.215, 0.61, 0.355, 1), background-color 0s 0.15s linear;
   }
   .hamburger--stand.is-active .hamburger-inner::before {
     top: 0;
     transform: rotate(-45deg);
-    transition: top 0.075s 0.1s ease-out,
-      transform 0.075s 0.15s cubic-bezier(0.215, 0.61, 0.355, 1);
+    transition: top 0.075s 0.1s ease-out, transform 0.075s 0.15s cubic-bezier(0.215, 0.61, 0.355, 1);
   }
   .hamburger--stand.is-active .hamburger-inner::after {
     bottom: 0;
     transform: rotate(45deg);
-    transition: bottom 0.075s 0.1s ease-out,
-      transform 0.075s 0.15s cubic-bezier(0.215, 0.61, 0.355, 1);
+    transition: bottom 0.075s 0.1s ease-out, transform 0.075s 0.15s cubic-bezier(0.215, 0.61, 0.355, 1);
   }
 
   /*
    * Stand Reverse
    */
   .hamburger--stand-r .hamburger-inner {
-    transition: transform 0.075s 0.15s cubic-bezier(0.55, 0.055, 0.675, 0.19),
-      background-color 0s 0.075s linear;
+    transition: transform 0.075s 0.15s cubic-bezier(0.55, 0.055, 0.675, 0.19), background-color 0s 0.075s linear;
   }
   .hamburger--stand-r .hamburger-inner::before {
-    transition: top 0.075s 0.075s ease-in,
-      transform 0.075s 0s cubic-bezier(0.55, 0.055, 0.675, 0.19);
+    transition: top 0.075s 0.075s ease-in, transform 0.075s 0s cubic-bezier(0.55, 0.055, 0.675, 0.19);
   }
   .hamburger--stand-r .hamburger-inner::after {
-    transition: bottom 0.075s 0.075s ease-in,
-      transform 0.075s 0s cubic-bezier(0.55, 0.055, 0.675, 0.19);
+    transition: bottom 0.075s 0.075s ease-in, transform 0.075s 0s cubic-bezier(0.55, 0.055, 0.675, 0.19);
   }
 
   .hamburger--stand-r.is-active .hamburger-inner {
     transform: rotate(-90deg);
     background-color: transparent !important;
-    transition: transform 0.075s 0s cubic-bezier(0.215, 0.61, 0.355, 1),
-      background-color 0s 0.15s linear;
+    transition: transform 0.075s 0s cubic-bezier(0.215, 0.61, 0.355, 1), background-color 0s 0.15s linear;
   }
   .hamburger--stand-r.is-active .hamburger-inner::before {
     top: 0;
     transform: rotate(-45deg);
-    transition: top 0.075s 0.1s ease-out,
-      transform 0.075s 0.15s cubic-bezier(0.215, 0.61, 0.355, 1);
+    transition: top 0.075s 0.1s ease-out, transform 0.075s 0.15s cubic-bezier(0.215, 0.61, 0.355, 1);
   }
   .hamburger--stand-r.is-active .hamburger-inner::after {
     bottom: 0;
     transform: rotate(45deg);
-    transition: bottom 0.075s 0.1s ease-out,
-      transform 0.075s 0.15s cubic-bezier(0.215, 0.61, 0.355, 1);
+    transition: bottom 0.075s 0.1s ease-out, transform 0.075s 0.15s cubic-bezier(0.215, 0.61, 0.355, 1);
   }
 
   /*
@@ -861,8 +829,7 @@ export const style = css`
     transition: top 0.075s 0.12s ease, opacity 0.075s ease;
   }
   .hamburger--squeeze .hamburger-inner::after {
-    transition: bottom 0.075s 0.12s ease,
-      transform 0.075s cubic-bezier(0.55, 0.055, 0.675, 0.19);
+    transition: bottom 0.075s 0.12s ease, transform 0.075s cubic-bezier(0.55, 0.055, 0.675, 0.19);
   }
 
   .hamburger--squeeze.is-active .hamburger-inner {
@@ -878,8 +845,7 @@ export const style = css`
   .hamburger--squeeze.is-active .hamburger-inner::after {
     bottom: 0;
     transform: rotate(-90deg);
-    transition: bottom 0.075s ease,
-      transform 0.075s 0.12s cubic-bezier(0.215, 0.61, 0.355, 1);
+    transition: bottom 0.075s ease, transform 0.075s 0.12s cubic-bezier(0.215, 0.61, 0.355, 1);
   }
 
   /*

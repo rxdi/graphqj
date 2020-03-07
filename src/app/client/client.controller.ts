@@ -1,49 +1,43 @@
 import {
+  BootstrapService,
+  Container,
   Controller,
   GraphQLControllerOptions,
-  Type,
-  Subscription,
-  Subscribe,
-  PubSubService,
-  Container,
-  Mutation,
-  BootstrapService,
-  printSchema,
-  withFilter,
+  GraphQLNonNull,
   GraphQLString,
-  GraphQLNonNull
+  Mutation,
+  printSchema,
+  PubSubService,
+  Subscribe,
+  Subscription,
+  Type,
+  withFilter,
 } from '@gapi/core';
-import { ClientType } from './types/client.type';
-import { Config, ConfigViews, PredictedTranspilation } from '../app.tokens';
-import {
-  mapComponentsPath,
-  modifyViewsConfig
-} from '../../helpers/component.parser';
-import { IClientViewType } from '../@introspection';
 
-interface Reader<R, A> {
-  (r: R): A
+import { IClientViewType } from '../@introspection';
+import { Config, IConfigViews, IPredictedTranspilation } from '../app.tokens';
+import { ClientType } from './types/client.type';
+
+interface IReader<R, A> {
+  (r: R): A;
 }
-interface ViewConfig {
-  components: string[] | PredictedTranspilation[];
+interface IViewConfig {
+  components: string[] | IPredictedTranspilation[];
   views: IClientViewType[];
   schema: string;
 }
 
-const getViewsConfig = (views?: ConfigViews): Reader<Config, ViewConfig> => (config: Config) => ({
+export const viewsToArray = <T>(a: { [key: string]: T }): Array<T> =>
+  Object.keys(a).reduce((acc, curr) => [...acc, { ...a[curr], name: curr }], []);
+const getViewsConfig = (views?: IConfigViews): IReader<Config, IViewConfig> => (config: Config) => ({
   components: config.$components,
   views: viewsToArray(views || config.$views),
-  schema: printSchema(Container.get(BootstrapService).schema)
-})
+  schema: printSchema(Container.get(BootstrapService).schema),
+});
 
-export const viewsToArray = <T>(a: { [key: string]: T }): Array<T> =>
-  Object.keys(a).reduce(
-    (acc, curr) => [...acc, { ...a[curr], name: curr }],
-    []
-  );
 @Controller<GraphQLControllerOptions>({
   guards: [],
-  type: []
+  type: [],
 })
 export class ClientController {
   constructor(private pubsub: PubSubService) {}
@@ -60,22 +54,21 @@ export class ClientController {
           return true;
         }
         return false;
-      }
-    )
+      },
+    ),
   )
   @Subscription({
     clientId: {
-      type: new GraphQLNonNull(GraphQLString)
-    }
+      type: new GraphQLNonNull(GraphQLString),
+    },
   })
-  async listenForChanges(views: ConfigViews) {
+  async listenForChanges(views: IConfigViews) {
     return getViewsConfig(views)(Container.get<Config>('main-config-compiled'));
   }
 
-
   @Type(ClientType)
   @Mutation()
-  async clientReady(root, payload, context) {
+  async clientReady() {
     // const config = Container.get<Config>('main-config-compiled');
     // if (config.$views) {
     //   config.$views = modifyViewsConfig(

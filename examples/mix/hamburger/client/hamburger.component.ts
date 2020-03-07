@@ -1,11 +1,12 @@
 import { Component, html, property } from '@rxdi/lit-html';
+import gql from 'graphql-tag';
+import { Observable, of } from 'rxjs';
+import { filter, map, switchMap, take, tap } from 'rxjs/operators';
+
+import { IHamburgerStatisticsType } from '../../api-introspection';
+import { BaseComponent } from './base.component';
 import { style } from './hamburger.component.css';
 import { HamburgerTypes } from './hamburger.type';
-import { BaseComponent } from './base.component';
-import { take, switchMap, filter, tap, map } from 'rxjs/operators';
-import gql from 'graphql-tag';
-import { of, Observable } from 'rxjs';
-import { IHamburgerStatisticsType } from '../../api-introspection'
 
 /**
  * @customElement hamburger-component
@@ -17,16 +18,14 @@ import { IHamburgerStatisticsType } from '../../api-introspection'
     return html`
       <div
         @click=${this.clickHamburgerButton}
-        class="hamburger hamburger--${this.type} ${this.active
-          ? 'is-active'
-          : ''}"
+        class="hamburger hamburger--${this.type} ${this.active ? 'is-active' : ''}"
       >
         <div class="hamburger-box">
           <div class="hamburger-inner"></div>
         </div>
       </div>
     `;
-  }
+  },
 })
 export class HamburgerComponent extends BaseComponent {
   @property({ type: Boolean }) active: boolean;
@@ -39,7 +38,7 @@ export class HamburgerComponent extends BaseComponent {
         tap(active => (this.active = !active)),
         filter(() => !!this.enableBackendStatistics),
         switchMap(() => this.sendClickStatistics()),
-        take(1)
+        take(1),
       )
       .subscribe();
   }
@@ -52,7 +51,7 @@ export class HamburgerComponent extends BaseComponent {
             clicks
           }
         }
-      `
+      `,
     }).pipe(map(mutation => mutation.data.clickHamburgerButton));
   }
 }

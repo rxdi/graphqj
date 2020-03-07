@@ -1,6 +1,7 @@
 import { Inject, Plugin } from '@rxdi/core';
 import { HAPI_SERVER } from '@rxdi/hapi';
 import { Server } from 'hapi';
+
 import { includes } from '../../../helpers/args-extractors';
 
 @Plugin()
@@ -15,9 +16,9 @@ export class ServeComponents {
         handler: {
           directory: {
             path: `${process.cwd()}/components`,
-            index: ['index.html', 'default.html']
-          }
-        }
+            index: ['index.html', 'default.html'],
+          },
+        },
       });
       this.server.route({
         method: 'GET',
@@ -26,9 +27,10 @@ export class ServeComponents {
           directory: {
             path: __dirname,
             redirectToSlash: true,
-            listing: false, index: ['index.html']
-          }
-        }
+            listing: false,
+            index: ['index.html'],
+          },
+        },
       });
     }
   }

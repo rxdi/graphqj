@@ -1,12 +1,13 @@
 import {
-  GraphQLString,
   GraphQLBoolean,
   GraphQLInt,
-  GraphQLNonNull,
   GraphQLList,
+  GraphQLNonNull,
   GraphQLScalarType,
-  GraphQLType
+  GraphQLString,
+  GraphQLType,
 } from 'graphql';
+
 import { GlobalUnion } from '../app/app.tokens';
 
 export function ParseArgs(ck: GlobalUnion) {
@@ -42,50 +43,30 @@ export function ParseArgs(ck: GlobalUnion) {
     type = { type: new GraphQLList(GraphQLString) };
   }
 
-  if (
-    ck === 'boolean[]' ||
-    ck === 'Boolean[]' ||
-    ck === '[Boolean]' ||
-    ck === '[Bool]'
-  ) {
+  if (ck === 'boolean[]' || ck === 'Boolean[]' || ck === '[Boolean]' || ck === '[Bool]') {
     type = { type: new GraphQLList(GraphQLBoolean) };
   }
 
-  if (
-    ck === 'number[]' ||
-    ck === 'Number[]' ||
-    ck === '[Number]' ||
-    ck === '[Int]'
-  ) {
+  if (ck === 'number[]' || ck === 'Number[]' || ck === '[Number]' || ck === '[Int]') {
     type = { type: new GraphQLList(GraphQLInt) };
   }
 
   /* False negative Array */
   if (ck === 'string[]!' || ck === 'String[]!' || ck === '[String]!') {
     type = {
-      type: new GraphQLNonNull(new GraphQLList(GraphQLString))
+      type: new GraphQLNonNull(new GraphQLList(GraphQLString)),
     };
   }
 
-  if (
-    ck === 'boolean[]!' ||
-    ck === 'Boolean[]!' ||
-    ck === '[Boolean]!' ||
-    ck === '[Bool]'
-  ) {
+  if (ck === 'boolean[]!' || ck === 'Boolean[]!' || ck === '[Boolean]!' || ck === '[Bool]') {
     type = {
-      type: new GraphQLNonNull(new GraphQLList(GraphQLBoolean))
+      type: new GraphQLNonNull(new GraphQLList(GraphQLBoolean)),
     };
   }
 
-  if (
-    ck === 'number[]!' ||
-    ck === 'Number[]!' ||
-    ck === '[Number]!' ||
-    ck === '[Int]!'
-  ) {
+  if (ck === 'number[]!' || ck === 'Number[]!' || ck === '[Number]!' || ck === '[Int]!') {
     type = {
-      type: new GraphQLNonNull(new GraphQLList(GraphQLInt))
+      type: new GraphQLNonNull(new GraphQLList(GraphQLInt)),
     };
   }
   return type;
